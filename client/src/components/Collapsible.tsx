@@ -17,13 +17,11 @@ export default function Collapsible(props: {isOpen: boolean, children: React.Rea
     maxWidth: `500px`,
 
     overflow: `hidden`,
-    position: `relative`,
     transform: `translateY(0px)`,
     transition: `height ${trnasition}s ease-out`
   }
 
   let childS: CSSProperties = {
-    position: `relative`,
     bottom: `0px`,
     transform: `translateY(${-height}px)`,
     transition: `transform ${trnasition}s ease-out`,

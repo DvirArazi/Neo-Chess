@@ -6,6 +6,7 @@ import React from 'react'
 import Toggle from '../components/Toggle'
 import Collapsible from '../components/Collapsible'
 import CatagoryButton, {Catagory} from '../components/index/CatagoryButton'
+import OctagonPicker from '../components/OctagonPicker'
 
 export default function Home() {
   const [isOnline, setIsOnline] = React.useState<boolean|null>(true);
@@ -27,6 +28,7 @@ export default function Home() {
       </Head>
       <main>
         <TopBar></TopBar>
+        <OctagonPicker />
         <h1>Neo-Chess</h1>
         <Toggle isOpen={isOnline} setIsOpen={setIsOnline}>
           <Icon path="wifi" />
@@ -88,7 +90,6 @@ export default function Home() {
           <CatagoryButton catagory={{title: "Rapid", time: 60, increment: 2}} rating={1234}/>
           <CatagoryButton catagory={{title: "Classical", time: 60, increment: 2}} rating={1234}/>
         </Box>
-        
       </main>
     </>
   )
