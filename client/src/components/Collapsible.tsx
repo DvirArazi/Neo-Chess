@@ -7,7 +7,6 @@ export default function Collapsible(props: {isOpen: boolean, children: React.Rea
 
   const [height, setHeight] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(()=>{
     setHeight(ref.current.clientHeight);
   });
@@ -16,6 +15,7 @@ export default function Collapsible(props: {isOpen: boolean, children: React.Rea
     margin: `auto`,
     maxWidth: `500px`,
 
+    height: `0px`,
     overflow: `hidden`,
     transform: `translateY(0px)`,
     transition: `height ${trnasition}s ease-out`
@@ -41,7 +41,9 @@ export default function Collapsible(props: {isOpen: boolean, children: React.Rea
   return (
     <div style={parentS}>
       <div style={childS} ref={ref}>
-        {children}
+        <div style={{padding:`0.02px`}}>
+          {children}
+        </div>
       </div>
     </div>
   );

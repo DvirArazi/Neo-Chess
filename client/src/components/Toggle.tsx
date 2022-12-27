@@ -1,24 +1,24 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
+import Stateful from "../Utils/types";
+
 
 export default function Toggle(props: {
-  isOpen: boolean|null,
-  setIsOpen: (value: React.SetStateAction<boolean|null>) => void,
+  isOpen: Stateful<boolean>,
   children: React.ReactNode
 }) {
-  const {isOpen, setIsOpen, children} = props;
-  
+  const { isOpen: isOpen, children } = props;
+
   return (<ToggleButtonGroup
     exclusive={true}
-    
-    value={isOpen}
+    value={isOpen.value}
     onChange={
       (
         _: React.MouseEvent<HTMLElement>,
-        newIsOpen: boolean|null
+        newIsOpen: boolean | null
       ) => {
         if (newIsOpen != null) {
-          setIsOpen(newIsOpen);
+          isOpen.set(newIsOpen);
         }
       }
     }
