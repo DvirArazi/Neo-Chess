@@ -5,6 +5,10 @@
   scrollbar-width: none;
 }
 
+body {
+  margin: 0;
+}
+
 :root::-webkit-scrollbar {
   display: none;
 }

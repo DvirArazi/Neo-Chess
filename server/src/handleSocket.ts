@@ -1,11 +1,8 @@
-import { RpcServer } from 'shared/rpcTypes';
+import RpcServer from "./utils/types";
 
 const handleSocket = (webSocketServer: RpcServer) => {
     webSocketServer.on('connection', (socket) => {
-        console.log("hello");
-        setTimeout(() => {
-            socket.emit("blue");
-        }, 2000);
+            // socket.emit("");
     });
 };
 

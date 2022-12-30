@@ -2,8 +2,9 @@
   "extends": "../tsconfig.json",
     "compilerOptions": {
       "plugins": [{ "name": "typescript-plugin-css-modules" }],
-      // "paths": {
-      //   "src/*": ["src/*"]
-      // },
+      "paths": {
+        "src/*": ["src/*"]
+      },
+      "noEmit": false,
     }
 }

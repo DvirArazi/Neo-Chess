@@ -14,6 +14,11 @@ export default function TopBar() {
     padding: `5px`,
   }
 
+  const iconSx: SxProps = {
+    width: `25px`,
+    height: `25px`,
+  }
+
   return (
     <Box sx={barSx}>
       <Box sx={rowSx}>
@@ -21,13 +26,13 @@ export default function TopBar() {
         <Box sx={itemSx}>Sign In</Box>
       </Box>
       <Box sx={rowSx}>
-        <Box sx={itemSx}>
+        <Box sx={{...itemSx, ...iconSx}}>
           <Icon path="fight" />
         </Box>
-        <Box sx={itemSx}>
+        <Box sx={{...itemSx, ...iconSx}}>
           <Icon path="history" />
         </Box>
-        <Box sx={itemSx}>
+        <Box sx={{...itemSx, ...iconSx}}>
           <Icon path="user" />
         </Box>
       </Box>

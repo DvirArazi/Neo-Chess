@@ -1,10 +1,10 @@
 import { Box, Button, Paper } from "@mui/material";
-import Icon from "../Icon";
+import Icon from "../../Icon";
 
-export default function CatagoryButton(props: {rating?: number, catagory: Catagory}) {
-  const {rating, catagory} = props;
+export default function CatagoryButton(props: { rating?: number, catagory: Catagory }) {
+  const { rating, catagory } = props;
 
-  return(
+  return (
     <Box>
       {rating != null ? <Box>{rating}</Box> : null}
       <Button variant="outlined" sx={{
@@ -15,7 +15,7 @@ export default function CatagoryButton(props: {rating?: number, catagory: Catago
         <Box>{
           catagory.title != "Untimed" ?
             `${timeToString(catagory.time)} | ${timeToString(catagory.increment)}` :
-            <Icon path="infinity" size={50}/>
+            <Icon path="infinity" size={50} />
         }</Box>
       </Button>
     </Box>
@@ -23,14 +23,16 @@ export default function CatagoryButton(props: {rating?: number, catagory: Catago
 }
 
 export type Catagory =
-  { title: "Untimed",
-  } | 
-  { title: "Bullet" | "Blitz" | "Rapid" | "Classical"
+  {
+    title: "Untimed",
+  } |
+  {
+    title: "Bullet" | "Blitz" | "Rapid" | "Classical"
     time: number,
     increment: number,
   }
-;
+  ;
 
 const timeToString = (time: number) => {
-  return time >= 60 ? `${Math.floor(time/60)}m` : `${time}s`;
+  return time >= 60 ? `${Math.floor(time / 60)}m` : `${time}s`;
 }

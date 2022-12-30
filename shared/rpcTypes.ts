@@ -1,13 +1,13 @@
 import { Server } from "socket.io";
 
 export interface ServerToClientEvents {
-    blue: () => void;
+    opponentMoved: (from: Point, to: Point)=> void;
 }
 export interface ClientToServerEvents {
-    bla: () => void;
+    playerMoved: (from: Point, to: Point) => void;
 }
 
-export type RpcServer = Server<
-    ClientToServerEvents,
-    ServerToClientEvents
->;
+type Point = {
+    x: number,
+    y: number,
+}

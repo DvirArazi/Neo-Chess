@@ -5,17 +5,20 @@ import Icon from '../components/Icon'
 import React from 'react'
 import Toggle from '../components/Toggle'
 import Collapsible from '../components/Collapsible'
-import CatagoryButton, { Catagory } from '../components/index/CatagoryButton'
-import CompatibleSelect from '../components/CompatibleSelect'
-import { BrowserView, MobileView } from 'react-device-detect'
-import Stateful from '../Utils/types'
-import OnlinePanel from '../components/index/OnlinePanel'
+import Stateful from '../utils/stateful'
+import OnlinePanel from '../components/pageExclusives/index/OnlinePanel'
+import CatagoryButton from '../components/pageExclusives/index/CatagoryButton'
+import CustomeFormatPanel from '../components/pageExclusives/index/CustomeFormatSelect'
+import Layout from '../components/Layout'
 
 export default function Home() {
   const isOnline = new Stateful(true);
   const isRated = new Stateful(true);
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
+  const chosen = new Stateful("");
+  const time = new Stateful(15 * 60);
+  const increment = new Stateful(10);
 
   const [age, setAge] = React.useState('');
   const handleAgeChange = (event: SelectChangeEvent) => {
@@ -24,13 +27,7 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>Neo Chess</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main>
-        <TopBar></TopBar>
+      <Layout>
         <h1>Neo-Chess</h1>
         <Toggle isOpen={isOnline}>
           <Icon path="wifi" />
@@ -38,12 +35,15 @@ export default function Home() {
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
           <Collapsible isOpen={isOnline.value}>
-            <OnlinePanel isRated={isRated} isRanged={isRanged} range={range}/>
+            <OnlinePanel
+              isRated={isRated}
+              isRanged={isRanged}
+              range={range}
+              chosen={chosen}
+            />
           </Collapsible>
         </Box>
         <Box sx={{
-          margin: `auto`,
-          maxWidth: `500px`,
           display: `flex`,
           flexDirection: `row`,
           justifyContent: `space-around`,
@@ -54,9 +54,8 @@ export default function Home() {
           <CatagoryButton catagory={{ title: "Rapid", time: 60, increment: 2 }} rating={1234} />
           <CatagoryButton catagory={{ title: "Classical", time: 60, increment: 2 }} rating={1234} />
         </Box>
-        <BrowserView>Hola</BrowserView>
-        <MobileView>Bonjour</MobileView>
-      </main>
+        <CustomeFormatPanel time={time} increment={increment} />
+      </Layout>
     </>
   )
 }

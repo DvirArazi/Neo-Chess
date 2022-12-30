@@ -19,9 +19,9 @@
       "isolatedModules": true,
       "jsx": "preserve",
       "baseUrl": ".",
-      "paths": {
-        "shared/*": ["shared/*"]
-      },
+      // "paths": {
+      //   "shared/*": ["shared/*"]
+      // },
     },
     "include": [
       "next-env.d.ts",

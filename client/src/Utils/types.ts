@@ -1,22 +1,9 @@
-import React from "react";
+import { ClientToServerEvents, ServerToClientEvents } from "shared/rpcTypes";
+import { Socket } from "socket.io-client";
 
-class Stateful<T> {
-  private _value: T
-  private _setValue: React.Dispatch<React.SetStateAction<T>>
+type RpcClient = Socket<
+    ServerToClientEvents,
+    ClientToServerEvents
+>;
 
-  constructor(value: T) {
-    const state = React.useState(value);
-    this._value = state[0];
-    this._setValue = state[1];
-  }
-
-  public get value() {
-    return this._value;
-  }
-
-  public get set() {
-    return this._setValue;
-  }
-}
-
-export default Stateful;
+export default RpcClient;

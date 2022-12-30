@@ -4,7 +4,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
-import { RpcServer, ClientToServerEvents, ServerToClientEvents } from 'shared/rpcTypes';
+import RpcServer from './utils/types'
 
 const port = parseInt(process.env.PORT || "3000");
 const dev = process.env.NODE_ENV !== 'production';
