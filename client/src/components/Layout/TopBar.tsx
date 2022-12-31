@@ -1,5 +1,6 @@
 import { Box, SxProps } from "@mui/material";
-import Icon from "./Icon";
+import Icon from "../Icon";
+import SignInButton from "./TopBar/SignInButton";
 
 export default function TopBar() {
   const barSx: SxProps = {
@@ -18,8 +19,8 @@ export default function TopBar() {
     <Box sx={barSx}>
       <Box sx={rowSx}>
         <Box sx={itemSx}>
+          <SignInButton />
         </Box>
-        <Box sx={itemSx}>Sign In</Box>
       </Box>
       <Box sx={rowSx}>
         <Box sx={{

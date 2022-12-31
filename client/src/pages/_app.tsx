@@ -4,17 +4,14 @@ import { useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
 import RpcClient from '../utils/types';
+import { SessionProvider } from 'next-auth/react';
+import { Session } from 'next-auth';
 
 export let SOCKET: RpcClient;
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps<{session: Session}>) {
   useEffect(() => {
-    console.log("echo");
     SOCKET = io();
-
-    // SOCKET.on("blue", () => {
-    //   console.log("bla");
-    // });
 
     return () => {
       SOCKET.close();
@@ -22,13 +19,15 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
   return (
     <>
-    <Head>
-        <title>Neo Chess</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="referrer" content="no-referrer-when-downgrade" />
-        <link rel="icon" href="/favicon.ico" />
-    </Head>
-      <Component {...pageProps} />
+      <Head>
+          <title>Neo Chess</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="referrer" content="no-referrer-when-downgrade" />
+          <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <SessionProvider session={pageProps.session}>
+        <Component {...pageProps} />
+      </SessionProvider>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import TopBar from '../components/TopBar'
+import TopBar from '../components/Layout/TopBar'
 import { Box, MenuItem, NativeSelect, Paper, Select, SelectChangeEvent, Slider } from '@mui/material'
 import Icon from '../components/Icon'
 import React from 'react'
