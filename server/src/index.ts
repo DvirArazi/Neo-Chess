@@ -5,6 +5,11 @@ import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
 import RpcServer from './utils/types'
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+
+dotenv.config({
+  path: "server/.env"
+});
 
 const port = parseInt(process.env.PORT || "3000");
 const dev = process.env.NODE_ENV !== 'production';

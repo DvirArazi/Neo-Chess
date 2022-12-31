@@ -5,9 +5,12 @@ import Stateful from "../utils/stateful";
 
 export default function Toggle(props: {
   isOpen: Stateful<boolean>,
-  children: React.ReactNode
+  children: React.ReactNode,
+  isLeftDisabled?: boolean
 }) {
-  const { isOpen: isOpen, children } = props;
+  const { isOpen, children} = props;
+
+  const isLeftDisabled = props.isLeftDisabled ?? false;
 
   return (<ToggleButtonGroup
     exclusive={true}
@@ -23,7 +26,7 @@ export default function Toggle(props: {
       }
     }
   >
-    <ToggleButton value={true}>{children[0]}</ToggleButton>
+    <ToggleButton disabled={isLeftDisabled} value={true}>{children[0]}</ToggleButton>
     <ToggleButton value={false}>{children[1]}</ToggleButton>
   </ToggleButtonGroup>);
 }

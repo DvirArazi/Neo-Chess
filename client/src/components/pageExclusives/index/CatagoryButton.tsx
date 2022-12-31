@@ -15,7 +15,7 @@ export default function CatagoryButton(props: { rating?: number, catagory: Catag
         <Box>{
           catagory.title != "Untimed" ?
             `${timeToString(catagory.time)} | ${timeToString(catagory.increment)}` :
-            <Icon path="infinity" size={50} />
+            <Icon path="infinity" />
         }</Box>
       </Button>
     </Box>

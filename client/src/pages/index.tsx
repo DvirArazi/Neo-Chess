@@ -13,25 +13,23 @@ import Layout from '../components/Layout'
 import { Clock } from 'shared/types'
 import { useRouter } from 'next/router'
 import { SOCKET } from './_app'
+import { useSession } from 'next-auth/react'
 
 export default function Home() {
   const router = useRouter();
+  const {data: session} = useSession();
 
-  const isOnline = new Stateful(true);
+  const isOnline = new Stateful(false);
   const isRated = new Stateful(true);
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
   const chosen = new Stateful("");
 
-  const [age, setAge] = React.useState('');
-  const handleAgeChange = (event: SelectChangeEvent) => {
-    setAge(event.target.value as string);
-  }
-
   const start = (isOnline: boolean, clock: Clock) => {
     if (isOnline) {
-      SOCKET.emit("createGame", clock, () => {
-
+      console.log("calling createGame");
+      SOCKET.emit("createGame", clock, (gameId: string) => {
+        console.log("woooooow");
       });
 
       router.push('/game/abc');
@@ -44,8 +42,8 @@ export default function Home() {
     <>
       <Layout>
         <h1>Neo-Chess</h1>
-        <Toggle isOpen={isOnline}>
-          <Icon path="wifi" />
+        <Toggle isOpen={isOnline} isLeftDisabled={session == null}>
+          <Icon path="wifi" color={session == null ? "#808080" : "#000000"}/>
           <Icon path="wifi_off" />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
