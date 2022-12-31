@@ -1,11 +1,14 @@
 import { Box, Button, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material";
 import Stateful from "client/src/utils/stateful";
+import { Clock } from "shared/types";
 
 export default function CustomeFormatPanel(props: {
-  time: Stateful<number>,
-  increment: Stateful<number>,
+  onPlay: (clock: Clock) => void,
 }) {
-  const { time, increment } = props;
+  const { onPlay } = props;
+
+  const time = new Stateful(15 * 60);
+  const increment = new Stateful(10);
 
   const format = (() => {
     const total = time.value + increment.value * 40;
@@ -35,7 +38,7 @@ export default function CustomeFormatPanel(props: {
             >
               {
                 times.map((v) =>
-                  <MenuItem value={v}>{timeToString(v)}</MenuItem>
+                  <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
                 )
               }
             </Select>
@@ -44,17 +47,20 @@ export default function CustomeFormatPanel(props: {
             Increment
             <Select
               value={increment.value}
-              onChange={(e) => handleChange(e, increment)}
+              onChange={(e: SelectChangeEvent<number>) => handleChange(e, increment)}
             >
               {
                 increments.map((v) =>
-                  <MenuItem value={v}>{timeToString(v)}</MenuItem>
+                  <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
                 )
               }
             </Select>
           </Box>
         </Box>
-        <Button>Play</Button>
+        <Button onClick={() => onPlay({
+          time: time.value,
+          increment: increment.value
+        })}>Play</Button>
       </Paper>
     </Box>
   );

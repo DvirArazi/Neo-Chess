@@ -1,4 +1,4 @@
-import { Box, createTheme, SxProps } from "@mui/material";
+import { Box, SxProps } from "@mui/material";
 import Icon from "./Icon";
 
 export default function TopBar() {
@@ -14,26 +14,40 @@ export default function TopBar() {
     padding: `5px`,
   }
 
-  const iconSx: SxProps = {
-    width: `25px`,
-    height: `25px`,
-  }
-
   return (
     <Box sx={barSx}>
       <Box sx={rowSx}>
-        <Box sx={itemSx}>Log In</Box>
+        <Box sx={itemSx}>
+        </Box>
         <Box sx={itemSx}>Sign In</Box>
       </Box>
       <Box sx={rowSx}>
-        <Box sx={{...itemSx, ...iconSx}}>
+        <Box sx={{
+          ...itemSx,
+          ...{
+            width: `25px`,
+            height: `25px`,
+          }
+        }}>
           <Icon path="fight" />
         </Box>
-        <Box sx={{...itemSx, ...iconSx}}>
+        <Box sx={{
+          ...itemSx,
+          ...{
+            width: `23px`,
+            height: `23px`,
+          }
+        }}>
           <Icon path="history" />
         </Box>
-        <Box sx={{...itemSx, ...iconSx}}>
-          <Icon path="user" />
+        <Box sx={{
+          ...itemSx,
+          ...{
+            width: `30px`,
+            height: `30px`,
+          }
+        }}>
+          <Icon path="friends" />
         </Box>
       </Box>
     </Box>

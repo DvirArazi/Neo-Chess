@@ -6,28 +6,29 @@ import Piece from "./Piece";
 export default function Board(props: { layout: BoardLayout }) {
   const { layout } = props;
 
-  
+  let children: JSX.Element[] = [];
+  for (let i = 0; i < layout.length; i++) {
+    const data = layout[i];
+
+    if (data == null) continue;
+
+    children.push(
+      <Box key={i} sx={{
+        position: `absolute`,
+        left: `${Math.floor(i % SIDE) * SIZE}%`,
+        top: `${Math.floor(i / SIDE) * SIZE}%`,
+        width: `${SIZE}%`,
+        height: `${SIZE}%`,
+      }}>
+        <Piece data={data} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ position: `relative` }}>
       <Background side={SIDE} />
-      {
-        layout.map((data, i) => {
-          if (data == null) return null;
-
-          return (
-            <Box sx={{
-              position: `absolute`,
-              left: `${Math.floor(i % SIDE) * SIZE}%`,
-              top: `${Math.floor(i / SIDE) * SIZE}%`,
-              width: `${SIZE}%`,
-              height: `${SIZE}%`,
-            }}>
-              <Piece key={i} data={data} />
-            </Box>
-          );
-        })
-      }
+      {children}
     </Box>
   );
 }

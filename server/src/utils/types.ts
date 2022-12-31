@@ -1,4 +1,4 @@
-import { ClientToServerEvents, ServerToClientEvents } from "shared/rpcTypes";
+import { ClientToServerEvents, ServerToClientEvents } from "shared/types";
 import { Server } from "socket.io";
 
 type RpcServer = Server<

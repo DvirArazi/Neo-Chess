@@ -1,9 +1,7 @@
 import { Box } from "@mui/material";
 import Layout from "client/src/components/Layout";
 import Board, { BoardLayout, SIDE } from "client/src/components/pageExclusives/game/Board";
-import Background from "client/src/components/pageExclusives/game/Board/Background";
 import { PieceColor, PieceType } from "shared/pieceData";
-// import { PieceColor, PieceType } from "client/src/components/pageExclusives/game/pieceData";
 
 export default function Game() {
   let layout: BoardLayout = Array.from({ length: SIDE * SIDE }, () => null);

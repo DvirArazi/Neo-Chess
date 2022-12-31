@@ -10,20 +10,35 @@ import OnlinePanel from '../components/pageExclusives/index/OnlinePanel'
 import CatagoryButton from '../components/pageExclusives/index/CatagoryButton'
 import CustomeFormatPanel from '../components/pageExclusives/index/CustomeFormatSelect'
 import Layout from '../components/Layout'
+import { Clock } from 'shared/types'
+import { useRouter } from 'next/router'
+import { SOCKET } from './_app'
 
 export default function Home() {
+  const router = useRouter();
+
   const isOnline = new Stateful(true);
   const isRated = new Stateful(true);
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
   const chosen = new Stateful("");
-  const time = new Stateful(15 * 60);
-  const increment = new Stateful(10);
 
   const [age, setAge] = React.useState('');
   const handleAgeChange = (event: SelectChangeEvent) => {
     setAge(event.target.value as string);
   }
+
+  const start = (isOnline: boolean, clock: Clock) => {
+    if (isOnline) {
+      SOCKET.emit("createGame", clock, () => {
+
+      });
+
+      router.push('/game/abc');
+    } else {
+      router.push('/game/offline');
+    }
+  };
 
   return (
     <>
@@ -54,9 +69,8 @@ export default function Home() {
           <CatagoryButton catagory={{ title: "Rapid", time: 60, increment: 2 }} rating={1234} />
           <CatagoryButton catagory={{ title: "Classical", time: 60, increment: 2 }} rating={1234} />
         </Box>
-        <CustomeFormatPanel time={time} increment={increment} />
+        <CustomeFormatPanel onPlay={(clock) => start(isOnline.value, clock)} />
       </Layout>
     </>
   )
 }
-

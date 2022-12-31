@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
 import RpcClient from '../utils/types';
 
-let SOCKET: RpcClient;
+export let SOCKET: RpcClient;
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
@@ -25,9 +25,8 @@ export default function App({ Component, pageProps }: AppProps) {
     <Head>
         <title>Neo Chess</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="referrer" content="no-referrer-when-downgrade" />
         <link rel="icon" href="/favicon.ico" />
-        <link rel="stylesheet" href="fonts" />
-
     </Head>
       <Component {...pageProps} />
     </>
