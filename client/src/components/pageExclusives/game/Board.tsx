@@ -19,6 +19,9 @@ export default function Board(props: { layout: BoardLayout }) {
         top: `${Math.floor(i / SIDE) * SIZE}%`,
         width: `${SIZE}%`,
         height: `${SIZE}%`,
+        background: "blue",
+        textAlign: `center`,
+        margin: `auto`,
       }}>
         <Piece data={data} />
       </Box>

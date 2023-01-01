@@ -1,15 +1,8 @@
-import { CSSProperties } from "@emotion/serialize";
-import { Box } from "@mui/material";
-import CssFilterConverter from "css-filter-converter";
-import Image from "next/image";
 import React from "react";
-import { useEffect, useState } from "react";
 
-export default function Icon(props: { path: string, color?: string }) {
+export default function Icon(props: { path: string, isGrayed?: boolean }) {
   const {path} = props;
-  const color = props.color ?? `#000000`;
-
-  const filter = CssFilterConverter.hexToFilter(color).color;
+  const isGrayed = props.isGrayed ?? false;
 
   return (
     <img
@@ -19,8 +12,9 @@ export default function Icon(props: { path: string, color?: string }) {
         width: `100%`,
         height: `100%`,
         overflow: `visible`,
-        filter: filter,
+        fill: "#808080",
+        filter: isGrayed ? "invert(47%) sepia(0%) saturate(2884%) hue-rotate(146deg) brightness(108%) contrast(87%)" : "none",
       }}
-    ></img>
+    />
   );
 }
