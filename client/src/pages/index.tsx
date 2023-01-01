@@ -13,11 +13,12 @@ import Layout from '../components/Layout'
 import { Clock } from 'shared/types'
 import { useRouter } from 'next/router'
 import { SOCKET } from './_app'
-import { useSession } from 'next-auth/react'
+import { getCsrfToken, useSession } from 'next-auth/react'
 
 export default function Home() {
   const router = useRouter();
   const {data: session} = useSession();
+  const csrfToken = Promise.resolve(getCsrfToken());
 
   const isOnline = new Stateful(false);
   const isRated = new Stateful(true);
@@ -29,8 +30,6 @@ export default function Home() {
   const start = (isOnline: boolean, clock: Clock) => {
     if (isOnline) {
       isSnackbarOpen.set(true);
-
-      session.user.
 
       SOCKET.emit("openGameRequest", clock, (gameId: string) => {
         console.log("woooooow");
