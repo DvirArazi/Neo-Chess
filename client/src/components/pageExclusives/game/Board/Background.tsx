@@ -10,7 +10,7 @@ export default function Background(props: { side: number }) {
 
     const canvas = canvasRef.current;
     canvas.style.imageRendering = "pixelated";
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = color0;
     for (let x = 0; x < side; x++) {
       for (let y = 0; y < side; y++) {

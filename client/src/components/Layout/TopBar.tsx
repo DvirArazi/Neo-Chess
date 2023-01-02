@@ -1,5 +1,5 @@
 import { Box, SxProps, Button } from "@mui/material";
-import { SOCKET } from "client/src/pages/_app";
+import { SOCKET, USER_DATA } from "client/src/pages/_app";
 import Stateful from "client/src/utils/stateful";
 import { TokenPayload } from "google-auth-library";
 import Icon from "../Icon";
@@ -18,13 +18,6 @@ export default function TopBar() {
     padding: `5px`,
   };
 
-  const userData = new Stateful<TokenPayload | undefined>(undefined);
-
-  SOCKET.on("authenticated", (data) => {
-    console.log("bla")
-    userData.set(data);
-  });
-
   function GoogleLogout() {
     throw new Error("Function not implemented.");
   }
@@ -34,11 +27,11 @@ export default function TopBar() {
       <Box sx={rowSx}>
         <Box sx={itemSx}>
           {
-            userData.value == undefined ? 
+            USER_DATA.value == undefined ? 
               <SignInButton /> :
               <Box sx={{display: `flex`, flexDirection: `row`}}>
-                <Box>{userData.value.name!}</Box>
-                <Button onClick={()=>{userData.set(undefined)}}>Sign Out</Button>
+                <Box>{USER_DATA.value.name!}</Box>
+                <Button onClick={()=>{USER_DATA.set(undefined)}}>Sign Out</Button>
               </Box>
           }
         </Box>

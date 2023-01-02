@@ -8,7 +8,7 @@ export default function Collapsible(props: {isOpen: boolean, children: React.Rea
   const [height, setHeight] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(()=>{
-    setHeight(ref.current.clientHeight);
+    setHeight(ref.current!.clientHeight);
   });
 
   let parentS: CSSProperties = {
