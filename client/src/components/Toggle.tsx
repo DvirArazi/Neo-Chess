@@ -10,6 +10,10 @@ export default function Toggle(props: {
 }) {
   const { isOpen, children} = props;
 
+  if (children == undefined) {
+    throw new Error('"children" is undefined');
+  }
+
   const isLeftDisabled = props.isLeftDisabled ?? false;
 
   return (<ToggleButtonGroup

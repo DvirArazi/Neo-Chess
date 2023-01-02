@@ -1,19 +1,19 @@
 import { Box, Button } from '@mui/material';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { GoogleLogin, hasGrantedAllScopesGoogle } from '@react-oauth/google';
+import { SOCKET } from 'client/src/pages/_app';
 
 export default function SignInButton() {
-  const { data: session } = useSession();
-
-  if (session != null) {
-    return (
-      <Box sx={{display: `flex`, flexDirection: `row`}}>
-        <Box>{session.user.name}</Box>
-        <Button onClick={() => {signOut()}}>Sign Out</Button>
-      </Box>
-    );
-  }
 
   return (
-    <Button onClick={() => signIn("google")}>Sign In</Button>
+    <GoogleLogin
+      onSuccess={(credentialResponse) => {
+        console.log(credentialResponse);
+        // credentialResponse.
+        SOCKET.emit("authenticate", credentialResponse.credential!);
+      }}
+      onError={() => {
+        console.log('Login Failed :(');
+      }}
+    />
   );
 }

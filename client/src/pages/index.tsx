@@ -13,12 +13,9 @@ import Layout from '../components/Layout'
 import { Clock } from 'shared/types'
 import { useRouter } from 'next/router'
 import { SOCKET } from './_app'
-import { getCsrfToken, useSession } from 'next-auth/react'
 
 export default function Home() {
   const router = useRouter();
-  const {data: session} = useSession();
-  const csrfToken = Promise.resolve(getCsrfToken());
 
   const isOnline = new Stateful(false);
   const isRated = new Stateful(true);
@@ -45,8 +42,8 @@ export default function Home() {
     <>
       <Layout>
         <h1>Neo-Chess</h1>
-        <Toggle isOpen={isOnline} isLeftDisabled={session == null}>
-          <Icon path="wifi" isGrayed={session == null}/>
+        <Toggle isOpen={isOnline} isLeftDisabled={false}>
+          <Icon path="wifi" isGrayed={false}/>
           <Icon path="wifi_off" />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
