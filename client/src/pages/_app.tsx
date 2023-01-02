@@ -6,10 +6,16 @@ import Head from 'next/head';
 import RpcClient from '../utils/types';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Stateful from '../utils/stateful';
+import React from 'react';
+import { TokenPayload } from 'google-auth-library';
 
+const SocketContext = React.createContext(io());
+const UserDataContext = React.createContext<TokenPayload | undefined>(undefined);
 export let SOCKET: RpcClient;
 
 export default function App({ Component, pageProps }: AppProps) {
+  
+
   const isReady = new Stateful(false);
 
   useEffect(() => {

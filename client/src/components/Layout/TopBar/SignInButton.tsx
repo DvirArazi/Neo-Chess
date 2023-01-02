@@ -8,7 +8,6 @@ export default function SignInButton() {
     <GoogleLogin
       onSuccess={(credentialResponse) => {
         console.log(credentialResponse);
-        // credentialResponse.
         SOCKET.emit("authenticate", credentialResponse.credential!);
       }}
       onError={() => {

@@ -25,7 +25,7 @@ const handleSocket = async (webSocketServer: RpcServer) => {
         });
 
         const payload = ticket.getPayload();
-        if (payload == undefined) {
+        if (payload === undefined) {
           console.error("payload is undefined");
           return;
         }

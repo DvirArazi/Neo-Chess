@@ -36,7 +36,10 @@ export default function TopBar() {
           {
             userData.value == undefined ? 
               <SignInButton /> :
-              <Button onClick={()=>{GoogleLogout()}}>Sign Out</Button>
+              <Box sx={{display: `flex`, flexDirection: `row`}}>
+                <Box>{userData.value.name!}</Box>
+                <Button onClick={()=>{userData.set(undefined)}}>Sign Out</Button>
+              </Box>
           }
         </Box>
       </Box>
