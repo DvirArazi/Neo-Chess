@@ -4,12 +4,10 @@ import { useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
 import RpcClient from '../utils/types';
-import { SessionProvider } from 'next-auth/react';
-import { Session } from 'next-auth';
 
 export let SOCKET: RpcClient;
 
-export default function App({ Component, pageProps }: AppProps<{session: Session}>) {
+export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     SOCKET = io();
 
@@ -25,9 +23,7 @@ export default function App({ Component, pageProps }: AppProps<{session: Session
           <meta name="referrer" content="no-referrer-when-downgrade" />
           <link rel="icon" href="/favicon.ico" />
       </Head>
-      <SessionProvider session={pageProps.session}>
-        <Component {...pageProps} />
-      </SessionProvider>
+      <Component {...pageProps} />
     </>
   );
 }
