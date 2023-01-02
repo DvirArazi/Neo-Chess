@@ -5,7 +5,7 @@ import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
 import RpcServer from './utils/types'
-import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as dotenv from 'dotenv'
 
 dotenv.config({
   path: "server/.env"
@@ -20,29 +20,31 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
+console.log(app);
 app.prepare().then(() => {
-  const expressApp = express()
-  const httpServer = http.createServer(expressApp);
-  const webSocketServer: RpcServer = new Server(httpServer, {
-    cors: {
-      origin: '*'
-    },
-    pingInterval: 1000
-  });
+  console.log("booo");
+  // const expressApp = express()
+  // const httpServer = http.createServer(expressApp);
+  // const webSocketServer: RpcServer = new Server(httpServer, {
+  //   cors: {
+  //     origin: '*'
+  //   },
+  //   pingInterval: 1000
+  // });
 
-  const publicFolder = path.join(process.cwd(), '/client/public/');
+  // const publicFolder = path.join(process.cwd(), '/client/public/');
 
-  expressApp.use(express.static(publicFolder));
+  // expressApp.use(express.static(publicFolder));
 
-  handleSocket(webSocketServer);
+  // handleSocket(webSocketServer);
 
-  expressApp.all('*', (req, res) => {
-    return handle(req, res);
-  });
+  // expressApp.all('*', (req, res) => {
+  //   return handle(req, res);
+  // });
 
-  httpServer.listen(port, () => {
-    console.log(`> Listening on http://localhost:${port}`);
-  });
+  // httpServer.listen(port, () => {
+  //   console.log(`> Listening on http://localhost:${port}`);
+  // });
 }).catch((reason) => {
   console.error(reason);
 });
