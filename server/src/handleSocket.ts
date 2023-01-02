@@ -17,7 +17,8 @@ const handleSocket = async (webSocketServer: RpcServer) => {
 
 
     webSocketServer.on("connection", (socket) => {
-      socket.on("openGameRequest", (clock, onCreated) => {
+      socket.on("createGame", (clock, onCreated) => {
+        console.log("hello");
         collection.insertOne({
           white: "Dvir",
           black: "Shlaiv",

@@ -9,6 +9,3 @@ export type Game = {
     black: string,
 }
 
-export type GameRequest = {
-
-}

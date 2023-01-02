@@ -5,7 +5,7 @@ export interface ServerToClientEvents {
 }
 export interface ClientToServerEvents {
     playerMoved: (from: Point, to: Point) => void;
-    openGameRequest: (clock: Clock, onCreated: (gameId: string)=>void) => void;
+    createGame: (clock: Clock, onCreated: (gameId: string)=>void) => void;
 }
 
 type Point = {
