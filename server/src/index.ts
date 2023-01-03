@@ -4,7 +4,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
-import RpcServer from './utils/types'
+import { SocketServer } from './utils/types'
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 dotenv.config({
@@ -23,7 +23,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const expressApp = express()
   const httpServer = http.createServer(expressApp);
-  const webSocketServer: RpcServer = new Server(httpServer, {
+  const webSocketServer: SocketServer = new Server(httpServer, {
     cors: {
       origin: '*'
     },

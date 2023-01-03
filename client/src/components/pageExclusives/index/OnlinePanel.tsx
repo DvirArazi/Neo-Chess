@@ -28,12 +28,12 @@ export default function OnlinePanel(
       // transition: `height 2s ease-out`,
       // background: `blue`,
     }}>
-      <Toggle isOpen={isRated}>
+      <Toggle isOn={isRated}>
         <Box sx={{ fontSize: `12px`, width: `50px` }}>Rated</Box>
         <Box sx={{ fontSize: `12px`, width: `50px` }}>Casual</Box>
       </Toggle>
       <Box sx={{ marginBottom: `15px` }}></Box>
-      <Toggle isOpen={isRanged}>
+      <Toggle isOn={isRanged}>
         <Box sx={{ fontSize: `12px`, width: `100px` }}>Rating Range</Box>
         <Box sx={{ fontSize: `12px`, width: `100px` }}>VS Friend</Box>
       </Toggle>

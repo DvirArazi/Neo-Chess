@@ -1,8 +1,8 @@
-import RpcServer, { Game } from './utils/types'
+import { SocketServer, Game } from './utils/types'
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
-const handleSocket = async (webSocketServer: RpcServer) => {
+const handleSocket = async (webSocketServer: SocketServer) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
   // const uri = `mongodb+srv://DvirArazi:${process.env.MONGODB_PASSWORD}@cluster0.t5tdz9u.mongodb.net/?retryWrites=true&w=majority`;
@@ -33,7 +33,7 @@ const handleSocket = async (webSocketServer: RpcServer) => {
         socket.emit("authenticated", payload);
       });
 
-      socket.on("openGameRequest", (clock, onCreated) => {
+      socket.on("openGameRequest", (tid, clock, onCreated) => {
         // collection.insertOne({
         //   white: "Dvir",
         //   black: "Shlaiv",

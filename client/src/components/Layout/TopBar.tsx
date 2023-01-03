@@ -1,9 +1,9 @@
 import { Box, SxProps, Button } from "@mui/material";
-import { SOCKET, USER_DATA } from "client/src/pages/_app";
+import { COOKIE, SOCKET, USER_DATA } from "client/src/pages/_app";
 import Stateful from "client/src/utils/stateful";
 import { TokenPayload } from "google-auth-library";
 import Icon from "../Icon";
-import SignInButton from "./TopBar/SignInButton";
+import { SignInButton, SignOutButton } from "./TopBar/SignInButton";
 
 export default function TopBar() {
   const barSx: SxProps = {
@@ -29,10 +29,7 @@ export default function TopBar() {
           {
             USER_DATA.value == undefined ? 
               <SignInButton /> :
-              <Box sx={{display: `flex`, flexDirection: `row`}}>
-                <Box>{USER_DATA.value.name!}</Box>
-                <Button onClick={()=>{USER_DATA.set(undefined)}}>Sign Out</Button>
-              </Box>
+              <SignOutButton />
           }
         </Box>
       </Box>
