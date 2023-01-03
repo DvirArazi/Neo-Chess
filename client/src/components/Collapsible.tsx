@@ -1,4 +1,4 @@
-import { CSSProperties, useState, useRef, useEffect } from "react";
+import { CSSProperties, useState, useRef, useEffect } from 'react'
 
 const trnasition = 0.2;
 

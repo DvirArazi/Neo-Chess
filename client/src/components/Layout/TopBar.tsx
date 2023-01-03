@@ -3,7 +3,7 @@ import { COOKIE, SOCKET, USER_DATA } from "client/src/pages/_app";
 import Stateful from "client/src/utils/stateful";
 import { TokenPayload } from "google-auth-library";
 import Icon from "../Icon";
-import { SignInButton, SignOutButton } from "./TopBar/SignInButton";
+import { SignInButton, SignOutButton } from "./TopBar/AuthenticationButtons";
 
 export default function TopBar() {
   const barSx: SxProps = {

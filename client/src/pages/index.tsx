@@ -30,7 +30,7 @@ export default function Home() {
     if (isOnline && isSignedIn) {
       isSnackbarOpen.set(true);
 
-      SOCKET.emit("openGameRequest", "test", clock, (gameId: string) => {
+      SOCKET.emit("openGameRequest", clock, (gameId: string) => {
         console.log("woooooow");
       });
 
@@ -39,8 +39,6 @@ export default function Home() {
       // router.push('/game/offline');
     }
   };
-
-  console.log(USER_DATA);
 
   return (
     <>

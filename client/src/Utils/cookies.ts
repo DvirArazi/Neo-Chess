@@ -1,14 +1,21 @@
-import { getCookie, setCookie } from "typescript-cookie";
+import Cookies from 'js-cookie'
 
-export default class Cookies {
-  get tid() {
-    return getCookie(Cookie.Tid);
-  }
-  set tid(value: string | undefined) {
-    setCookie(Cookie.Tid, value);
+export function getCookie(name: CookieName) {
+  return Cookies.get(CookieMap[name]);
+}
+
+export function setCookie(name: CookieName, value: string | undefined) {
+  if (value !== undefined) {
+    Cookies.set(CookieMap[name], value);
+  } else {
+    Cookies.remove(CookieMap[name])
   }
 }
 
-enum Cookie {
-  Tid = "tid"
+export enum CookieName {
+  IdToken
 }
+
+const CookieMap = new Map<CookieName, string>([
+  [CookieName.IdToken, "idToken"],
+]);

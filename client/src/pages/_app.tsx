@@ -8,10 +8,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Stateful from '../utils/stateful';
 import React from 'react';
 import { TokenPayload } from 'google-auth-library';
-import Cookies from '../utils/cookies';
+import { CookieName, getCookie } from '../utils/cookies';
 
-export let SOCKET: SocketClient = io();
-export let COOKIE: Cookies = new Cookies();
+export let SOCKET: SocketClient;
 export let USER_DATA: Stateful<TokenPayload | undefined>;
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -20,13 +19,15 @@ export default function App({ Component, pageProps }: AppProps) {
   USER_DATA = new Stateful(undefined);
 
   useEffect(() => { //TRY TO DELETE THAT, MIGHT NOT BE NEEDED
+    SOCKET = io();
+
     SOCKET.on("authenticated", (data) => {
-      console.log("has user data!");
       USER_DATA.set(data);
     });
 
-    if (COOKIE.tid != undefined) {
-      SOCKET.emit("authenticate", COOKIE.tid);
+    const idToken = getCookie(CookieName.IdToken);
+    if (idToken != undefined) {
+      SOCKET.emit("authenticate", idToken);
     }
 
     isReady.set(true);
@@ -36,20 +37,20 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-      <>
-      { !isReady.value ? <div></div> :
-      <>
-      <Head>
-          <title>Neo Chess</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="referrer" content="no-referrer-when-downgrade" />
-          <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID!}>
-        <Component {...pageProps} />
-      </GoogleOAuthProvider>
-      </>
+    <>
+      {!isReady.value ? <div></div> :
+        <>
+          <Head>
+            <title>Neo Chess</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta name="referrer" content="no-referrer-when-downgrade" />
+            <link rel="icon" href="/favicon.ico" />
+          </Head>
+          <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID!}>
+            <Component {...pageProps} />
+          </GoogleOAuthProvider>
+        </>
       }
-       </>
+    </>
   );
 }
