@@ -1,6 +1,9 @@
-import { Box, SxProps } from "@mui/material";
+import { Box, SxProps, Button } from "@mui/material";
+import { COOKIE, SOCKET, USER_DATA } from "client/src/pages/_app";
+import Stateful from "client/src/utils/stateful";
+import { TokenPayload } from "google-auth-library";
 import Icon from "../Icon";
-import SignInButton from "./TopBar/SignInButton";
+import { SignInButton, SignOutButton } from "./TopBar/AuthenticationButtons";
 
 export default function TopBar() {
   const barSx: SxProps = {
@@ -10,16 +13,24 @@ export default function TopBar() {
   const rowSx: SxProps = {
     display: `flex`,
     flexDirection: `row`,
-  }
+  };
   const itemSx: SxProps = {
     padding: `5px`,
+  };
+
+  function GoogleLogout() {
+    throw new Error("Function not implemented.");
   }
 
   return (
     <Box sx={barSx}>
       <Box sx={rowSx}>
         <Box sx={itemSx}>
-          <SignInButton />
+          {
+            USER_DATA.value == undefined ? 
+              <SignInButton /> :
+              <SignOutButton />
+          }
         </Box>
       </Box>
       <Box sx={rowSx}>

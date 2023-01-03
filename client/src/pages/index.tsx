@@ -12,7 +12,7 @@ import CustomeFormatPanel from '../components/pageExclusives/index/CustomeFormat
 import Layout from '../components/Layout'
 import { Clock } from 'shared/types'
 import { useRouter } from 'next/router'
-import { SOCKET } from './_app'
+import { SOCKET, USER_DATA } from './_app'
 
 export default function Home() {
   const router = useRouter();
@@ -22,11 +22,13 @@ export default function Home() {
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
   const chosen = new Stateful("");
+  const isSnackbarOpen = new Stateful(false);
 
   const start = (isOnline: boolean, clock: Clock) => {
     if (isOnline) {
-      console.log("calling createGame");
-      SOCKET.emit("createGame", clock, (gameId: string) => {
+      isSnackbarOpen.set(true);
+
+      SOCKET.emit("openGameRequest", clock, (gameId: string) => {
         console.log("woooooow");
       });
 
@@ -40,8 +42,8 @@ export default function Home() {
     <>
       <Layout>
         <h1>Neo-Chess</h1>
-        <Toggle isOpen={isOnline} isLeftDisabled={false}>
-          <Icon path="wifi" color={"#808080"}/>
+        <Toggle isOpen={isOnline} isLeftDisabled={session == null}>
+          <Icon path="wifi" isGrayed={session == null}/>
           <Icon path="wifi_off" />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
@@ -67,6 +69,16 @@ export default function Home() {
         </Box>
         <CustomeFormatPanel onPlay={(clock) => start(isOnline.value, clock)} />
       </Layout>
+      <Box sx={{padding: `30px`}}/>
+
+      <Snackbar
+        open={isSnackbarOpen.value}
+        autoHideDuration={3000}
+        message="Waiting for opponent"
+        onClose={(_: any, reason: SnackbarCloseReason)=>{
+          isSnackbarOpen.set(false);
+        }}
+      />
     </>
   )
 }

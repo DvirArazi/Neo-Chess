@@ -4,11 +4,11 @@ import http from 'http'
 import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
-import RpcServer from './utils/types'
-import * as dotenv from 'dotenv'
+import { SocketServer } from './utils/types'
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 dotenv.config({
-  path: "server/.env"
+  path: ".env"
 });
 
 const port = parseInt(process.env.PORT || "3000");
@@ -22,15 +22,14 @@ const handle = app.getRequestHandler();
 
 console.log(app);
 app.prepare().then(() => {
-  console.log("booo");
-  // const expressApp = express()
-  // const httpServer = http.createServer(expressApp);
-  // const webSocketServer: RpcServer = new Server(httpServer, {
-  //   cors: {
-  //     origin: '*'
-  //   },
-  //   pingInterval: 1000
-  // });
+  const expressApp = express()
+  const httpServer = http.createServer(expressApp);
+  const webSocketServer: SocketServer = new Server(httpServer, {
+    cors: {
+      origin: '*'
+    },
+    pingInterval: 1000
+  });
 
   // const publicFolder = path.join(process.cwd(), '/client/public/');
 

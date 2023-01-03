@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.10.5",
     "@mui/material": "^5.11.1",
     "@next/font": "^13.1.0",
+    "@react-oauth/google": "^0.5.1",
     "@types/express": "^4.17.15",
     "@types/lodash": "^4.14.191",
     "@types/node": "18.11.17",
@@ -22,6 +23,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "google-auth-library": "^8.7.0",
+    "js-cookie": "^3.0.1",
     "lodash": "^4.17.21",
     "mongodb": "^4.13.0",
     "next": "13.1.0",
@@ -32,6 +34,7 @@
     "socket.io-client": "^4.5.4"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.2",
     "cross-env": "^7.0.3",
     "nodemon": "^2.0.20",
     "sass": "^1.57.1",
