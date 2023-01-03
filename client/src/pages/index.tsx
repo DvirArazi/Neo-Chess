@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import TopBar from '../components/Layout/TopBar'
-import { Box, MenuItem, NativeSelect, Paper, Select, SelectChangeEvent, Slider } from '@mui/material'
+import { Box, MenuItem, NativeSelect, Paper, Select, SelectChangeEvent, Slider, Snackbar } from '@mui/material'
 import Icon from '../components/Icon'
 import React from 'react'
 import Toggle from '../components/Toggle'
@@ -24,6 +24,8 @@ export default function Home() {
   const chosen = new Stateful("");
   const isSnackbarOpen = new Stateful(false);
 
+  const isAuthed = USER_DATA != undefined;
+
   const start = (isOnline: boolean, clock: Clock) => {
     if (isOnline) {
       isSnackbarOpen.set(true);
@@ -38,12 +40,13 @@ export default function Home() {
     }
   };
 
+
   return (
     <>
       <Layout>
         <h1>Neo-Chess</h1>
-        <Toggle isOpen={isOnline} isLeftDisabled={session == null}>
-          <Icon path="wifi" isGrayed={session == null}/>
+        <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
+          <Icon path="wifi" isGrayed={!isAuthed}/>
           <Icon path="wifi_off" />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
@@ -75,7 +78,7 @@ export default function Home() {
         open={isSnackbarOpen.value}
         autoHideDuration={3000}
         message="Waiting for opponent"
-        onClose={(_: any, reason: SnackbarCloseReason)=>{
+        onClose={()=>{
           isSnackbarOpen.set(false);
         }}
       />
