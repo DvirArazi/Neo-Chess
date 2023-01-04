@@ -20,7 +20,6 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
-console.log(app);
 app.prepare().then(() => {
   const expressApp = express()
   const httpServer = http.createServer(expressApp);
@@ -31,19 +30,19 @@ app.prepare().then(() => {
     pingInterval: 1000
   });
 
-  // const publicFolder = path.join(process.cwd(), '/client/public/');
+  const publicFolder = path.join(process.cwd(), '/client/public/');
 
-  // expressApp.use(express.static(publicFolder));
+  expressApp.use(express.static(publicFolder));
 
-  // handleSocket(webSocketServer);
+  handleSocket(webSocketServer);
 
-  // expressApp.all('*', (req, res) => {
-  //   return handle(req, res);
-  // });
+  expressApp.all('*', (req, res) => {
+    return handle(req, res);
+  });
 
-  // httpServer.listen(port, () => {
-  //   console.log(`> Listening on http://localhost:${port}`);
-  // });
+  httpServer.listen(port, () => {
+    console.log(`> Listening on http://localhost:${port}`);
+  });
 }).catch((reason) => {
   console.error(reason);
 });

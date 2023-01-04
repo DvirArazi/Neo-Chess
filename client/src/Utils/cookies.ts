@@ -1,21 +1,18 @@
 import Cookies from 'js-cookie'
+import { AutoAuthData } from 'shared/types';
 
-export function getCookie(name: CookieName) {
-  return Cookies.get(CookieMap[name]);
+export const AAD_COOKIE = cookie<AutoAuthData>("aad");
+
+function cookie<T>(name: string) {
+  return {
+    set: (value: T | undefined) => {
+      Cookies.set(name, JSON.stringify(value));
+    },
+    get: () => {
+      const cookie = Cookies.get(name);
+      if (cookie === undefined) { return undefined; }
+
+      return JSON.parse(cookie) as T;
+    }
+  };
 }
-
-export function setCookie(name: CookieName, value: string | undefined) {
-  if (value !== undefined) {
-    Cookies.set(CookieMap[name], value);
-  } else {
-    Cookies.remove(CookieMap[name])
-  }
-}
-
-export enum CookieName {
-  IdToken
-}
-
-const CookieMap = new Map<CookieName, string>([
-  [CookieName.IdToken, "idToken"],
-]);
