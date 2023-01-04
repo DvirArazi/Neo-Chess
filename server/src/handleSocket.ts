@@ -3,7 +3,7 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { User } from 'shared/types';
 import { generateKeySync } from 'crypto';
-// import { removeFirst } from 'shared/funcs';
+import { removeFirst } from 'shared/funcs';
 
 let USERS: User[] = [];
 
@@ -72,7 +72,7 @@ export default async function handleSocket(webSocketServer: SocketServer) {
 
       socket.on("signOut", (aad) => {
         if (userId !== aad.id) {
-          console.warn('IDs do not match.');
+          socket.emit("signedOut");
           return;
         }
 
@@ -82,7 +82,7 @@ export default async function handleSocket(webSocketServer: SocketServer) {
           return;
         }
 
-        // removeFirst(user.keys, aad.key);
+        removeFirst(user.keys, aad.key);
 
         socket.emit("signedOut");
       });

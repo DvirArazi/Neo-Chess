@@ -24,8 +24,8 @@ const nextConfig = {
     return config;
   },
 
-  //to be able to use the environment variables on the client side
-  //==============================================================
+  //to be able to use environment variables on the client side
+  //==========================================================
   env: {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   },
