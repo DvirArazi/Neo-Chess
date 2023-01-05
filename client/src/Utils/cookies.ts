@@ -6,13 +6,18 @@ export const AAD_COOKIE = cookie<AutoAuthData>("aad");
 function cookie<T>(name: string) {
   return {
     set: (value: T | undefined) => {
+      if (value === undefined) {
+        Cookies.remove(name);
+      }
+
       Cookies.set(name, JSON.stringify(value));
     },
     get: () => {
-      const cookie = Cookies.get(name);
-      if (cookie === undefined) { return undefined; }
-
-      return JSON.parse(cookie) as T;
+      try {
+        return JSON.parse(Cookies.get(name)!) as T;
+      } catch {
+        return undefined;
+      }
     }
   };
 }

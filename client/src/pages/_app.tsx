@@ -17,7 +17,7 @@ export let USER_DATA: Stateful<TokenPayload | undefined>;
 export default function App({ Component, pageProps }: AppProps) {
 
   const isReady = new Stateful(false);
-  USER_DATA = new Stateful(undefined);
+  USER_DATA = new Stateful<TokenPayload | undefined>(undefined);
 
   useEffect(() => {
     SOCKET = io();

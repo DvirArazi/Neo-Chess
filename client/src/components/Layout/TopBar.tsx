@@ -1,5 +1,5 @@
 import { Box, SxProps, Button } from "@mui/material";
-import { COOKIE, SOCKET, USER_DATA } from "client/src/pages/_app";
+import { USER_DATA } from "client/src/pages/_app";
 import Stateful from "client/src/utils/stateful";
 import { TokenPayload } from "google-auth-library";
 import Icon from "../Icon";

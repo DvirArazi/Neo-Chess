@@ -24,7 +24,7 @@ export default function Home() {
   const chosen = new Stateful("");
   const isSnackbarOpen = new Stateful(false);
 
-  const isAuthed = USER_DATA != undefined;
+  const isAuthed = USER_DATA.value != undefined;
 
   const start = (isOnline: boolean, clock: Clock) => {
     if (isOnline) {
@@ -40,14 +40,13 @@ export default function Home() {
     }
   };
 
-
   return (
     <>
       <Layout>
         <h1>Neo-Chess</h1>
         <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
-          <Icon path="wifi" isGrayed={!isAuthed}/>
-          <Icon path="wifi_off" />
+          <Icon path="wifi" side={25} color={isAuthed ? "#000000" : "#808080"}/>
+          <Icon path="wifi_off" side={25} />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
           <Collapsible isOpen={isOnline.value}>

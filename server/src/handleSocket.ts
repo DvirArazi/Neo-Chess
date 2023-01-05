@@ -1,6 +1,6 @@
-import { SocketServer, Game } from './utils/types'
+import { SocketServer } from './utils/types'
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { OAuth2Client, } from 'google-auth-library';
 import { User } from 'shared/types';
 import { generateKeySync } from 'crypto';
 import { removeFirst } from 'shared/funcs';
@@ -92,8 +92,6 @@ export default async function handleSocket(webSocketServer: SocketServer) {
           console.warn('Attempt to open a game request by an unauthenticated user.');
           return;
         }
-
-
 
         onCreated("stringstring");
       });

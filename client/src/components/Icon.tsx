@@ -1,25 +1,32 @@
-import { CSSProperties } from "@emotion/serialize";
-import { Box } from "@mui/material";
-import Image from "next/image";
 import React from "react";
-import { useEffect, useState } from "react";
 
-export default function Icon(props: { path: string, isGrayed?: boolean }) {
-  const {path} = props;
-  const isGrayed = props.isGrayed ?? false;
+export default function Icon(props: { path: string, color?: string | undefined, side?: number }) {
+  const {path, color} = props;
+  const side = props.side !== undefined ? `${props.side}px` : `100%`;
 
   return (
-    <img
-      src={`/${path}.svg`}
-      style={{
-        objectFit: `contain`,
-        width: `100%`,
-        height: `100%`,
-        overflow: `visible`,
-        filter: isGrayed ?
-          `invert(54%) sepia(6%) saturate(0%) hue-rotate(247deg) brightness(92%) contrast(88%)` : 
-          `none`,
-      }}
-    ></img>
+    <>
+      {
+        color !== undefined ?
+        <div style={{
+          width: side,
+          height: side,
+          display: `inline-block`,
+          
+          WebkitMask: `url(/${path}.svg) no-repeat 50% 50%`,
+          mask: `url(/${path}.svg) no-repeat 50% 50%`,
+          WebkitMaskSize: `cover`,
+          maskSize: `cover`,
+
+          backgroundColor: color,
+        }}>
+        </div> :
+        <img src={`/${path}.svg`}></img>
+      } 
+    </>
   );
+}
+
+export enum SvgNames {
+  history
 }

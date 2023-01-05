@@ -2,12 +2,16 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "module": "commonjs",
-        "outDir": "dist",
+        "outDir": "./dist",
+        "baseUrl": "..",
+    },
+    "ts-node": {
+        "require": ["tsconfig-paths/register"]
     },
     "include": [
-        ".", "../shared/funcs.ts",
+        ".", "../shared/",
     ],
     "exclude": [
-        "dist"
+        "./dist"
     ]
 }
