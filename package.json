@@ -2,7 +2,6 @@
   "name": "client",
   "version": "0.1.0",
   "private": true,
-  "comment: old dev script": "nodemon --exec \"ts-node --project server/tsconfig.json server/src/index.ts\" --watch server",
   "scripts": {
     "dev": "nodemon --watch server/**/*.ts --exec ts-node server/src/index.ts",
     "build": "cd client && next build && cd .. && tsc --project server/tsconfig.json",

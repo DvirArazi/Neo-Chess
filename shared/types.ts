@@ -1,8 +1,8 @@
 import { TokenPayload } from "google-auth-library";
-import { Server } from "socket.io";
+import { ObjectId } from "mongodb";
 
 export interface ClientToServerEvents {
-  openGameRequest: (clock: Clock, onCreated: (gameId: string)=>void) => void;
+  openGameRequest: (clock: Clock, onCreated: (gameId: string) => void) => void;
   signIn: (idToken: string) => void;
   autoSignIn: (aad: AutoAuthData) => void;
   signOut: (aad: AutoAuthData) => void;
@@ -16,13 +16,13 @@ export interface ServerToClientEvents {
 }
 
 export type User = {
-  id: string,
+  sub: string,
   keys: string[],
   data: TokenPayload,
 }
 
 export type AutoAuthData = {
-  id: string,
+  id: ObjectId,
   key: string,
 }
 

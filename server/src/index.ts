@@ -6,6 +6,7 @@ import path from 'path'
 import handleSocket from './handleSocket'
 import { SocketServer } from './utils/types'
 import * as dotenv from 'dotenv'
+import { Terminal } from './utils/terminal'
 
 dotenv.config({
   path: ".env"
@@ -41,7 +42,7 @@ app.prepare().then(() => {
   });
 
   httpServer.listen(port, () => {
-    console.log(`> Listening on http://localhost:${port}`);
+    Terminal.log(`Listening on http://localhost:${port}`);
   });
 }).catch((reason) => {
   console.error(reason);

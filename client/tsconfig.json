@@ -1,8 +1,6 @@
 {
   "extends": "../tsconfig.json",
     "compilerOptions": {
-      //remove this plugin
-      "plugins": [{ "name": "typescript-plugin-css-modules" }],
       "paths": {
         "src/*": ["src/*"]
       },
