@@ -7,7 +7,7 @@ export function removeFirst<T>(arr: T[], value: T) {
   }
 }
 
-export function formatByTimeframe(timeframe: Timeframe | undefined) {
+export function timeFormatByTimeframe(timeframe: Timeframe | undefined) {
   if (timeframe === undefined) return TimeFormats.Untimed;
 
   const total = timeframe.timePerTurn + timeframe.increment * 40;
@@ -16,3 +16,11 @@ export function formatByTimeframe(timeframe: Timeframe | undefined) {
   if (total < 1500) return TimeFormats.Rapid;
   return TimeFormats.Classical;
 }
+
+// export class Ref<T> {
+//   value: T;
+  
+//   constructor(value: T) {
+//     this.value = value;
+//   }
+// }

@@ -1,9 +1,11 @@
-import { TokenPayload } from "google-auth-library";
-import { ObjectId } from "mongodb";
-import { BoardLayout, ClientToServerEvents, TimeFormats, GameSettings, ServerToClientEvents, Timeframe } from "shared/types";
-import { Server } from "socket.io";
+import { OAuth2Client, TokenPayload } from "google-auth-library";
+import { Collection, ObjectId } from "mongodb";
+import { BoardLayout, ClientToServerEvents, TimeFormats, GameSettings, ServerToClientEvents, Timeframe, GameRequest } from "shared/types";
+import { Server, Socket } from "socket.io";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
 
 export type WebSocketServer = Server<ClientToServerEvents, ServerToClientEvents>;
+export type ServerSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export type User = {
   googleId: string,
@@ -21,5 +23,15 @@ export type Game = {
   black: ObjectId,
   settings: GameSettings,
   boardLayout: BoardLayout,
+}
+
+export type HandlerParams = {
+  webSocketServer: WebSocketServer,
+  socket: ServerSocket,
+  userId: ObjectId | undefined,
+  oAuth2Client: OAuth2Client,
+  usersCollection: Collection<User>,
+  gameRequestsCollection: Collection<GameRequest>,
+  ongoingGamesCollection: Collection<Game>,
 }
 
