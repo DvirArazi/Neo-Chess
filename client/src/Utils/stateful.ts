@@ -1,6 +1,6 @@
 import React from "react";
 
-class Stateful<T> {
+export default class Stateful<T> {
   private _value: T
   private _setValue: React.Dispatch<React.SetStateAction<T>>
 
@@ -10,7 +10,7 @@ class Stateful<T> {
     this._setValue = state[1];
   }
 
-  public get value() {
+  public get get() {
     return this._value;
   }
 
@@ -18,5 +18,3 @@ class Stateful<T> {
     return this._setValue;
   }
 }
-
-export default Stateful;

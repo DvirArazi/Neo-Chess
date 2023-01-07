@@ -41,14 +41,14 @@ export default function OnlinePanel(
 
       <Paper variant="outlined" sx={{
         padding: `20px 20px 10px 20px`,
-        display: isRanged.value ? `block` : `none`,
+        display: isRanged.get ? `block` : `none`,
         // transition: `visibility 0s, opacity 0.5s linear`,
       }}>
         <Box>
-          {rangeToString(range.value[0])} to {rangeToString(range.value[1])}
+          {rangeToString(range.get[0])} to {rangeToString(range.get[1])}
         </Box>
         <Slider
-          value={range.value}
+          value={range.get}
           onChange={handleRangeChange}
           min={-500}
           max={500}
@@ -60,7 +60,7 @@ export default function OnlinePanel(
         />
       </Paper>
       <div style={{
-        display: isRanged.value ? `none` : `block`,
+        display: isRanged.get ? `none` : `block`,
         // transition: `display 0.2s ease-out`,
       }}>
         <FriendList

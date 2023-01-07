@@ -22,7 +22,7 @@ export function SignInButton() {
 export function SignOutButton() {
   return (
     <Box sx={{ display: `flex`, flexDirection: `row` }}>
-      <Box>{USER_DATA.value!.name!}</Box>
+      <Box>{USER_DATA.get!.name!}</Box>
       <Button onClick={() => {
 
         SOCKET.emit("signOut", AAD_COOKIE.get()!);

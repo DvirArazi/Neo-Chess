@@ -4,7 +4,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import path from 'path'
 import handleSocket from './handleSocket'
-import { SocketServer } from './utils/types'
+import { WebSocketServer } from './utils/types'
 import * as dotenv from 'dotenv'
 import { Terminal } from './utils/terminal'
 
@@ -24,7 +24,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const expressApp = express()
   const httpServer = http.createServer(expressApp);
-  const webSocketServer: SocketServer = new Server(httpServer, {
+  const webSocketServer: WebSocketServer = new Server(httpServer, {
     cors: {
       origin: '*'
     },
@@ -45,5 +45,5 @@ app.prepare().then(() => {
     Terminal.log(`Listening on http://localhost:${port}`);
   });
 }).catch((reason) => {
-  console.error(reason);
+  Terminal.error(reason);
 });

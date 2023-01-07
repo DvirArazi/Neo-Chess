@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
-import { SocketClient } from '../utils/types';
+import { WebSocketClient } from '../utils/types';
 import Stateful from '../utils/stateful';
 import React from 'react';
 import { TokenPayload } from 'google-auth-library';
@@ -11,7 +11,7 @@ import Script from 'next/script';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AAD_COOKIE } from '../utils/cookies';
 
-export let SOCKET: SocketClient;
+export let SOCKET: WebSocketClient;
 export let USER_DATA: Stateful<TokenPayload | undefined>;
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -52,7 +52,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      {!isReady.value ? <div></div> :
+      {!isReady.get ? <div></div> :
         <>
           <Head>
             <title>Neo Chess</title>

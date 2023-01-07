@@ -37,7 +37,6 @@
     "@types/js-cookie": "^3.0.2",
     "cross-env": "^7.0.3",
     "nodemon": "^2.0.20",
-    "sass": "^1.57.1",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.2",
