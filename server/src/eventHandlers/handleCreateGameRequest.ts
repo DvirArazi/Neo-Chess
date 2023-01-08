@@ -38,12 +38,12 @@ export default function handleOpenGameRequest(p: HandlerParams) {
     const player0: PlayerWithId = {
       id: user0._id,
       name: user0.name,
-      rating: user0.ratings.get(timeFormat)!//[timeFormat as number]
+      rating: user0.ratings[timeFormat]//[timeFormat as number]
     }
     const player1: PlayerWithId = {
       id: user1._id,
       name: user1.name,
-      rating: user1.ratings.get(timeFormat)!//[timeFormat as number]
+      rating: user1.ratings[timeFormat]//[timeFormat as number]
     }
 
     const boardLayout = generateBoardLayout();

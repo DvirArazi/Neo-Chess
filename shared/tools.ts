@@ -8,13 +8,13 @@ export function removeFirst<T>(arr: T[], value: T) {
 }
 
 export function timeFormatByTimeframe(timeframe: Timeframe | undefined): TimeFormats {
-  if (timeframe === undefined) return "Untimed";
+  if (timeframe === undefined) return TimeFormats.Untimed;
 
   const total = timeframe.timePerTurn + timeframe.increment * 40;
-  if (total < 180) return "Bullet";
-  if (total < 500) return "Blitz";
-  if (total < 1500) return "Rapid";
-  return "Classical";
+  if (total < 180) return TimeFormats.Bullet;
+  if (total < 500) return TimeFormats.Blitz;
+  if (total < 1500) return TimeFormats.Rapid;
+  return TimeFormats.Classical;
 }
 
 // export class Ref<T> {

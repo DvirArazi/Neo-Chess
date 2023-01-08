@@ -70,9 +70,10 @@ export type GameViewData = {
   history: GameHistory,
 }
 
-export type TimeFormats =
-  "Untimed" |
-  "Bullet" |
-  "Blitz" |
-  "Rapid" |
-  "Classical"
+export enum TimeFormats {
+  Untimed = 0,
+  Bullet = 1,
+  Blitz = 2,
+  Rapid = 3,
+  Classical = 4,
+}

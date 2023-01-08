@@ -9,12 +9,12 @@ export type ServerSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export type User = {
   googleId: string,
-  socketsIds: Map<string, string>,
+  socketsIds: {key: string, value: string}[],
   data: TokenPayload,
   gameRequestId: ObjectId | undefined,
   ongoingGamesIds: ObjectId[],
   name: string,
-  ratings: Map<TimeFormats, number>,
+  ratings: number[],
 }
 
 export type PlayerWithId = {

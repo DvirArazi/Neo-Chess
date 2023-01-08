@@ -3,6 +3,7 @@ import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 
 export default function handleGetGameViewData(p: HandlerParams) {
+  Terminal.log("hello");
   p.socket.on("getGameViewData", async (path, callback) => {
     const game = await p.ongoingGamesCollection.findOne({ path: path });
     if (game === null) {
@@ -19,6 +20,7 @@ export default function handleGetGameViewData(p: HandlerParams) {
       };
     })();
 
+    Terminal.log("calling back");
     callback({
       role: role,
       ...game

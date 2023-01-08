@@ -1,9 +1,8 @@
-import { generateKeySync } from "crypto";
-import { TimeFormats } from "shared/types";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { User } from "../utils/types";
 import { v4 as uuidv4 } from 'uuid';
+import { emitToUser } from "../utils/tools";
 
 export function HandleSignIn(p: HandlerParams) {
   p.socket.on("signIn", async (idToken) => {
@@ -23,10 +22,9 @@ export function HandleSignIn(p: HandlerParams) {
     const user = await p.usersCollection.findOneAndUpdate(
       { googleId: googleId },
       {
-        $push: { keys: newKey },
-        $setOnInsert: <Omit<User, "keys">>{
+        $push: { socketsIds: { key: newKey, value: p.socket.id } },
+        $setOnInsert: <Omit<User, "socketsIds">>{
           googleId: googleId,
-          socketsIds: [p.socket.id],
           data: data,
           name: data.name,
           gameRequestId: undefined,
@@ -45,6 +43,6 @@ export function HandleSignIn(p: HandlerParams) {
     }
 
     p.userId = user.value._id;
-    p.socket.emit("signedIn", { id: p.userId, key: newKey }, data);
+    emitToUser(p.webSocketServer, user.value, "signedIn", { id: p.userId, key: newKey }, data);
   });
 }
