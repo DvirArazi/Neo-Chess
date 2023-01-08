@@ -11,7 +11,7 @@ export default function CustomeFormatPanel(props: {
   const increment = new Stateful(10);
 
   const format = (() => {
-    const total = time.get + increment.get * 40;
+    const total = time.value + increment.value * 40;
     if (total < 180) return "Bullet";
     if (total < 500) return "Blitz";
     if (total < 1500) return "Rapid";
@@ -33,7 +33,7 @@ export default function CustomeFormatPanel(props: {
           <Box>
             Time per Turn
             <Select
-              value={time.get}
+              value={time.value}
               onChange={(e) => handleChange(e, time)}
             >
               {
@@ -46,7 +46,7 @@ export default function CustomeFormatPanel(props: {
           <Box>
             Increment
             <Select
-              value={increment.get}
+              value={increment.value}
               onChange={(e: SelectChangeEvent<number>) => handleChange(e, increment)}
             >
               {
@@ -58,8 +58,8 @@ export default function CustomeFormatPanel(props: {
           </Box>
         </Box>
         <Button onClick={() => onPlay({
-          timePerTurn: time.get,
-          increment: increment.get
+          timePerTurn: time.value,
+          increment: increment.value
         })}>Play</Button>
       </Paper>
     </Box>

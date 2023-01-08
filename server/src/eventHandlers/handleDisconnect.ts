@@ -1,24 +1,20 @@
+import { ObjectId } from "mongodb";
+import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { HandlerParams } from "../utils/types";
 
 export function HandleDisconnect(p: HandlerParams) {
-  const {
-    userId,
-    socket,
-    usersCollection,
-    gameRequestsCollection,
-  } = p;
-  socket.on("disconnect", async (aad)=>{
-    if (userId === undefined) {
+  p.socket.on("disconnect", async (aad)=>{
+    if (p.userId === undefined) {
       return;
     }
     
-    const user = await usersCollection.findOneAndUpdate(
-      { _id: userId },
+    const user = await p.usersCollection.findOneAndUpdate(
+      { _id: new ObjectId(p.userId.toString()) },
       {
-        $pull: { socketIds: socket.id },
+        $pull: { socketIds: p.socket.id },
         $set: { gameRequestId: undefined },
-      }
+      },
+      { upsert: false }
     );
     
     if (user.value === null) {
@@ -29,7 +25,7 @@ export function HandleDisconnect(p: HandlerParams) {
     const gameRequestId = user.value.gameRequestId;
     
     if (gameRequestId !== undefined) {
-      gameRequestsCollection.deleteOne({ _id: gameRequestId });
+      p.gameRequestsCollection.deleteOne({ _id: gameRequestId });
     }
   });
   }

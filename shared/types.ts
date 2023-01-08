@@ -6,20 +6,15 @@ export interface ClientToServerEvents {
   signIn: (idToken: string) => void;
   autoSignIn: (aad: AutoAuthData) => void;
   signOut: (aad: AutoAuthData) => void;
-  openGameRequest: (gameSettings: GameSettings) => void;
+  createGameRequest: (gameSettings: GameSettings) => void;
+  getGameViewData: (gameId: string, dataCallback: (data: GameViewData | undefined) => void) => void;
   playerMoved: (from: Point, to: Point) => void;
 }
 export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: TokenPayload) => void;
   autoSignedIn: (data: TokenPayload) => void;
   signedOut: () => void;
-  gameCreated: (
-    isWhite: boolean,
-    player0: Player,
-    player1: Player,
-    boardLayout: BoardLayout,
-    gameSettings: GameSettings
-  ) => void;
+  createdGame: (path: string) => void;
   opponentMoved: (from: Point, to: Point) => void;
 }
 
@@ -48,17 +43,36 @@ export type GameRequest = {
   data: GameSettings
 }
 
-export type BoardLayout = Array<PieceData | undefined>;
+export enum GameRole {
+  White,
+  Black,
+  Viewer,
+}
+
+export type GameState = {
+  position: Array<PieceData | undefined>,
+  whiteTime: number,
+  blackTime: number,
+};
+
+export type GameHistory = Array<GameState>;
 
 export type Player = {
   name: string,
   rating: number,
 }
 
-export enum TimeFormats {
-  Untimed,
-  Bullet,
-  Blitz,
-  Rapid,
-  Classical,
+export type GameViewData = {
+  role: GameRole,
+  white: Player,
+  black: Player,
+  settings: GameSettings,
+  history: GameHistory,
 }
+
+export type TimeFormats =
+  "Untimed" |
+  "Bullet" |
+  "Blitz" |
+  "Rapid" |
+  "Classical"

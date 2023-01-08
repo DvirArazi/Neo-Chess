@@ -22,15 +22,13 @@ export default function Home() {
   const chosen = new Stateful("");
   const isSnackbarOpen = new Stateful(false);
 
-  const isAuthed = USER_DATA.get != undefined;
+  const isAuthed = USER_DATA.value != undefined;
 
   const start = (isOnline: boolean, gameRequest: GameSettings) => {
     if (isOnline) {
       isSnackbarOpen.set(true);
 
-      SOCKET.emit("openGameRequest", gameRequest);
-
-      router.push('/game/abc');
+      SOCKET.emit("createGameRequest", gameRequest);
     } else {
       router.push('/game/offline');
     }
@@ -45,7 +43,7 @@ export default function Home() {
           <Icon path="wifi_off" side={25} />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
-          <Collapsible isOpen={isOnline.get}>
+          <Collapsible isOpen={isOnline.value}>
             <OnlinePanel
               isRated={isRated}
               isRanged={isRanged}
@@ -65,12 +63,12 @@ export default function Home() {
           <CatagoryButton catagory={{ title: "Rapid", time: 60, increment: 2 }} rating={1234} />
           <CatagoryButton catagory={{ title: "Classical", time: 60, increment: 2 }} rating={1234} />
         </Box>
-        <CustomeFormatPanel onPlay={(timeframe) => start(isOnline.get, { timeframe: timeframe, isRated: isRated.get })} />
+        <CustomeFormatPanel onPlay={(timeframe) => start(isOnline.value, { timeframe: timeframe, isRated: isRated.value })} />
       </Layout>
       <Box sx={{ padding: `30px` }} />
 
       <Snackbar
-        open={isSnackbarOpen.get}
+        open={isSnackbarOpen.value}
         autoHideDuration={3000}
         message="Waiting for opponent"
         onClose={() => {

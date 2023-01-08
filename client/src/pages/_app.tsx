@@ -7,14 +7,15 @@ import { WebSocketClient } from '../utils/types';
 import Stateful from '../utils/stateful';
 import React from 'react';
 import { TokenPayload } from 'google-auth-library';
-import Script from 'next/script';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AAD_COOKIE } from '../utils/cookies';
+import { useRouter } from 'next/router';
 
 export let SOCKET: WebSocketClient;
 export let USER_DATA: Stateful<TokenPayload | undefined>;
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
 
   const isReady = new Stateful(false);
   USER_DATA = new Stateful<TokenPayload | undefined>(undefined);
@@ -38,6 +39,11 @@ export default function App({ Component, pageProps }: AppProps) {
       USER_DATA.set(undefined);
     });
 
+    SOCKET.on("createdGame", (path) => {
+      console.log("game created!");
+      router.push(`game/${path}`,);
+    });
+
     const aad = AAD_COOKIE.get();
     if (aad != undefined) {
       console.log('auto sign in');
@@ -52,7 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      {!isReady.get ? <div></div> :
+      {!isReady.value ? <div></div> :
         <>
           <Head>
             <title>Neo Chess</title>

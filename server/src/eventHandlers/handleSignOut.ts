@@ -1,15 +1,9 @@
-import { generateKeySync } from "crypto";
-import { TimeFormats } from "shared/types";
+import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { HandlerParams, User } from "../utils/types";
 
 export function HandleSignOut(p: HandlerParams) {
-const {
-  socket,
-  usersCollection,
-} = p;
-socket.on("signOut", async (aad)=>{
-  const user = await usersCollection.findOneAndUpdate(
+p.socket.on("signOut", async (aad)=>{
+  const user = await p.usersCollection.findOneAndUpdate(
     { _id: aad.id },
     { $pull: { keys: aad.key } },
     { upsert: true }
@@ -19,6 +13,6 @@ socket.on("signOut", async (aad)=>{
     Terminal.warning("User signed out with an invalid ID");
   }
 
-  socket.emit("signedOut");
+  p.socket.emit("signedOut");
 });
 }

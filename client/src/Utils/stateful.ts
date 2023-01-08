@@ -10,7 +10,7 @@ export default class Stateful<T> {
     this._setValue = state[1];
   }
 
-  public get get() {
+  public get value() {
     return this._value;
   }
 

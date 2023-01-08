@@ -27,7 +27,7 @@ export default function TopBar() {
       <Box sx={rowSx}>
         <Box sx={itemSx}>
           {
-            USER_DATA.get == undefined ?
+            USER_DATA.value == undefined ?
               <SignInButton /> :
               <SignOutButton />
           }

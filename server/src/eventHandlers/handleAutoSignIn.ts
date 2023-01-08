@@ -1,14 +1,15 @@
+import { ObjectId } from "mongodb";
+import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { HandlerParams, User } from "../utils/types";
 
 export function HandleAutoSignIn(p: HandlerParams) {
-const {
-  socket,
-  usersCollection,
-} = p;
-socket.on("autoSignIn", async (aad)=>{
-  const user = await usersCollection.findOne(
-    { _id: aad.id, keys: { $in: [aad.key] } }
+p.socket.on("autoSignIn", async (aad)=>{
+  Terminal.log(`aad: ${aad.id}, ${aad.key}`);
+  const user = await p.usersCollection.findOne(
+    { 
+      _id: new ObjectId(aad.id.toString()),
+      keys: { $in: [aad.key] }
+    }
   );
   if (user === null) {
     Terminal.warning('User auto signed out with an invalid AAD');
@@ -17,6 +18,6 @@ socket.on("autoSignIn", async (aad)=>{
 
   p.userId = aad.id;
 
-  socket.emit("autoSignedIn", (user.data));
+  p.socket.emit("autoSignedIn", (user.data));
 });
 }

@@ -11,7 +11,7 @@ export default function FriendList(props: { friends: string[], chosen: Stateful<
   return (
     <ToggleButtonGroup
       orientation="vertical"
-      value={chosen.get}
+      value={chosen.value}
       exclusive
       onChange={handleChange}
       sx={{ width: `100%` }}

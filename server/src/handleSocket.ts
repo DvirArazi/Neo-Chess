@@ -1,16 +1,13 @@
-import { Game, WebSocketServer, User, HandlerParams } from './utils/types'
-import { MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
+import { Collection, MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
 import { OAuth2Client, } from 'google-auth-library';
-import { TimeFormats, GameRequest } from 'shared/types';
-import { generateKeySync } from 'crypto';
+import { GameRequest } from 'shared/types';
 import { Terminal } from './utils/terminal';
-import { generateBoardLayout } from './utils/tools';
-import { timeFormatByTimeframe } from 'shared/tools';
-import handleOpenGameRequest from './eventHandlers/handleOpenGameRequest';
+import handleOpenGameRequest from './eventHandlers/handleCreateGameRequest';
 import { HandleSignIn } from './eventHandlers/handleSignIn';
 import { HandleAutoSignIn } from './eventHandlers/handleAutoSignIn';
 import { HandleSignOut } from './eventHandlers/handleSignOut';
 import { HandleDisconnect } from './eventHandlers/handleDisconnect';
+import { Game, ServerSocket, User, WebSocketServer } from './utils/types';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -19,7 +16,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     process.env.GOOGLE_REDIRECT_URL
   );
 
-  const uri = `mongodb+srv://DvirArazi:${process.env.MONGODB_PASSWORD}@cluster0.t5tdz9u.mongodb.net/?retryWrites=true&w=majority"`;
+  const uri = `mongodb+srv://DvirArazi:${process.env.MONGODB_PASSWORD}@cluster0.t5tdz9u.mongodb.net/?retryWrites=true`;
   const mongoClient = new MongoClient(uri, {
     serverApi: ServerApiVersion.v1,
   });
@@ -38,30 +35,20 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
       ongoingGamesCollection: db.collection<Game>("OngoingGames"),
     };
 
-    //===========
-    //  Sign In
-    //===========
     HandleSignIn(handlerParams);
-
-    //================
-    //  Auto Sign In
-    //================
     HandleAutoSignIn(handlerParams);
-
-    //============
-    //  Sign Out
-    //============
     HandleSignOut(handlerParams);
-
-    //=====================
-    //  Open Game Request
-    //=====================
     handleOpenGameRequest(handlerParams);
-
-    //==============
-    //  Disconnect
-    //==============
     HandleDisconnect(handlerParams);
-
   });
 };
+
+export type HandlerParams = {
+  webSocketServer: WebSocketServer,
+  socket: ServerSocket,
+  userId: ObjectId | undefined,
+  oAuth2Client: OAuth2Client,
+  usersCollection: Collection<User>,
+  gameRequestsCollection: Collection<GameRequest>,
+  ongoingGamesCollection: Collection<Game>,
+}

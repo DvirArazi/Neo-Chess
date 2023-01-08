@@ -14,13 +14,13 @@ export default function Toggle(props: {
   }
   const isOnDisabled = props.isOnDisabled ?? false;
 
-  if (isOn.get && isOnDisabled) {
+  if (isOn.value && isOnDisabled) {
     isOn.set(false);
   }
 
   return (<ToggleButtonGroup
     exclusive={true}
-    value={isOn.get}
+    value={isOn.value}
     onChange={
       (
         _: React.MouseEvent<HTMLElement>,

@@ -1,9 +1,9 @@
 import { Box } from "@mui/material";
-import { BoardLayout } from "shared/types";
+import { GameState } from "shared/types";
 import Background from "./Board/Background";
 import Piece from "./Piece";
 
-export default function Board(props: { layout: BoardLayout }) {
+export default function Board(props: { layout: GameState }) {
   const { layout } = props;
 
   let children: JSX.Element[] = [];
@@ -34,4 +34,4 @@ export default function Board(props: { layout: BoardLayout }) {
 }
 
 export const SIDE = 8;
-const SIZE = 1/SIDE*100;
+const SIZE = 1 / SIDE * 100;
