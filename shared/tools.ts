@@ -1,4 +1,4 @@
-import { TimeFormats, Timeframe } from "./types";
+import { TimeFormats, Timeframe } from "./types/gameTypes";
 
 export function removeFirst<T>(arr: T[], value: T) {
   let index = arr.indexOf(value);
@@ -7,7 +7,7 @@ export function removeFirst<T>(arr: T[], value: T) {
   }
 }
 
-export function timeFormatByTimeframe(timeframe: Timeframe | undefined): TimeFormats {
+export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFormats {
   if (timeframe === undefined) return TimeFormats.Untimed;
 
   const total = timeframe.timePerTurn + timeframe.increment * 40;
