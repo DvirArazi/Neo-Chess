@@ -1,21 +1,20 @@
 import { useEffect, useRef } from "react";
+import { BOARD_SIDE } from "shared/globals";
 
-export default function Background(props: { side: number }) {
-  const { side } = props;
-
+export default function Background() {
+  const resolution = 1;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (canvasRef.current == null) { return; }
 
     const canvas = canvasRef.current;
-    canvas.style.imageRendering = "pixelated";
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = color0;
-    for (let x = 0; x < side; x++) {
-      for (let y = 0; y < side; y++) {
+    for (let x = 0; x < BOARD_SIDE; x++) {
+      for (let y = 0; y < BOARD_SIDE; y++) {
         if (x % 2 != y % 2) {
-          ctx.fillRect(x, y, 1, 1);
+          ctx.fillRect(x*resolution, y*resolution, resolution, resolution);
         }
       }
     }
@@ -24,14 +23,15 @@ export default function Background(props: { side: number }) {
   return (
     <canvas
       ref={canvasRef}
-      width={side}
-      height={side}
+      width={BOARD_SIDE*resolution}
+      height={BOARD_SIDE*resolution}
       style={{
+        position: `absolute`,
+        left: `0%`,
         background: color1,
-
+        imageRendering: `pixelated`,
         width: `100%`,
         height: `100%`,
-        transformOrigin: `50% 50%`
       }}
     />
   );

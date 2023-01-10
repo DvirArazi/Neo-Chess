@@ -10,12 +10,8 @@ export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
   ev: Ev,
   ...args: EventParams<ServerToClientEvents, Ev>
 ) {
-  //create key-value pairs of key and socketId
-  //when user auto signs in,
-  //find the key and assign the new SocketId as its value
-  //when sending here, send to all the values
   user.socketsIds.forEach((socketId) => {
-    Terminal.log(`Emmiting ${ev} to {${socketId.key}, ${socketId.value}`);
+    Terminal.log(`Emitting ${ev} to {${socketId.key}, ${socketId.value}}`);
     webSocketServer.to(socketId.value).emit(ev, ...args);
   });
 }

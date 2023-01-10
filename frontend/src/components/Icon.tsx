@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import React from "react";
 
 export default function Icon(props: { path: string, color?: string | undefined, side?: number }) {
@@ -5,7 +6,10 @@ export default function Icon(props: { path: string, color?: string | undefined, 
   const side = props.side !== undefined ? `${props.side}px` : `100%`;
 
   return (
-    <>
+    <Box sx={{
+      pointerEvents: `none`,
+      userSelect: `none`,
+    }}>
       {
         color !== undefined ?
         <div style={{
@@ -21,9 +25,11 @@ export default function Icon(props: { path: string, color?: string | undefined, 
           backgroundColor: color,
         }}>
         </div> :
-        <img src={`/${path}.svg`}></img>
+        <img 
+          src={`/${path}.svg`}
+        ></img>
       } 
-    </>
+    </Box>
   );
 }
 
