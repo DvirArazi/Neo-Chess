@@ -1,23 +1,25 @@
 import { Box } from "@mui/material";
 import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
 import Lodash from 'lodash';
-import Icon from "../../Icon";
+import Icon from "../../../Icon";
 import { BOARD_SIDE } from "shared/globals";
 import Draggable, { ControlPosition } from "react-draggable";
 import Stateful from "frontend/src/utils/stateful";
 import { Point } from "shared/types/gameTypes";
 import { useRef } from "react";
+import { SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/Board";
 
 export default function Piece(props: {
   data: PieceData,
   index: number,
-  size: number,
-  getFraction: () => Point | undefined,
+  isEnabled: boolean,
+  onStart: () => void,
+  onEnd: () => Point | undefined,
 }) {
-  const { data, index, size, getFraction } = props;
+  const { data, isEnabled, index, onStart, onEnd } = props;
 
   //getFraction get a fracPosition param
-  //the first getFraction passes the startFracPosition
+  //the first getFraction passes the startFracPosition if piece is moveable
   //[path] finds every possible move 
   //and the second getFraction passes the endFracPosition
   //after the second is sent, the [path] checks if the move is legal
@@ -26,31 +28,26 @@ export default function Piece(props: {
   //and sends it to the other player
 
   const fracPosition = new Stateful<Point>({
-    x: Math.floor(index % BOARD_SIDE) * size,
-    y: Math.floor(index / BOARD_SIDE) * size,
+    x: Math.floor(index % BOARD_SIDE) * SQUARE_SIZE, //I don't think I need that floor here
+    y: Math.floor(index / BOARD_SIDE) * SQUARE_SIZE,
   });
-  let fracOffset: Point = {x: 0, y: 0};
 
   const nodeRef = useRef(null);
   return (
     <Draggable nodeRef={nodeRef}
+      disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
-      onStart={() => {
-        const fraction = getFraction();
-        if (fraction === undefined) return;
-        fracOffset = { x: fraction.x, y: fraction.y };
+      onStart={(e)=>{
+        e.stopPropagation();
+        onStart();
       }}
-      onStop={() => {
-        const fraction = getFraction();
+      onStop={(e) => {
+        e.stopPropagation();
+        const fraction = onEnd();
         if (fraction === undefined) return;
-        const pos = {
-          x: Math.floor((fraction.x - fracOffset.x) * BOARD_SIDE + Math.floor(fracOffset.x * BOARD_SIDE) + 0.5) * size,
-          y: Math.floor((fraction.y - fracOffset.y) * BOARD_SIDE + Math.floor(fracOffset.y * BOARD_SIDE) + 0.5) * size,
-        };
-        console.log(`${pos.x}, ${pos.y}`);
         fracPosition.set({
-          x: Math.floor((fraction.x - fracOffset.x) * BOARD_SIDE + Math.floor(fracOffset.x * BOARD_SIDE) + 0.5) * size,
-          y: Math.floor((fraction.y - fracOffset.y) * BOARD_SIDE + Math.floor(fracOffset.y * BOARD_SIDE) + 0.5) * size,
+          x: Math.floor(fraction.x * BOARD_SIDE) * SQUARE_SIZE,//Math.floor((fraction.x - fracOffset.x) * BOARD_SIDE + Math.floor(fracOffset.x * BOARD_SIDE) + 0.5) * size,
+          y: Math.floor(fraction.y * BOARD_SIDE) * SQUARE_SIZE,//Math.floor((fraction.y - fracOffset.y) * BOARD_SIDE + Math.floor(fracOffset.y * BOARD_SIDE) + 0.5) * size,
         });
       }}
     >
@@ -59,15 +56,18 @@ export default function Piece(props: {
           position: `absolute`,
           left: `${fracPosition.value.x}%`,
           top: `${fracPosition.value.y}%`,
-          width: `${size}%`,
-          height: `${size}%`,
-          cursor: `default`,
+          width: `${SQUARE_SIZE}%`,
+          height: `${SQUARE_SIZE}%`,
+          zIndex: `10`,
           ":hover": {
-            cursor: `pointer`,
+            cursor: `${isEnabled ? `pointer` : `default`}`,
+          },
+          ":active": {
+            zIndex: `20`,
           },
         }}
       >
-        <Icon path={`chess/${pieceDataToIconName(data)}`}/>
+        <Icon path={`chess/${pieceDataToIconName(data)}`} />
       </Box>
     </Draggable>
   );

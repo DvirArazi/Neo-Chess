@@ -1,4 +1,7 @@
-import { TimeFormats, Timeframe } from "./types/gameTypes";
+import { BoardLayout } from "frontend/src/utils/types";
+import { BOARD_SIDE } from "shared/globals";
+import { PieceColor } from "shared/types/pieceTypes";
+import { MoveError, Point, TimeFormats, Timeframe } from "./types/gameTypes";
 
 export function removeFirst<T>(arr: T[], value: T) {
   let index = arr.indexOf(value);

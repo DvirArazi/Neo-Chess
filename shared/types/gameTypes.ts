@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { PieceData, PieceType } from "./pieceTypes";
+import { PieceColor, PieceData, PieceType } from "./pieceTypes";
 
 export type Point = {
   x: number,
@@ -27,11 +27,10 @@ export type GameRequest = {
   ratingAbsMax: number,
 }
 
-export enum GameRole {
-  White,
-  Black,
+export enum EGameRole {
   Viewer,
 }
+export type GameRole = PieceColor | EGameRole.Viewer
 
 export type GameState = {
   position: Array<PieceData | undefined>,
@@ -62,3 +61,9 @@ export type GameViewData = {
   white: Player,
   black: Player,
 } & GameData
+
+export enum MoveError {
+  NoPiece,
+  WrongColor,
+  NoMoves
+}

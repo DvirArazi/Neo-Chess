@@ -9,7 +9,14 @@ export default function Home() {
   return (
     <>
       {/* <Content/> */}
-      <Board layout={new Array<PieceData>(64).fill({type: PieceType.Queen, color: PieceColor.White}, 5, 6)}/>
+      <Board 
+        layout={
+          new Array<PieceData>(64)
+            .fill({type: PieceType.Bishop, color: PieceColor.White}, 5, 8)
+            .fill({type: PieceType.Queen, color: PieceColor.Black}, 9, 13)
+        }
+        role={PieceColor.White}
+        />
     </>
   );
 }

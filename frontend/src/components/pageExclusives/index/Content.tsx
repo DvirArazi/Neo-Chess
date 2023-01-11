@@ -1,5 +1,5 @@
 import { Box, Snackbar } from "@mui/material";
-import Collapsible from "components/Collapsible";
+import Collapsible from "frontend/src/components/Collapsible";
 import Icon from "frontend/src/components/Icon";
 import Layout from "frontend/src/components/Layout";
 import CatagoryButton from "frontend/src/components/pageExclusives/index/CatagoryButton";

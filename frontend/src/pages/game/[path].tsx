@@ -51,7 +51,7 @@ export default function Game() {
   return (
     <Layout>
       <Box sx={{ background: `blue` }}>
-        <Board layout={startAndTurnsToBoardLayout(start, turns)} />
+        <Board layout={startAndTurnsToBoardLayout(start, turns)} role={role} />
       </Box>
     </Layout>
   );
