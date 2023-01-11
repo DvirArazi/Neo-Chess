@@ -28,7 +28,7 @@ export default function Piece(props: {
   //and sends it to the other player
 
   const fracPosition = new Stateful<Point>({
-    x: Math.floor(index % BOARD_SIDE) * SQUARE_SIZE, //I don't think I need that floor here
+    x: index % BOARD_SIDE * SQUARE_SIZE, 
     y: Math.floor(index / BOARD_SIDE) * SQUARE_SIZE,
   });
 
@@ -46,8 +46,8 @@ export default function Piece(props: {
         const fraction = onEnd();
         if (fraction === undefined) return;
         fracPosition.set({
-          x: Math.floor(fraction.x * BOARD_SIDE) * SQUARE_SIZE,//Math.floor((fraction.x - fracOffset.x) * BOARD_SIDE + Math.floor(fracOffset.x * BOARD_SIDE) + 0.5) * size,
-          y: Math.floor(fraction.y * BOARD_SIDE) * SQUARE_SIZE,//Math.floor((fraction.y - fracOffset.y) * BOARD_SIDE + Math.floor(fracOffset.y * BOARD_SIDE) + 0.5) * size,
+          x: Math.floor(fraction.x * BOARD_SIDE) * SQUARE_SIZE,
+          y: Math.floor(fraction.y * BOARD_SIDE) * SQUARE_SIZE,
         });
       }}
     >
@@ -65,6 +65,13 @@ export default function Piece(props: {
           ":active": {
             zIndex: `20`,
           },
+          //go back to this someday, but not today...
+          WebkitTransition: `left 2s ease, top 2s ease`,
+          transition: `left 2s ease, top 2s ease`,
+        }}
+        style={{
+          WebkitTransition: `left 2s ease, top 2s ease`,
+          transition: `left 2s ease, top 2s ease`,
         }}
       >
         <Icon path={`chess/${pieceDataToIconName(data)}`} />

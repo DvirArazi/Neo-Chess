@@ -19,6 +19,7 @@ export function Dot(props: { position: Point, onPressed: () => void }) {
         top: `${position.y * SQUARE_SIZE}%`,
         width: `${SQUARE_SIZE}%`,
         height: `${SQUARE_SIZE}%`,
+        zIndex: 20,
         ":hover": {
           cursor: `pointer`,
         },
@@ -32,7 +33,6 @@ export function Dot(props: { position: Point, onPressed: () => void }) {
         height: `${dia * 100}%`,
         borderRadius: `50%`,
         background: `rgb(33, 150, 243, 0.6)`,
-        zIndex: 20,
         ":hover": {
           cursor: `pointer`,
         },
