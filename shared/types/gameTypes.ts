@@ -54,16 +54,18 @@ export type GameData = {
   isRated: boolean,
   start: PieceType[],
   turns: GameTurn[],
+  timeLastTurn: number,
 }
 
 export type GameViewData = {
+  id: ObjectId,
   role: GameRole,
   white: Player,
   black: Player,
 } & GameData
 
 export enum MoveError {
-  NoPiece,
-  WrongColor,
-  NoMoves
+  NoPiece = 'There\'s no piece on the specified sqaure',
+  WrongColor = 'The piece on the specified square belongs to the opponent',
+  NoMoves = 'The piece on the specified square has no moves',
 }

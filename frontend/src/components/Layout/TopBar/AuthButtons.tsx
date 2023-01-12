@@ -25,7 +25,7 @@ export function SignOutButton() {
       <Box>{USER_DATA.value!.name!}</Box>
       <Button onClick={() => {
 
-        SOCKET.emit("signOut", AAD_COOKIE.get()!);
+        SOCKET.emit("signOut");
 
       }}>Sign Out</Button>
     </Box>

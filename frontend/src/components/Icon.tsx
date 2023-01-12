@@ -7,15 +7,16 @@ export default function Icon(props: { path: string, color?: string | undefined, 
 
   return (
     <Box sx={{
+      width: side,
+      height: side,
       pointerEvents: `none`,
       userSelect: `none`,
     }}>
       {
         color !== undefined ?
         <div style={{
-          width: side,
-          height: side,
-          display: `inline-block`,
+          width: `100%`,
+          height: `100%`,
           
           WebkitMask: `url(/${path}.svg) no-repeat 50% 50%`,
           mask: `url(/${path}.svg) no-repeat 50% 50%`,
@@ -26,6 +27,10 @@ export default function Icon(props: { path: string, color?: string | undefined, 
         }}>
         </div> :
         <img 
+          style={{
+            width: `100%`,
+            height: `100%`,
+          }}
           src={`/${path}.svg`}
         ></img>
       } 

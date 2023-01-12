@@ -22,7 +22,7 @@ export function HandleSignIn(p: HandlerParams) {
     const user = await p.usersCollection.findOneAndUpdate(
       { googleId: googleId },
       {
-        $push: { socketsIds: { key: newKey, value: p.socket.id } },
+        $push: { socketsIds: { key: newKey, values: [p.socket.id] } },
         $setOnInsert: <Omit<User, "socketsIds">>{
           googleId: googleId,
           data: data,

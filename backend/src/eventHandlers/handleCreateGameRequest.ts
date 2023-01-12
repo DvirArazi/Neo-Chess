@@ -30,6 +30,8 @@ export default function handleOpenGameRequest(p: HandlerParams) {
       ratingAbsMax: { $gte: ratingAbsMax },
     });
 
+    Terminal.log(`found a request? ${deletedGameRequest.value !== null}`);
+
     //if a request with matching settings was not found
     //====================================*******====== 
     if (deletedGameRequest.value === null) {
@@ -88,7 +90,8 @@ export default function handleOpenGameRequest(p: HandlerParams) {
       timeframe: timeframe,
       isRated: isRated,
       start: boardLayout,
-      turns: []
+      turns: [],
+      timeLastTurn: p.date.getTime()
     });
 
     p.usersCollection.updateOne({ _id: user0._id }, { $push: { ongoingGamesIds: game.insertedId } });

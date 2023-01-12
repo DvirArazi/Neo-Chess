@@ -1,8 +1,27 @@
 import { BoardLayout } from "frontend/src/utils/types";
 import { BOARD_SIDE } from "shared/globals";
 import { err, ok, Result } from "shared/tools/result";
-import { MoveError, Point } from "shared/types/gameTypes";
+import { GameTurn, MoveError, Point } from "shared/types/gameTypes";
 import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
+
+export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
+  const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
+
+  for (let x = 0; x < BOARD_SIDE; x++) {
+    layout[x] = { type: start[x], color: PieceColor.White };
+    layout[BOARD_SIDE + x] = { type: PieceType.Pawn, color: PieceColor.White };
+    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = { type: PieceType.Pawn, color: PieceColor.Black };
+    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = { type: start[x], color: PieceColor.Black };
+  }
+
+  for (const turn of turns) {
+    const action = turn.action;
+    layout[action[1]] = layout[action[0]];
+    layout[action[0]] = undefined;
+  }
+
+  return layout;
+}
 
 export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0: Point): Result<Point[], MoveError> {
   var moves: Point[] = [];

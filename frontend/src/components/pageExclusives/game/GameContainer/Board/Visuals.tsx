@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/Board";
+import { SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
 import { Point } from "shared/types/gameTypes";
 
 const dia = 0.4;
@@ -8,8 +8,8 @@ export function Dot(props: { position: Point, onPressed: () => void }) {
   const { position, onPressed } = props;
 
   return (
-    <Box 
-      onMouseDown={(e)=>{
+    <Box
+      onMouseDown={(e) => {
         e.stopPropagation();
         onPressed();
       }}

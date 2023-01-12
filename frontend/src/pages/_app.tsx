@@ -24,7 +24,9 @@ export default function App({ Component, pageProps }: AppProps) {
     SOCKET = io();
 
     SOCKET.on("signedIn", (aad, data) => {
-      console.log(`data: ${data.iss}`);
+      console.log(`User signed in\ndata: ${data.iss}`);
+      
+      SOCKET.emit("removeKey", aad);
       AAD_COOKIE.set(aad);
       USER_DATA.set(data);
     });

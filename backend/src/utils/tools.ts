@@ -11,8 +11,8 @@ export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
   ...args: EventParams<ServerToClientEvents, Ev>
 ) {
   user.socketsIds.forEach((socketId) => {
-    Terminal.log(`Emitting ${ev} to {${socketId.key}, ${socketId.value}}`);
-    webSocketServer.to(socketId.value).emit(ev, ...args);
+    Terminal.log(`Emitting ${ev} to {${socketId.key}, ${socketId.values}}`);
+    webSocketServer.to(socketId.values).emit(ev, ...args);
   });
 }
 

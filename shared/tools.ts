@@ -1,3 +1,4 @@
+import { Terminal } from "backend/src/utils/terminal";
 import { BoardLayout } from "frontend/src/utils/types";
 import { BOARD_SIDE } from "shared/globals";
 import { PieceColor } from "shared/types/pieceTypes";
@@ -18,6 +19,15 @@ export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFor
   if (total < 500) return TimeFormats.Blitz;
   if (total < 1500) return TimeFormats.Rapid;
   return TimeFormats.Classical;
+}
+
+export function remove<T>(array: T[], value: T): boolean {
+  const index = array.indexOf(value);
+  if (index <= -1) return false;
+
+  array.splice(index, 1);
+
+  return true;
 }
 
 // export class Ref<T> {

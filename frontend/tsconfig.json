@@ -1,8 +1,8 @@
 {
   "extends": "../tsconfig.json",
-    "compilerOptions": {
-      "paths": {
-        "*": ["*", "frontend/src/*"]
-      },
-    }
+  "compilerOptions": {
+    "paths": {
+      "*": ["*", "frontend/src/*"]
+    },
+  },
 }
