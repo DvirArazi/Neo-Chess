@@ -16,8 +16,11 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
 
   for (const turn of turns) {
     const action = turn.action;
-    layout[action[1]] = layout[action[0]];
-    layout[action[0]] = undefined;
+    const fromI = action % BOARD_SIDE**2;
+    const toI = Math.floor(action / BOARD_SIDE**2);
+    console.log('current action: ', fromI, toI);
+    layout[toI] = layout[fromI];
+    layout[fromI] = undefined;
   }
 
   return layout;
@@ -35,7 +38,7 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
   if (value0 == undefined) {
     return err(MoveError.NoPiece);
   }
-  if (isWhiteTurn != (value0.color == PieceColor.White)) {
+  if (isWhiteTurn != (value0.color === PieceColor.White)) {
     return err(MoveError.WrongColor);
   }
 
@@ -110,13 +113,13 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
       break;
     case PieceType.Pawn:
       const isWhite = value0.color == PieceColor.White;
-      const yDir = isWhite ? -1 : 1;
+      const yDir = isWhite ? 1 : -1;
       var opCons: { op: Point, con: (value1: PieceData | undefined) => boolean }[] = [
         {
           op: { x: 0, y: 2 },
-          con: (value1) =>
-            square0.y == (isWhite ? BOARD_SIDE - 2 : 1) &&
-            getValue({ x: square0.x, y: (isWhite ? BOARD_SIDE - 3 : 2) }) === undefined &&
+          con: value1 =>
+            square0.y == (isWhite ? 1 : (BOARD_SIDE - 2) ) &&
+            getValue({ x: square0.x, y: (isWhite ? 2 : (BOARD_SIDE - 3)) }) === undefined &&
             value1 === undefined,
         },
         { op: { x: 0, y: 1 }, con: value1 => value1 === undefined },
@@ -139,9 +142,13 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
   return ok(moves);
 }
 
-function isOnBoard(square: Point) {
+export function isOnBoard(square: Point) {
   return (
     square.x >= 0 && square.x < BOARD_SIDE &&
     square.y >= 0 && square.y < BOARD_SIDE
   );
+}
+
+export function pointToSquare(point: Point) {
+  return point.x + BOARD_SIDE * point.y;
 }

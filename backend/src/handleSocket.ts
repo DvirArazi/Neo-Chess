@@ -1,7 +1,7 @@
 import { Collection, MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
 import { OAuth2Client, } from 'google-auth-library';
 import { Terminal } from './utils/terminal';
-import handleOpenGameRequest from './eventHandlers/handleCreateGameRequest';
+import handleCreateGameRequest from './eventHandlers/handleCreateGameRequest';
 import { HandleSignIn } from './eventHandlers/handleSignIn';
 import { HandleAutoSignIn } from './eventHandlers/handleAutoSignIn';
 import { HandleSignOut } from './eventHandlers/handleSignOut';
@@ -9,6 +9,7 @@ import { HandleDisconnect } from './eventHandlers/handleDisconnect';
 import { Game, ServerSocket, User, WebSocketServer } from './utils/types';
 import handleGetGameViewData from './eventHandlers/handleGetGameViewData';
 import { GameRequest } from 'shared/types/gameTypes';
+import handlePlayerMoved from 'backend/src/eventHandlers/handlePlayerMove';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const date = new Date();
@@ -49,8 +50,9 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     HandleSignIn(handlerParams);
     HandleAutoSignIn(handlerParams);
     HandleSignOut(handlerParams);
-    handleOpenGameRequest(handlerParams);
+    handleCreateGameRequest(handlerParams);
     handleGetGameViewData(handlerParams);
+    handlePlayerMoved(handlerParams);
     HandleDisconnect(handlerParams);
   });
 };

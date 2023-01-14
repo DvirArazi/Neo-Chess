@@ -7,7 +7,7 @@ import Draggable, { ControlPosition } from "react-draggable";
 import Stateful from "frontend/src/utils/stateful";
 import { Point } from "shared/types/gameTypes";
 import { useRef } from "react";
-import { SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
+import { pieceDataToIconName, SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
 
 export default function Piece(props: {
   data: PieceData,
@@ -69,26 +69,4 @@ export default function Piece(props: {
       </Box>
     </Draggable>
   );
-}
-
-
-const pieceDataToIconName = (data: PieceData): string => {
-  const compare = (other: PieceData) => {
-    return Lodash.isEqual(data, other);
-  }
-
-  if (compare({ type: PieceType.Pawn, color: PieceColor.Black })) return "pawn_black";
-  if (compare({ type: PieceType.Bishop, color: PieceColor.Black })) return "bishop_black";
-  if (compare({ type: PieceType.Knight, color: PieceColor.Black })) return "knight_black";
-  if (compare({ type: PieceType.Rook, color: PieceColor.Black })) return "rook_black";
-  if (compare({ type: PieceType.Queen, color: PieceColor.Black })) return "queen_black";
-  if (compare({ type: PieceType.King, color: PieceColor.Black })) return "king_black";
-  if (compare({ type: PieceType.Pawn, color: PieceColor.White })) return "pawn_white";
-  if (compare({ type: PieceType.Bishop, color: PieceColor.White })) return "bishop_white";
-  if (compare({ type: PieceType.Knight, color: PieceColor.White })) return "knight_white";
-  if (compare({ type: PieceType.Rook, color: PieceColor.White })) return "rook_white";
-  if (compare({ type: PieceType.Queen, color: PieceColor.White })) return "queen_white";
-  if (compare({ type: PieceType.King, color: PieceColor.White })) return "king_white";
-
-  throw new Error(`PieceData provided does not correlate to any string`);
 }

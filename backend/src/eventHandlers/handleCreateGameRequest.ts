@@ -7,7 +7,7 @@ import { PlayerWithId } from "../utils/types";
 import { PieceType } from "shared/types/pieceTypes";
 import { BOARD_SIDE } from "shared/globals";
 
-export default function handleOpenGameRequest(p: HandlerParams) {
+export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
     if (p.userId === undefined) {
       Terminal.warning('Attempt to open a game request by an unauthenticated user');

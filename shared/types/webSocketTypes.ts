@@ -1,6 +1,6 @@
 import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
-import { GameViewData, Point, Timeframe } from "./gameTypes";
+import { GameTurn, GameViewData, Point, Timeframe } from "./gameTypes";
 
 export interface ClientToServerEvents {
   signIn: (idToken: string) => void;
@@ -9,14 +9,14 @@ export interface ClientToServerEvents {
   removeKey: (aad: AutoAuthData) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
-  playerMove: (gameId: ObjectId, start: Point, end: Point) => void;
+  playerMove: (gameId: ObjectId, from: Point, to: Point) => void;
 }
 export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: TokenPayload) => void;
   autoSignedIn: (data: TokenPayload) => void;
   signedOut: () => void;
   createdGame: (path: string) => void;
-  playerMoved: (start: Point, end: Point) => void;
+  playerMoved: (gameTurn: GameTurn) => void;
 }
 
 export type AutoAuthData = {

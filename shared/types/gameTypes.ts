@@ -7,7 +7,7 @@ export type Point = {
 }
 
 export type Timeframe = {
-  timePerTurn: number,
+  timeOverall: number,
   increment: number,
 }
 
@@ -28,7 +28,7 @@ export type GameRequest = {
 }
 
 export enum EGameRole {
-  Viewer,
+  Viewer = 2,
 }
 export type GameRole = PieceColor | EGameRole.Viewer
 
@@ -39,7 +39,7 @@ export type GameState = {
 };
 
 export type GameTurn = {
-  action: Uint8Array,
+  action: number,
   whiteTime: number,
   blackTime: number,
 }

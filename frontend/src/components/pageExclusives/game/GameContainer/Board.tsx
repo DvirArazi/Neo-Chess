@@ -6,23 +6,28 @@ import Stateful from "frontend/src/utils/stateful";
 import { BoardLayout } from "frontend/src/utils/types";
 import { useRef } from "react";
 import { BOARD_SIDE } from "shared/globals";
-import { getLegalMoves } from "shared/tools/boardLayout";
-import { GameRole, MoveError, Point } from "shared/types/gameTypes";
+import { getLegalMoves, pointToSquare } from "shared/tools/boardLayout";
+import { EGameRole, GameRole, MoveError, Point } from "shared/types/gameTypes";
 import Lodash from "lodash";
 import React from "react";
-import { ok } from "shared/tools/result";
+import PromotionBanner from "frontend/src/components/pageExclusives/game/GameContainer/Board/PromotionBanner";
+import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
 
 export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
 
 type Props = {
   layout: BoardLayout,
+  isWhiteTurn: boolean,
   role: GameRole,
   onTurnEnd: (start: Point, endPos: Point) => void,
 }
 type State = {
   legalMoves: Point[],
-  startPos: Point | undefined,
+  from: Point | undefined,
+  to: Point | undefined,
   layout: BoardLayout,
+  isWhiteTurn: boolean,
+  promotionSquare: number | undefined,
 }
 export default class Board extends React.Component<Props, State> {
 
@@ -30,44 +35,25 @@ export default class Board extends React.Component<Props, State> {
     super(props);
     this.state = {
       legalMoves: [],
-      startPos: undefined,
+      from: undefined,
+      to: undefined,
       layout: props.layout,
+      isWhiteTurn: props.isWhiteTurn,
+      promotionSquare: undefined,
     };
   }
 
   private boxRef = React.createRef<HTMLDivElement>();
   private fraction: Point | undefined = undefined;
 
+  public update(layout: BoardLayout, isWhiteTurn: boolean) {
+    this.setState({
+      layout: layout,
+      isWhiteTurn: isWhiteTurn,
+    });
+  }
+
   render() {
-    const onEnd = () => {
-      if (this.fraction === undefined) return undefined;
-
-      const endPos = fractionToPosition(this.fraction);
-
-      if (
-        this.state.startPos !== undefined &&
-        Lodash.some(this.state.legalMoves, endPos)
-      ) {
-        const sI = this.state.startPos.y * BOARD_SIDE + this.state.startPos.x;
-        const eI = endPos.y * BOARD_SIDE + endPos.x;
-        const layout = this.state.layout;
-        layout[eI] = layout[sI];
-        layout[sI] = undefined;
-
-        this.setState({
-          legalMoves: [],
-          startPos: undefined,
-          layout: layout,
-        });
-
-        this.props.onTurnEnd(this.state.startPos, endPos);
-
-        return this.fraction;
-      }
-
-      return undefined;
-    }
-
     let pieces: JSX.Element[] = [];
     for (let i = 0; i < this.state.layout.length; i++) {
       const pieceData = this.state.layout[i];
@@ -84,29 +70,31 @@ export default class Board extends React.Component<Props, State> {
             if (this.fraction === undefined) return;
 
             const pos = fractionToPosition(this.fraction);
-            const moves = getLegalMoves(this.state.layout, true, pos);
+            const moves = getLegalMoves(this.state.layout, this.state.isWhiteTurn, pos);
             if (moves.ok) {
               this.setState({
                 legalMoves: moves.value,
-                startPos: pos
+                from: pos
               });
             }
           }}
 
-          onEnd={onEnd}
+          onEnd={this.onEnd}
         />
       );
     }
 
     let visuals: JSX.Element[] = [];
-    if (this.state.startPos != undefined) {
+    if (this.state.from != undefined) {
       visuals = [
         ...this.state.legalMoves.map((move, i) =>
-          <Dot key={i} position={move} onPressed={onEnd} />
+          <Dot key={i} position={move} onPressed={this.onEnd} />
         ),
-        ...[<Highlight key={-1} position={this.state.startPos} />]
+        ...[<Highlight key={-1} position={this.state.from} />]
       ]
     }
+
+    let promotionComponent = this.generatePromotionBanner();
 
     return (
       <Box sx={{ maxWidth: `700px`, maxHeight: `700px` }}>
@@ -128,7 +116,7 @@ export default class Board extends React.Component<Props, State> {
           onMouseDown={(e) => {
             this.setState({
               legalMoves: [],
-              startPos: undefined,
+              from: undefined,
             });
           }}
           sx={{
@@ -143,8 +131,115 @@ export default class Board extends React.Component<Props, State> {
           <Background />
           {pieces}
           {visuals}
+          {promotionComponent}
         </Box>
       </Box>
+    );
+  }
+
+  private onEnd = () => {
+    console.log(this.boxRef);
+    if (this.fraction === undefined) return undefined;
+
+    const to = fractionToPosition(this.fraction);
+
+    if (
+      this.state.from !== undefined &&
+      Lodash.some(this.state.legalMoves, to)
+    ) {
+      const fromI = pointToSquare(this.state.from);
+      const toI = pointToSquare(to);
+      const layout = this.state.layout;
+      layout[toI] = layout[fromI];
+
+      layout[fromI] = undefined;
+
+      this.setState({
+        legalMoves: [],
+        layout: layout,
+        isWhiteTurn: !this.state.isWhiteTurn,
+      });
+
+      if (
+        (
+          (
+            this.props.role === PieceColor.White &&
+            toI >= BOARD_SIDE ** 2 - BOARD_SIDE - 1
+          ) ||
+          (
+            this.props.role === PieceColor.Black &&
+            toI < BOARD_SIDE
+          )
+        ) &&
+        layout[toI]?.type === PieceType.Pawn
+      ) {
+        this.setState({
+          promotionSquare: toI,
+          to: to,
+        });
+      } else {
+        this.setState({
+          from: undefined,
+          to: undefined,
+        });
+        this.props.onTurnEnd(this.state.from, to);
+      }
+
+      return this.fraction;
+    }
+
+    return undefined;
+  }
+
+  private generatePromotionBanner = () => {
+    if (
+      this.state.promotionSquare === undefined ||
+      this.props.role === EGameRole.Viewer
+    ) {
+      return <></>;
+    }
+
+    const piecesCounts = [1, 2, 2, 2];
+    for (const square of this.state.layout) {
+      if (square?.color !== this.props.role) continue;
+
+      switch (square?.type) {
+        case PieceType.Queen:
+          piecesCounts[0]--;
+          break;
+        case PieceType.Rook:
+          piecesCounts[1]--;
+          break;
+        case PieceType.Knight:
+          piecesCounts[2]--;
+          break;
+        case PieceType.Bishop:
+          piecesCounts[3]--;
+          break;
+      }
+    }
+
+    return (
+      <PromotionBanner
+        color={this.props.role}
+        piecesCounts={piecesCounts}
+        onChoice={(type) => {
+          const layout = this.state.layout;
+          layout[pointToSquare(this.state.to!)] = {
+            type: type,
+            color: this.props.role as PieceColor
+          };
+
+          this.setState({
+            layout: layout,
+            from: undefined,
+            to: undefined,
+            promotionSquare: undefined,
+          });
+
+          this.props.onTurnEnd(this.state.from!, this.state.to!);
+        }}
+      />
     );
   }
 }
@@ -154,4 +249,25 @@ function fractionToPosition(fraction: Point) {
     x: Math.floor(fraction.x * BOARD_SIDE),
     y: Math.floor(fraction.y * BOARD_SIDE),
   };
+}
+
+export function pieceDataToIconName(data: PieceData): string {
+  const compare = (other: PieceData) => {
+    return Lodash.isEqual(data, other);
+  }
+
+  if (compare({ type: PieceType.Pawn, color: PieceColor.Black })) return "pawn_black";
+  if (compare({ type: PieceType.Bishop, color: PieceColor.Black })) return "bishop_black";
+  if (compare({ type: PieceType.Knight, color: PieceColor.Black })) return "knight_black";
+  if (compare({ type: PieceType.Rook, color: PieceColor.Black })) return "rook_black";
+  if (compare({ type: PieceType.Queen, color: PieceColor.Black })) return "queen_black";
+  if (compare({ type: PieceType.King, color: PieceColor.Black })) return "king_black";
+  if (compare({ type: PieceType.Pawn, color: PieceColor.White })) return "pawn_white";
+  if (compare({ type: PieceType.Bishop, color: PieceColor.White })) return "bishop_white";
+  if (compare({ type: PieceType.Knight, color: PieceColor.White })) return "knight_white";
+  if (compare({ type: PieceType.Rook, color: PieceColor.White })) return "rook_white";
+  if (compare({ type: PieceType.Queen, color: PieceColor.White })) return "queen_white";
+  if (compare({ type: PieceType.King, color: PieceColor.White })) return "king_white";
+
+  throw new Error(`PieceData provided does not correlate to any string`);
 }

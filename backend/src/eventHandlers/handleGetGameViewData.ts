@@ -13,14 +13,14 @@ export default function handleGetGameViewData(p: HandlerParams) {
     }
 
     const role: GameRole = (() => {
-      switch (p.userId) {
-        case game.white.id: return PieceColor.White;
-        case game.black.id: return PieceColor.Black;
+      switch (p.userId?.toString()) {
+        case game.white.id.toString(): return PieceColor.White;
+        case game.black.id.toString(): return PieceColor.Black;
         default: return EGameRole.Viewer;
       };
     })();
 
-    let bla = Buffer.from([1, 2, 3]);
+    Terminal.log("role: " + role);
 
     callback({
       id: game._id,

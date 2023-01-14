@@ -8,16 +8,18 @@ import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
 export default function Home() {
   return (
     <>
-      <Content />
-      {/* <Board 
+      {/* <Content /> */}
+      <Board 
         layout={
           new Array<PieceData>(64)
             .fill({type: PieceType.Bishop, color: PieceColor.White}, 5, 8)
-            .fill({type: PieceType.Queen, color: PieceColor.Black}, 9, 13)
+            .fill({type: PieceType.Pawn, color: PieceColor.Black}, 9, 13)
+            .fill({type: PieceType.Pawn, color: PieceColor.White}, 53, 55)
         }
+        isWhiteTurn={true}
         role={PieceColor.White}
         onTurnEnd={()=>{}}
-        /> */}
+        />
     </>
   );
 }

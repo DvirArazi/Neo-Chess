@@ -4,8 +4,10 @@ import Board from "frontend/src/components/pageExclusives/game/GameContainer/Boa
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/stateful";
 import { BoardLayout } from "frontend/src/utils/types";
+import { useRef } from "react";
 import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
-import { GameViewData } from "shared/types/gameTypes";
+import { GameTurn, GameViewData } from "shared/types/gameTypes";
+import { PieceType } from "shared/types/pieceTypes";
 
 export default function GameContainer(props: {data: GameViewData}) {
   const {
@@ -19,20 +21,28 @@ export default function GameContainer(props: {data: GameViewData}) {
     turns,
   } = props.data;
 
-  const layout = new Stateful<BoardLayout>(startAndTurnsToBoardLayout(start, turns));
+  const gameTurns = new Stateful<GameTurn[]>(turns);
+  const boardRef = useRef<Board>(null);
 
-  SOCKET.on("playerMoved", (start, end) => {
+  const layout = startAndTurnsToBoardLayout(start, gameTurns.value);
+  const isWhiteTurn = gameTurns.value.length % 2 == 0;
+  
+  boardRef.current?.update(layout, isWhiteTurn);
 
+  SOCKET.on("playerMoved", (gameTurn) => {
+    const t = gameTurns.value.concat(gameTurn);
+    gameTurns.set(t);
   });
 
   return (
     <Layout>
-      <Box sx={{ background: `blue` }}>
-        <Board
-          layout={layout.value}
+      <Box>
+        <Board ref={boardRef}
           role={role}
-          onTurnEnd={(start, end) => {
-            SOCKET.emit("playerMove", id, start, end);
+          layout={layout}
+          isWhiteTurn={isWhiteTurn}
+          onTurnEnd={(from, to) => {
+            SOCKET.emit("playerMove", id, from, to);
           }}
         />
       </Box>
