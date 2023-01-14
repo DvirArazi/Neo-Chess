@@ -3,6 +3,7 @@ import { BOARD_SIDE } from "shared/globals";
 import { err, ok, Result } from "shared/tools/result";
 import { GameTurn, MoveError, Point } from "shared/types/gameTypes";
 import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
+import Lodash from "lodash";
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
   const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
@@ -16,8 +17,8 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
 
   for (const turn of turns) {
     const action = turn.action;
-    const fromI = action % BOARD_SIDE**2;
-    const toI = Math.floor(action / BOARD_SIDE**2);
+    const fromI = action % BOARD_SIDE ** 2;
+    const toI = Math.floor(action / BOARD_SIDE ** 2);
     console.log('current action: ', fromI, toI);
     layout[toI] = layout[fromI];
     layout[fromI] = undefined;
@@ -118,7 +119,7 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
         {
           op: { x: 0, y: 2 },
           con: value1 =>
-            square0.y == (isWhite ? 1 : (BOARD_SIDE - 2) ) &&
+            square0.y == (isWhite ? 1 : (BOARD_SIDE - 2)) &&
             getValue({ x: square0.x, y: (isWhite ? 2 : (BOARD_SIDE - 3)) }) === undefined &&
             value1 === undefined,
         },
@@ -142,6 +143,48 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
   return ok(moves);
 }
 
+function isInCheck(layout: BoardLayout, isWhiteTurn: boolean): boolean {
+  const playerColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
+
+  for (let i = 0; i < BOARD_SIDE ** 2; i++) {
+    const value = layout[i];
+    if (value !== undefined && value.color !== playerColor) {
+      const movesResult = getLegalMoves(layout, !isWhiteTurn, IndexToPoint(i));
+      if (!movesResult.ok) continue;
+      const moves = movesResult.value;
+
+      for (const move of moves) {
+        if (Lodash.isEqual(layout[pointToIndex(move)], { type: PieceType.King, color: playerColor })) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+export function isInCheckmate(layout: BoardLayout, isWhiteTurn: boolean): boolean {
+  const playerColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
+
+  if (!isInCheck(layout, isWhiteTurn)) { return false; }
+
+  for (let i = 0; i < BOARD_SIDE ** 2; i++) {
+    const value = layout[i];
+    if (value !== undefined && value.color === playerColor) {
+      const movesResult = getLegalMoves(layout, isWhiteTurn, IndexToPoint(i));
+      if (!movesResult.ok) continue;
+      const moves = movesResult.value;
+
+      for (const move in moves) {
+        // if (!isInCheck(la))
+      }
+    }
+  }
+
+  return true;
+}
+
 export function isOnBoard(square: Point) {
   return (
     square.x >= 0 && square.x < BOARD_SIDE &&
@@ -149,6 +192,10 @@ export function isOnBoard(square: Point) {
   );
 }
 
-export function pointToSquare(point: Point) {
+export function pointToIndex(point: Point) {
   return point.x + BOARD_SIDE * point.y;
+}
+
+export function IndexToPoint(square: number): Point {
+  return { x: square % BOARD_SIDE, y: Math.floor(square / BOARD_SIDE) };
 }

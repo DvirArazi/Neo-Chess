@@ -6,7 +6,7 @@ import Stateful from "frontend/src/utils/stateful";
 import { BoardLayout } from "frontend/src/utils/types";
 import { useRef } from "react";
 import { BOARD_SIDE } from "shared/globals";
-import { getLegalMoves, pointToSquare } from "shared/tools/boardLayout";
+import { getLegalMoves, pointToIndex } from "shared/tools/boardLayout";
 import { EGameRole, GameRole, MoveError, Point } from "shared/types/gameTypes";
 import Lodash from "lodash";
 import React from "react";
@@ -94,7 +94,7 @@ export default class Board extends React.Component<Props, State> {
       ]
     }
 
-    let promotionComponent = this.generatePromotionBanner();
+    let promotionBanner = this.generatePromotionBanner();
 
     return (
       <Box sx={{ maxWidth: `700px`, maxHeight: `700px` }}>
@@ -131,7 +131,7 @@ export default class Board extends React.Component<Props, State> {
           <Background />
           {pieces}
           {visuals}
-          {promotionComponent}
+          {promotionBanner}
         </Box>
       </Box>
     );
@@ -147,8 +147,8 @@ export default class Board extends React.Component<Props, State> {
       this.state.from !== undefined &&
       Lodash.some(this.state.legalMoves, to)
     ) {
-      const fromI = pointToSquare(this.state.from);
-      const toI = pointToSquare(to);
+      const fromI = pointToIndex(this.state.from);
+      const toI = pointToIndex(to);
       const layout = this.state.layout;
       layout[toI] = layout[fromI];
 
@@ -225,7 +225,7 @@ export default class Board extends React.Component<Props, State> {
         piecesCounts={piecesCounts}
         onChoice={(type) => {
           const layout = this.state.layout;
-          layout[pointToSquare(this.state.to!)] = {
+          layout[pointToIndex(this.state.to!)] = {
             type: type,
             color: this.props.role as PieceColor
           };

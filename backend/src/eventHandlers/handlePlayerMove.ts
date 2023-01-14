@@ -1,7 +1,7 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { emitToUser, toValidId } from "backend/src/utils/tools";
-import { getLegalMoves, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { getLegalMoves, isInCheckmate, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import Lodash from "lodash";
 import { GameTurn, Point } from "shared/types/gameTypes";
 import { BOARD_SIDE } from "shared/globals";
@@ -24,8 +24,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
       Terminal.warning('Couldn\'nt find game using the id provided by the user');
       return;
     }
-    
-    const isWhite = (()=>{
+
+    const isWhite = (() => {
       if (game.white.id.toString() === user._id.toString()) return true;
       if (game.black.id.toString() === user._id.toString()) return false;
       return undefined;
@@ -42,7 +42,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
     const legalMovesResult = getLegalMoves(layout, isWhite, from);
     if (!legalMovesResult.ok) {
-      Terminal.error(legalMovesResult.error);
+      Terminal.warning(legalMovesResult.error);
       return;
     }
     const legalMoves = legalMovesResult.value;
@@ -69,7 +69,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
         }
       }
     })();
-    const gameUpdatedResult = await p.ongoingGamesCollection.findOneAndUpdate(
+    const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/
       {
         $push: {
@@ -78,11 +78,11 @@ export default function handlePlayerMoved(p: HandlerParams) {
       },
       { returnDocument: "after" },
     );
-    if (gameUpdatedResult.value === null) {
+    if (gameAfterResult.value === null) {
       Terminal.error('Could not find and update game');
       return;
     }
-    const gameUpdated = gameUpdatedResult.value;
+    const gameAfter = gameAfterResult.value;
 
     const otherUserId = isWhite ? game.white.id : game.black.id;
     const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
@@ -90,6 +90,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
       Terminal.error('Could not find other user saved on game');
       return;
     }
+
+    isInCheckmate(startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns), !isWhite);
 
     emitToUser(p.webSocketServer, user, "playerMoved", turn);
     emitToUser(p.webSocketServer, otherUser, "playerMoved", turn);
@@ -102,5 +104,5 @@ function pointsToAction(from: Point, to: Point) {
     from.y * BOARD_SIDE +
     to.x * BOARD_SIDE ** 2 +
     to.y * BOARD_SIDE ** 3
-    );
+  );
 }
