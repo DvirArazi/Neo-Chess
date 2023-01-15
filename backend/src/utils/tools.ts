@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { ServerToClientEvents } from "shared/types/webSocketTypes";
+import { ServerToClientEvents } from "shared/types/webSocket";
 import { EventNames, EventParams, EventsMap } from "socket.io/dist/typed-events";
 import { Terminal } from "./terminal";
 import { User, WebSocketServer } from "./types";

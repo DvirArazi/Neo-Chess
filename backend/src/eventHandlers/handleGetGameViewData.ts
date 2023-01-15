@@ -1,5 +1,5 @@
-import { GameRole, EGameRole } from "shared/types/gameTypes";
-import { PieceColor } from "shared/types/pieceTypes";
+import { GameRole, EGameRole } from "shared/types/game";
+import { PieceColor } from "shared/types/piece";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 

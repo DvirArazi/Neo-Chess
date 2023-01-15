@@ -1,15 +1,9 @@
 import { Box } from "@mui/material";
-import Layout from "frontend/src/components/Layout";
 import GameContainer from "frontend/src/components/pageExclusives/game/GameContainer";
-import Board from "frontend/src/components/pageExclusives/game/GameContainer/Board";
-import Stateful from "frontend/src/utils/stateful";
-import { BoardLayout } from "frontend/src/utils/types";
+import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { BOARD_SIDE } from "shared/globals";
-import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
-import { GameTurn, GameViewData } from "shared/types/gameTypes";
-import { PieceColor, PieceType } from "shared/types/pieceTypes";
+import { GameViewData } from "shared/types/game";
 import { SOCKET } from "../_app";
 
 export default function Game() {

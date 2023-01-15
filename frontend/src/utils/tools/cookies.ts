@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie'
-import { AutoAuthData } from 'shared/types/webSocketTypes';
+import { AutoAuthData } from 'shared/types/webSocket';
 
 class Cookie<T> {
   _name: string;

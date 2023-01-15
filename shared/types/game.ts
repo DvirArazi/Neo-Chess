@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { PieceColor, PieceData, PieceType } from "./pieceTypes";
+import { PieceColor, PieceData, PieceType } from "./piece";
 
 export type Point = {
   x: number,

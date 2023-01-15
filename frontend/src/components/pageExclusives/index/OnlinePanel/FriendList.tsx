@@ -1,5 +1,5 @@
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import Stateful from "frontend/src/utils/stateful";
+import Stateful from "frontend/src/utils/tools/stateful";
 
 export default function FriendList(props: { friends: string[], chosen: Stateful<string> }) {
   const { friends, chosen } = props;

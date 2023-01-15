@@ -7,9 +7,9 @@ import CustomeFormatPanel from "frontend/src/components/pageExclusives/index/Cus
 import OnlinePanel from "frontend/src/components/pageExclusives/index/OnlinePanel";
 import Toggle from "frontend/src/components/Toggle";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
-import Stateful from "frontend/src/utils/stateful";
+import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
-import { Timeframe } from "shared/types/gameTypes";
+import { Timeframe } from "shared/types/game";
 
 export default function Content() {
   const router = useRouter();

@@ -8,7 +8,7 @@ import { HandleSignOut } from './eventHandlers/handleSignOut';
 import { HandleDisconnect } from './eventHandlers/handleDisconnect';
 import { Game, ServerSocket, User, WebSocketServer } from './utils/types';
 import handleGetGameViewData from './eventHandlers/handleGetGameViewData';
-import { GameRequest } from 'shared/types/gameTypes';
+import { GameRequest } from 'shared/types/game';
 import handlePlayerMoved from 'backend/src/eventHandlers/handlePlayerMove';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {

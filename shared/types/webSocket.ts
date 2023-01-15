@@ -1,6 +1,6 @@
 import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
-import { GameTurn, GameViewData, Point, Timeframe } from "./gameTypes";
+import { GameTurn, GameViewData, Point, Timeframe } from "./game";
 
 export interface ClientToServerEvents {
   signIn: (idToken: string) => void;

@@ -1,6 +1,6 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import React from "react";
-import Stateful from "../utils/stateful";
+import Stateful from "../utils/tools/stateful";
 
 export default function Toggle(props: {
   isOn: Stateful<boolean>,

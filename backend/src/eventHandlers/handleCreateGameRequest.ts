@@ -1,10 +1,10 @@
-import { timeframeToTimeFormat } from "shared/tools";
+import { timeframeToTimeFormat } from "shared/tools/general";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { emitToUser, toValidId } from "../utils/tools";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
-import { PieceType } from "shared/types/pieceTypes";
+import { PieceType } from "shared/types/piece";
 import { BOARD_SIDE } from "shared/globals";
 
 export default function handleCreateGameRequest(p: HandlerParams) {

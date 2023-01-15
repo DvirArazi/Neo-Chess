@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
 import { WebSocketClient } from '../utils/types';
-import Stateful from '../utils/stateful';
+import Stateful from '../utils/tools/stateful';
 import React from 'react';
 import { TokenPayload } from 'google-auth-library';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AAD_COOKIE } from '../utils/cookies';
+import { AAD_COOKIE } from '../utils/tools/cookies';
 import { useRouter } from 'next/router';
 
 export let SOCKET: WebSocketClient;
@@ -25,7 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
     SOCKET.on("signedIn", (aad, data) => {
       console.log(`User signed in\ndata: ${data.iss}`);
-      
+
       SOCKET.emit("removeKey", aad);
       AAD_COOKIE.set(aad);
       USER_DATA.set(data);

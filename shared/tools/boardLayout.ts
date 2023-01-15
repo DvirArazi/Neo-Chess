@@ -1,18 +1,18 @@
-import { BoardLayout } from "frontend/src/utils/types";
 import { BOARD_SIDE } from "shared/globals";
 import { err, ok, Result } from "shared/tools/result";
-import { GameTurn, MoveError, Point } from "shared/types/gameTypes";
-import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
+import { GameTurn, MoveError, Point } from "shared/types/game";
+import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
+import { BoardLayout } from "shared/types/boardLayout";
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
   const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
 
   for (let x = 0; x < BOARD_SIDE; x++) {
-    layout[x] = { type: start[x], color: PieceColor.White };
-    layout[BOARD_SIDE + x] = { type: PieceType.Pawn, color: PieceColor.White };
-    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = { type: PieceType.Pawn, color: PieceColor.Black };
-    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = { type: start[x], color: PieceColor.Black };
+    layout[x] = { type: start[x], color: PieceColor.White, key: x };
+    layout[BOARD_SIDE + x] = { type: PieceType.Pawn, color: PieceColor.White, key: x + BOARD_SIDE };
+    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = { type: PieceType.Pawn, color: PieceColor.Black, key: x + BOARD_SIDE * 2 };
+    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = { type: start[x], color: PieceColor.Black, key: x + BOARD_SIDE * 3 };
   }
 
   for (const turn of turns) {
@@ -27,7 +27,7 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
   return layout;
 }
 
-export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0: Point): Result<Point[], MoveError> {
+export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square0: Point): Result<Point[], MoveError> {
   var moves: Point[] = [];
 
   const getValue = (square: Point) => {
@@ -39,7 +39,7 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
   if (value0 == undefined) {
     return err(MoveError.NoPiece);
   }
-  if (isWhiteTurn != (value0.color === PieceColor.White)) {
+  if (turnColor != value0.color) {
     return err(MoveError.WrongColor);
   }
 
@@ -124,7 +124,7 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
             value1 === undefined,
         },
         { op: { x: 0, y: 1 }, con: value1 => value1 === undefined },
-        { op: { x: -1, y: -1 }, con: value1 => value1 !== undefined && value1.color !== value0.color },
+        { op: { x: -1, y: 1 }, con: value1 => value1 !== undefined && value1.color !== value0.color },
         { op: { x: 1, y: 1 }, con: value1 => value1 !== undefined && value1.color != value0.color },
       ];
       for (var opCon of opCons) {
@@ -143,18 +143,17 @@ export function getLegalMoves(layout: BoardLayout, isWhiteTurn: boolean, square0
   return ok(moves);
 }
 
-function isInCheck(layout: BoardLayout, isWhiteTurn: boolean): boolean {
-  const playerColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
+function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
 
   for (let i = 0; i < BOARD_SIDE ** 2; i++) {
     const value = layout[i];
-    if (value !== undefined && value.color !== playerColor) {
-      const movesResult = getLegalMoves(layout, !isWhiteTurn, IndexToPoint(i));
+    if (value !== undefined && value.color !== turnColor) {
+      const movesResult = getLegalMoves(layout, turnColor, IndexToPoint(i));
       if (!movesResult.ok) continue;
       const moves = movesResult.value;
 
       for (const move of moves) {
-        if (Lodash.isEqual(layout[pointToIndex(move)], { type: PieceType.King, color: playerColor })) {
+        if (Lodash.isEqual(layout[pointToIndex(move)], { type: PieceType.King, color: turnColor })) {
           return true;
         }
       }
@@ -164,15 +163,13 @@ function isInCheck(layout: BoardLayout, isWhiteTurn: boolean): boolean {
   return false;
 }
 
-export function isInCheckmate(layout: BoardLayout, isWhiteTurn: boolean): boolean {
-  const playerColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
-
-  if (!isInCheck(layout, isWhiteTurn)) { return false; }
+export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boolean {
+  if (!isInCheck(layout, turnColor)) { return false; }
 
   for (let i = 0; i < BOARD_SIDE ** 2; i++) {
     const value = layout[i];
-    if (value !== undefined && value.color === playerColor) {
-      const movesResult = getLegalMoves(layout, isWhiteTurn, IndexToPoint(i));
+    if (value !== undefined && value.color === turnColor) {
+      const movesResult = getLegalMoves(layout, turnColor, IndexToPoint(i));
       if (!movesResult.ok) continue;
       const moves = movesResult.value;
 

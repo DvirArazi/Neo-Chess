@@ -1,5 +1,5 @@
 import { Box, List, ListItem, Paper, Slider } from "@mui/material";
-import Stateful from "frontend/src/utils/stateful";
+import Stateful from "frontend/src/utils/tools/stateful";
 import Toggle from "../../Toggle";
 import FriendList from "./OnlinePanel/FriendList";
 
@@ -48,7 +48,7 @@ export default function OnlinePanel(
         </Box>
         <Slider
           value={range.value}
-          onChange={(_, value)=>{handleRangeChange(value as number[])}}
+          onChange={(_, value) => { handleRangeChange(value as number[]) }}
           min={-500}
           max={500}
           step={50}

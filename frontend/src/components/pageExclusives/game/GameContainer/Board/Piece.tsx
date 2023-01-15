@@ -1,52 +1,53 @@
-import { Box } from "@mui/material";
-import { PieceColor, PieceData, PieceType } from "shared/types/pieceTypes";
-import Lodash from 'lodash';
-import Icon from "../../../../Icon";
+import { Box, createTheme } from "@mui/material";
+import { PieceData } from "shared/types/piece";
 import { BOARD_SIDE } from "shared/globals";
 import Draggable, { ControlPosition } from "react-draggable";
-import Stateful from "frontend/src/utils/stateful";
-import { Point } from "shared/types/gameTypes";
+import { Point } from "shared/types/game";
 import { useRef } from "react";
 import { pieceDataToIconName, SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
+import Icon from "frontend/src/components/Icon";
+import Stateful from "frontend/src/utils/tools/stateful";
 
 export default function Piece(props: {
   data: PieceData,
   index: number,
   isEnabled: boolean,
+  slide: boolean,
   onStart: () => void,
-  onEnd: () => Point | undefined,
+  onEnd: () => void,
 }) {
-  const { data, isEnabled, index, onStart, onEnd } = props;
+  const { data, isEnabled, index, slide, onStart, onEnd } = props;
 
-  const fracPosition = new Stateful<Point>({
+  const mouseDownTime = new Stateful(0);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const fracPosition: Point = {
     x: index % BOARD_SIDE * SQUARE_SIZE,
     y: Math.floor(index / BOARD_SIDE) * SQUARE_SIZE,
-  });
+  };
 
-  const nodeRef = useRef(null);
   return (
-    <Draggable nodeRef={nodeRef}
+    <Draggable nodeRef={boxRef}
       disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
       onStart={(e) => {
         e.stopPropagation();
+        mouseDownTime.set(new Date().getTime());
         onStart();
       }}
       onStop={(e) => {
         e.stopPropagation();
-        const fraction = onEnd();
-        if (fraction === undefined) return;
-        fracPosition.set({
-          x: Math.floor(fraction.x * BOARD_SIDE) * SQUARE_SIZE,
-          y: Math.floor(fraction.y * BOARD_SIDE) * SQUARE_SIZE,
-        });
+        const timePassed = new Date().getTime() - mouseDownTime.value;
+        if (timePassed < 300) return;
+
+        onEnd();
       }}
     >
-      <Box ref={nodeRef}
+      <Box ref={boxRef}
         sx={{
           position: `absolute`,
-          left: `${fracPosition.value.x}%`,
-          top: `${fracPosition.value.y}%`,
+          left: `${fracPosition.x}%`,
+          top: `${fracPosition.y}%`,
           width: `${SQUARE_SIZE}%`,
           height: `${SQUARE_SIZE}%`,
           zIndex: `10`,
@@ -56,14 +57,12 @@ export default function Piece(props: {
           ":active": {
             zIndex: `20`,
           },
-          //go back to this someday, but not today...
-          WebkitTransition: `left 2s ease, top 2s ease`,
-          transition: `left 2s ease, top 2s ease`,
+          transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
-        style={{
-          WebkitTransition: `left 2s ease, top 2s ease`,
-          transition: `left 2s ease, top 2s ease`,
-        }}
+        // style={{
+        //   WebkitTransition: `left 2s ease, top 2s ease`,
+        //   transition: `left 2s ease, top 2s ease`,
+        // }}
       >
         <Icon path={`chess/${pieceDataToIconName(data)}`} />
       </Box>

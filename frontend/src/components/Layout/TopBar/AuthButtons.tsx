@@ -1,7 +1,7 @@
 import { Box, Button } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
-import { AAD_COOKIE } from "frontend/src/utils/cookies";
+import { AAD_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export function SignInButton() {
   return (

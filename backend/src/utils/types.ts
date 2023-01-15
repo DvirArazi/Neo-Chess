@@ -1,7 +1,7 @@
 import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
-import { GameData, GameTurn, Player, Timeframe } from "shared/types/gameTypes";
-import { ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocketTypes";
+import { GameData, GameTurn, Player, Timeframe } from "shared/types/game";
+import { ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocket";
 import { Server, Socket } from "socket.io";
 
 export type WebSocketServer = Server<ClientToServerEvents, ServerToClientEvents>;

@@ -3,8 +3,10 @@ import { Terminal } from "backend/src/utils/terminal";
 import { emitToUser, toValidId } from "backend/src/utils/tools";
 import { getLegalMoves, isInCheckmate, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import Lodash from "lodash";
-import { GameTurn, Point } from "shared/types/gameTypes";
+import { GameTurn, Point } from "shared/types/game";
 import { BOARD_SIDE } from "shared/globals";
+import { PieceColor } from "shared/types/piece";
+import { getOppositeColor } from "shared/tools/piece";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to) => {
@@ -25,22 +27,22 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const isWhite = (() => {
-      if (game.white.id.toString() === user._id.toString()) return true;
-      if (game.black.id.toString() === user._id.toString()) return false;
+    const turnColor = (() => {
+      if (game.white.id.toString() === user._id.toString()) return PieceColor.White;
+      if (game.black.id.toString() === user._id.toString()) return PieceColor.Black;
       return undefined;
     })();
-    if (isWhite === undefined) {
+    if (turnColor === undefined) {
       Terminal.warning('The user who tried to play a turn is not part of that game');
       return;
     }
 
-    if (isWhite !== (game.turns.length % 2 == 0)) {
+    if (turnColor !== (game.turns.length % 2 == 0 ? PieceColor.White : PieceColor.Black)) {
       Terminal.warning('The user who tried to play the current turn os of the opposite color')
     }
 
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
-    const legalMovesResult = getLegalMoves(layout, isWhite, from);
+    const legalMovesResult = getLegalMoves(layout, turnColor, from);
     if (!legalMovesResult.ok) {
       Terminal.warning(legalMovesResult.error);
       return;
@@ -84,14 +86,14 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
     const gameAfter = gameAfterResult.value;
 
-    const otherUserId = isWhite ? game.white.id : game.black.id;
+    const otherUserId = turnColor ? game.white.id : game.black.id;
     const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
     if (otherUser === null) {
       Terminal.error('Could not find other user saved on game');
       return;
     }
 
-    isInCheckmate(startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns), !isWhite);
+    isInCheckmate(startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns), getOppositeColor(turnColor));
 
     emitToUser(p.webSocketServer, user, "playerMoved", turn);
     emitToUser(p.webSocketServer, otherUser, "playerMoved", turn);

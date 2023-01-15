@@ -2,12 +2,12 @@ import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { toValidId } from "backend/src/utils/tools";
 import { User } from "backend/src/utils/types";
-import { remove } from "shared/tools";
-import { AutoAuthData } from "shared/types/webSocketTypes";
+import { remove } from "shared/tools/general";
+import { AutoAuthData } from "shared/types/webSocket";
 
 export default async function leave(p: HandlerParams, isSigningOut: boolean): Promise<User | undefined> {
   Terminal.log('----leaving----');
-  
+
   if (p.userId === undefined) {
     return undefined;
   }

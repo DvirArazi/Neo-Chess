@@ -1,7 +1,7 @@
 import { Box, Button, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material";
-import Stateful from "frontend/src/utils/stateful";
-import { timeframeToTimeFormat } from "shared/tools";
-import { TimeFormats, Timeframe } from "shared/types/gameTypes";
+import Stateful from "frontend/src/utils/tools/stateful";
+import { timeframeToTimeFormat } from "shared/tools/general";
+import { TimeFormats, Timeframe } from "shared/types/game";
 
 export default function CustomeFormatPanel(props: {
   onPlay: (clock: Timeframe) => void,

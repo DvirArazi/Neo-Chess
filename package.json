@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --watch backend/**/*.ts --exec ts-node backend/src/index.ts",
-    "build": "cd client && next build && cd .. && tsc --project backend/tsconfig.json",
-    "start": "cross-env NODE_ENV=production node backend/dist/backend/src/index.js",
+    "build": "cd frontend && next build && cd .. && tsc --project backend/tsconfig.json",
+    "start": "cross-env NODE_ENV=production NODE_PATH=backend/dist/ node backend/dist/backend/src/index.js",
     "lint": "next lint"
   },
   "dependencies": {
