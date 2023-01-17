@@ -4,6 +4,7 @@ import { GameTurn, MoveError, Point } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
 import { BoardLayout } from "shared/types/boardLayout";
+import { Terminal } from "backend/src/utils/terminal";
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
   const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
@@ -19,9 +20,13 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
     const action = turn.action;
     const fromI = action % BOARD_SIDE ** 2;
     const toI = Math.floor(action / BOARD_SIDE ** 2);
-    console.log('current action: ', fromI, toI);
     layout[toI] = layout[fromI];
     layout[fromI] = undefined;
+
+    if (
+      turn.promotion !== null && layout[toI] !== undefined) {
+      layout[toI]!.type = turn.promotion;
+    }
   }
 
   return layout;
@@ -180,6 +185,27 @@ export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boole
   }
 
   return true;
+}
+
+export function isKingCaptured(layout: BoardLayout, color: PieceColor): boolean {
+  for (const square of layout) {
+    if (square?.type === PieceType.King && square.color === color) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function step(layout: BoardLayout, from: Point, to: Point) {
+  let newLayout = [...layout];
+  const fromI = from.x + BOARD_SIDE * from.y;
+  const toI = to.x + BOARD_SIDE * to.y;
+
+  newLayout[toI] = newLayout[fromI];
+  newLayout[fromI] = undefined;
+
+  return newLayout;
 }
 
 export function isOnBoard(square: Point) {

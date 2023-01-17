@@ -4,7 +4,7 @@ import { BOARD_SIDE } from "shared/globals";
 import Draggable, { ControlPosition } from "react-draggable";
 import { Point } from "shared/types/game";
 import { useRef } from "react";
-import { pieceDataToIconName, SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
+import { pieceDataToIconName, SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/Board";
 import Icon from "frontend/src/components/Icon";
 import Stateful from "frontend/src/utils/tools/stateful";
 
@@ -59,10 +59,6 @@ export default function Piece(props: {
           },
           transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
-        // style={{
-        //   WebkitTransition: `left 2s ease, top 2s ease`,
-        //   transition: `left 2s ease, top 2s ease`,
-        // }}
       >
         <Icon path={`chess/${pieceDataToIconName(data)}`} />
       </Box>

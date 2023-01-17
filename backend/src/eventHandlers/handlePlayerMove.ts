@@ -1,15 +1,17 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools";
-import { getLegalMoves, isInCheckmate, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { emitToUser, toValidId } from "backend/src/utils/tools/general";
+import { getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
 import Lodash from "lodash";
-import { GameTurn, Point } from "shared/types/game";
+import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason } from "shared/types/game";
 import { BOARD_SIDE } from "shared/globals";
 import { PieceColor } from "shared/types/piece";
 import { getOppositeColor } from "shared/tools/piece";
+import { GameTurnWithRep } from "backend/src/utils/types";
+import { boardLayoutToRep, hasCausedRepetition } from "backend/src/utils/tools/rep";
 
 export default function handlePlayerMoved(p: HandlerParams) {
-  p.socket.on("playerMove", async (gameId, from, to) => {
+  p.socket.on("playerMove", async (gameId, from, to, promotion) => {
     if (p.userId === undefined) {
       Terminal.warning('User attempted to play a turn in an online game without being registered');
       return;
@@ -38,7 +40,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
 
     if (turnColor !== (game.turns.length % 2 == 0 ? PieceColor.White : PieceColor.Black)) {
-      Terminal.warning('The user who tried to play the current turn os of the opposite color')
+      Terminal.warning('The user who tried to play the current turn is of the opposite color')
     }
 
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
@@ -54,23 +56,30 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const turn: GameTurn = (() => {
+    const [whiteTime, blackTime] = (()=>{
       if (game.turns.length !== 0) {
         const lastTurn = game.turns[game.turns.length - 1];
         const delta = p.date.getTime() - game.timeLastTurn;
-        return {
-          action: pointsToAction(from, to),
-          whiteTime: lastTurn.whiteTime - delta,
-          blackTime: lastTurn.blackTime - delta,
-        }
+        return [
+          lastTurn.whiteTime - delta,
+          lastTurn.blackTime - delta,
+        ]
       } else {
-        return {
-          action: pointsToAction(from, to),
-          whiteTime: game.timeframe.timeOverall,
-          blackTime: game.timeframe.timeOverall,
-        }
+        return [
+          game.timeframe.timeOverall,
+          game.timeframe.timeOverall,
+        ];
       }
     })();
+
+    const turn: GameTurnWithRep = {
+      action: pointsToAction(from, to),
+      whiteTime: whiteTime,
+      blackTime: blackTime,
+      rep: boardLayoutToRep(step(layout, from, to)),
+      promotion: promotion
+    };
+
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/
       {
@@ -93,10 +102,35 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    isInCheckmate(startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns), getOppositeColor(turnColor));
+    const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
 
-    emitToUser(p.webSocketServer, user, "playerMoved", turn);
-    emitToUser(p.webSocketServer, otherUser, "playerMoved", turn);
+    const status: GameStatus = (() => {
+      if (isKingCaptured(layoutAfter, getOppositeColor(turnColor))) {
+        return {
+          catagory: GameStatusCatagory.Win,
+          winSide: turnColor,
+          reason: WinReason.KingCaptured,
+        }
+      }
+      if (isInCheckmate(layoutAfter, getOppositeColor(turnColor))) {
+        return {
+          catagory: GameStatusCatagory.Win,
+          winSide: turnColor,
+          reason: WinReason.Checkmate,
+        }
+      }
+      if (hasCausedRepetition(gameAfter)) {
+        return {
+          catagory: GameStatusCatagory.Draw,
+          reason: DrawReason.Repetition,
+        }
+      }
+
+      return { catagory: GameStatusCatagory.Ongoing };
+    })();
+
+    emitToUser(p.webSocketServer, user, "playerMoved", gameId, gameAfter.turns, status);
+    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, gameAfter.turns, status);
   });
 }
 

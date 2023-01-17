@@ -1,6 +1,6 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools";
+import { toValidId } from "backend/src/utils/tools/general";
 
 export default function removeKey(p: HandlerParams) {
   p.socket.on("removeKey", async (aad) => {

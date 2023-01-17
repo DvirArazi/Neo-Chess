@@ -1,11 +1,13 @@
 import { timeframeToTimeFormat } from "shared/tools/general";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { emitToUser, toValidId } from "../utils/tools";
+import { emitToUser, toValidId } from "../utils/tools/general";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
 import { PieceType } from "shared/types/piece";
 import { BOARD_SIDE } from "shared/globals";
+import { boardLayoutToRep } from "backend/src/utils/tools/rep";
+import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -80,7 +82,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       rating: user1.ratings[timeFormat]//[timeFormat as number]
     }
 
-    const boardLayout = generateBoardLayout();
+    const start = generateStart();
     const isUser0White = Math.random() < 0.5;
     const path = uuidv4();
     const game = await p.ongoingGamesCollection.insertOne({
@@ -89,7 +91,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       black: isUser0White ? player1 : player0,
       timeframe: timeframe,
       isRated: isRated,
-      start: boardLayout,
+      start: start,
+      startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],
       timeLastTurn: p.date.getTime()
     });
@@ -102,7 +105,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
   });
 }
 
-export function generateBoardLayout() {
+export function generateStart() {
   const layout = Array<PieceType>(BOARD_SIDE);
 
   layout[Math.floor(Math.random() * 4) * 2] = PieceType.Bishop;

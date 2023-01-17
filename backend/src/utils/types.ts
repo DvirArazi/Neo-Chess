@@ -21,8 +21,14 @@ export type PlayerWithId = {
   id: ObjectId
 } & Player
 
+export type GameTurnWithRep = {
+  rep: string
+} & GameTurn
+
 export type Game = {
   path: string,
   white: PlayerWithId,
   black: PlayerWithId,
+  turns: GameTurnWithRep[],
+  startRep: string,
 } & GameData

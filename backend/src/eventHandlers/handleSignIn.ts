@@ -2,7 +2,7 @@ import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { User } from "../utils/types";
 import { v4 as uuidv4 } from 'uuid';
-import { emitToUser } from "../utils/tools";
+import { emitToUser } from "../utils/tools/general";
 
 export function HandleSignIn(p: HandlerParams) {
   p.socket.on("signIn", async (idToken) => {

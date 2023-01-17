@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
-import Background from "frontend/src/components/pageExclusives/game/GameContainer/Board/Background";
-import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/GameContainer/Board/Visuals";
-import Piece from "frontend/src/components/pageExclusives/game/GameContainer/Board/Piece";
+import Background from "frontend/src/components/pageExclusives/game/Board/Background";
+import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
+import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { BOARD_SIDE } from "shared/globals";
 import { getLegalMoves, IndexToPoint, pointToIndex } from "shared/tools/boardLayout";
 import { Point } from "shared/types/game";
 import Lodash from "lodash";
 import React from "react";
-import PromotionBanner from "frontend/src/components/pageExclusives/game/GameContainer/Board/PromotionBanner";
+import PromotionBanner from "frontend/src/components/pageExclusives/game/Board/PromotionBanner";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import { comparePieces, getOppositeColor } from "shared/tools/piece";
 import { BoardLayout } from "shared/types/boardLayout";
@@ -18,7 +18,7 @@ type Props = {
   layout: BoardLayout,
   turnColor: PieceColor,
   enabled: boolean,
-  onTurnEnd: (start: Point, endPos: Point) => void,
+  onTurnEnd: (start: Point, endPos: Point, promotion: PieceType | null) => void,
 }
 type State = {
   layout: BoardLayout,
@@ -49,16 +49,17 @@ export default class Board extends React.Component<Props, State> {
     this.setState({
       layout: layout,
       turnColor: turnColor,
+      pieceSlide: true,
     });
   }
 
   render() {
     let pieces: JSX.Element[] = [];
     const piecesDatas = this.state.layout
-      .map((data, i) => data !== undefined ? {...data, ...{index: i}} : undefined)
+      .map((data, i) => data !== undefined ? { ...data, ...{ index: i } } : undefined)
       .filter(data => data !== undefined)
-      .sort((a, b) =>  a!.key > b!.key ? 1 : -1)
-    ;
+      .sort((a, b) => a!.key > b!.key ? 1 : -1)
+      ;
     for (const pieceData of piecesDatas) {
       if (pieceData === undefined) continue;
 
@@ -80,9 +81,9 @@ export default class Board extends React.Component<Props, State> {
               });
             }
           }}
-          onEnd={()=>{
+          onEnd={() => {
             this.onEnd();
-            this.setState({pieceSlide: false})
+            this.setState({ pieceSlide: false })
           }}
         />
       );
@@ -94,9 +95,9 @@ export default class Board extends React.Component<Props, State> {
         ...this.state.legalMoves.map((move, i) =>
           <Dot key={i}
             position={move}
-            onPressed={()=>{
+            onPressed={() => {
               this.onEnd();
-              this.setState({pieceSlide: true})
+              this.setState({ pieceSlide: true })
             }}
           />
         ),
@@ -182,6 +183,7 @@ export default class Board extends React.Component<Props, State> {
         )
       )
     ) {
+      console.log('delete 0');
       this.setState({
         promotionSquare: toI,
       });
@@ -190,14 +192,16 @@ export default class Board extends React.Component<Props, State> {
         from: undefined,
         turnColor: getOppositeColor(this.state.turnColor),
       });
-      this.props.onTurnEnd(this.state.from, to);
+      this.props.onTurnEnd(this.state.from, to, null);
     }
-
-    return this.fraction;
   }
 
   private generatePromotionBanner = () => {
+    console.log('delete 1');
+
     if (this.state.promotionSquare === undefined) return <></>;
+
+    console.log('delete 2');
 
     const piecesCounts = [1, 2, 2, 2];
     for (const square of this.state.layout) {
@@ -221,11 +225,8 @@ export default class Board extends React.Component<Props, State> {
 
     console.log(piecesCounts);
     if (!piecesCounts.some(count => count > 0)) {
-      this.setState({
-        from: undefined,
-        promotionSquare: undefined,
-        turnColor: getOppositeColor(this.state.turnColor),
-      });
+      console.log('delete 3');
+      this.endPromotion();
       return <></>
     };
 
@@ -239,15 +240,23 @@ export default class Board extends React.Component<Props, State> {
 
           this.setState({
             layout: layout,
-            from: undefined,
-            promotionSquare: undefined,
-            turnColor: getOppositeColor(this.state.turnColor),
           });
 
-          this.props.onTurnEnd(this.state.from!, IndexToPoint(this.state.promotionSquare!));
+          this.endPromotion();
         }}
       />
     );
+  }
+
+  private endPromotion() {
+    this.setState({
+      from: undefined,
+      promotionSquare: undefined,
+      turnColor: getOppositeColor(this.state.turnColor),
+    });
+
+    console.log(this.state.from, this.state.promotionSquare);
+    this.props.onTurnEnd(this.state.from!, IndexToPoint(this.state.promotionSquare!), null);
   }
 }
 
@@ -276,5 +285,5 @@ export function pieceDataToIconName(data: PieceData): string {
   if (compare({ type: PieceType.Queen, color: PieceColor.White })) return "queen_white";
   if (compare({ type: PieceType.King, color: PieceColor.White })) return "king_white";
 
-  throw new Error(`PieceData provided does not correlate to any string`);
+  throw new Error(`PieceData provided does not correlate to any icon name: ${data.type}, ${data.color}`);
 }

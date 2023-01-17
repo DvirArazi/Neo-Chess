@@ -12,11 +12,11 @@ export type Timeframe = {
 }
 
 export enum TimeFormats {
-  Untimed = 0,
-  Bullet = 1,
-  Blitz = 2,
-  Rapid = 3,
-  Classical = 4,
+  Untimed,
+  Bullet,
+  Blitz,
+  Rapid,
+  Classical,
 }
 
 export type GameRequest = {
@@ -42,6 +42,7 @@ export type GameTurn = {
   action: number,
   whiteTime: number,
   blackTime: number,
+  promotion: PieceType | null
 }
 
 export type Player = {
@@ -53,7 +54,6 @@ export type GameData = {
   timeframe: Timeframe,
   isRated: boolean,
   start: PieceType[],
-  turns: GameTurn[],
   timeLastTurn: number,
 }
 
@@ -62,6 +62,7 @@ export type GameViewData = {
   role: GameRole,
   white: Player,
   black: Player,
+  turns: GameTurn[],
 } & GameData
 
 export enum MoveError {
@@ -69,3 +70,36 @@ export enum MoveError {
   WrongColor = 'The piece on the specified square belongs to the opponent',
   NoMoves = 'The piece on the specified square has no moves',
 }
+
+export enum GameStatusCatagory {
+  Ongoing,
+  Win,
+  Draw,
+}
+
+export enum WinReason {
+  Resignation,
+  Checkmate,
+  KingCaptured,
+  Timeout,
+}
+
+export enum DrawReason {
+  InsufficientMaterial,
+  Repetition,
+  Agreement,
+}
+
+export type GameStatus =
+  {
+    catagory: GameStatusCatagory.Ongoing,
+  } |
+  {
+    catagory: GameStatusCatagory.Win,
+    winSide: PieceColor,
+    reason: WinReason,
+  } |
+  {
+    catagory: GameStatusCatagory.Draw,
+    reason: DrawReason,
+  }

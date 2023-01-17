@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { emitToUser, toValidId } from "../utils/tools";
+import { emitToUser, toValidId } from "../utils/tools/general";
 
 export function HandleAutoSignIn(p: HandlerParams) {
   p.socket.on("autoSignIn", async (aad) => {
@@ -21,7 +21,7 @@ export function HandleAutoSignIn(p: HandlerParams) {
     }
     const userBefore = userBeforeResult.value;
 
-    const valuesOld = userBefore.socketsIds.find((entry)=>{entry.key === aad.key});
+    const valuesOld = userBefore.socketsIds.find((entry) => { entry.key === aad.key });
 
     const userAfter = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(aad.id), },

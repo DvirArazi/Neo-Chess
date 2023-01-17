@@ -1,6 +1,6 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools";
+import { toValidId } from "backend/src/utils/tools/general";
 import { User } from "backend/src/utils/types";
 import { remove } from "shared/tools/general";
 import { AutoAuthData } from "shared/types/webSocket";

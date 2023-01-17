@@ -20,8 +20,6 @@ export default function handleGetGameViewData(p: HandlerParams) {
       };
     })();
 
-    Terminal.log("role: " + role);
-
     callback({
       id: game._id,
       role: role,

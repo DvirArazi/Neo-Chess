@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
-import { pieceDataToIconName } from "frontend/src/components/pageExclusives/game/GameContainer/Board";
-import Piece from "frontend/src/components/pageExclusives/game/GameContainer/Board/Piece";
+import { pieceDataToIconName } from "frontend/src/components/pageExclusives/game/Board";
+import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 
 const heightPercent = 40;

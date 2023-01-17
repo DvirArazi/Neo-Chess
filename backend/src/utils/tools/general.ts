@@ -1,8 +1,10 @@
 import { ObjectId } from "mongodb";
+import { BoardLayout } from "shared/types/boardLayout";
+import { PieceType } from "shared/types/piece";
 import { ServerToClientEvents } from "shared/types/webSocket";
 import { EventNames, EventParams, EventsMap } from "socket.io/dist/typed-events";
-import { Terminal } from "./terminal";
-import { User, WebSocketServer } from "./types";
+import { Terminal } from "../terminal";
+import { User, WebSocketServer } from "../types";
 
 export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
   webSocketServer: WebSocketServer,
