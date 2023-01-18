@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BOARD_SIDE } from "shared/globals";
+import { BOARD_SIDE } from "shared/tools/boardLayout";
 
 export default function Background() {
   const resolution = 1;

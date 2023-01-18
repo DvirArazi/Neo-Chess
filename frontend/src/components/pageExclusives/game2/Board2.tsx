@@ -4,8 +4,7 @@ import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
-import { BOARD_SIDE } from "shared/globals";
-import { getLegalMoves, getPieceCounts, pointToIndex } from "shared/tools/boardLayout";
+import { BOARD_SIDE, getLegalMoves, getPieceCounts, pointToIndex } from "shared/tools/boardLayout";
 import { BoardLayout, PieceDataWithKey } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
@@ -114,9 +113,14 @@ export default function Board2(props: {
   function getPromotionBanner(): JSX.Element {
     if (from.value === null || promotionTo.value === null) return <></>;
 
+    console.log('delete 0');
+
     const pieceCounts = getPieceCounts(layout, turnColor);
 
     if (!pieceCounts.some(pieceCount => pieceCount.count > 0)) {
+
+      console.log('delete 1');
+
       onTurnEnd(from.value, promotionTo.value, null);
 
       from.set(null);
@@ -129,6 +133,8 @@ export default function Board2(props: {
       pieceCounts={pieceCounts}
       onChoice={(type)=>{
         if (from.value === null || promotionTo.value === null) return;
+
+        console.log('delete 2');
 
         onPromotion(promotionTo.value, type);
         onTurnEnd(from.value, promotionTo.value, type);
@@ -154,17 +160,17 @@ export default function Board2(props: {
     if (from.value === null || mousePercentPos === null) return;
 
     const to = percentPosToSquarePos(mousePercentPos);
-    if (legalMoves.value.some(legalMove => comparePoints(legalMove, to))) return;
+    if (!legalMoves.value.some(legalMove => comparePoints(legalMove, to))) return;
 
     onMove(from.value, to);
 
     if (!isPromotion(to)) {
       onTurnEnd(from.value, to, null);
+      from.set(null);
     } else {
       promotionTo.set(to);
     }
 
-    from.set(null);
     legalMoves.set([]);
   }
 
@@ -185,3 +191,4 @@ export default function Board2(props: {
       );
   }
 }
+

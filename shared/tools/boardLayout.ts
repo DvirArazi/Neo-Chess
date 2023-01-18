@@ -1,10 +1,11 @@
-import { BOARD_SIDE } from "shared/globals";
 import { err, ok, Result } from "shared/tools/result";
 import { GameTurn, MoveError, Point } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
 import { BoardLayout, PieceCount } from "shared/types/boardLayout";
-import { Terminal } from "backend/src/utils/terminal";
+
+export const BOARD_SIDE = 8;
+export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
   const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);

@@ -1,12 +1,12 @@
 import { Box, createTheme } from "@mui/material";
 import { PieceData } from "shared/types/piece";
-import { BOARD_SIDE } from "shared/globals";
 import Draggable, { ControlPosition } from "react-draggable";
 import { Point } from "shared/types/game";
 import { useRef } from "react";
-import { pieceDataToIconName, SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/Board";
 import Icon from "frontend/src/components/Icon";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { pieceDataToIconName } from "shared/tools/piece";
+import { BOARD_SIDE, SQUARE_SIZE } from "shared/tools/boardLayout";
 
 export default function Piece(props: {
   data: PieceData,

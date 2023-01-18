@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import GameContainer from "frontend/src/components/pageExclusives/game/GameOnline";
+import GameOnline from "frontend/src/components/pageExclusives/game/GameOnline";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
@@ -33,5 +33,5 @@ export default function Game() {
     );
   }
 
-  return <GameContainer data={gameViewData.value} />;
+  return <GameOnline data={gameViewData.value} />;
 }

@@ -54,6 +54,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
     isReady.set(true);
     return () => {
+      SOCKET.off("signedIn");
+      SOCKET.off("autoSignedIn");
+      SOCKET.off("signedOut");
+      SOCKET.off("createdGame");
+
       SOCKET.close();
     };
   }, []);

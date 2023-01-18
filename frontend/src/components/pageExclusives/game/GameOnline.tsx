@@ -1,17 +1,16 @@
 import { Box, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
-import Board from "frontend/src/components/pageExclusives/game/Board";
 import Board2 from "frontend/src/components/pageExclusives/game2/Board2";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { getOppositeColor } from "shared/tools/piece";
 import { BoardLayout } from "shared/types/boardLayout";
 import { GameStatusCatagory, GameStatus, GameTurn, GameViewData } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
-export default function GameContainer(props: { data: GameViewData }) {
+export default function GameOnline(props: { data: GameViewData }) {
   const {
     id,
     role,
@@ -29,8 +28,7 @@ export default function GameContainer(props: { data: GameViewData }) {
   const gameStatus = new Stateful<GameStatus>({ catagory: GameStatusCatagory.Ongoing });
   const openModal = new Stateful<boolean>(false);
 
-  const boardRef = useRef<Board>(null);
-
+  SOCKET.off("playerMoved");
   SOCKET.on("playerMoved", (gameId, turn, status) => {
     if (id.toString() !== gameId.toString()) return;
 
@@ -50,18 +48,6 @@ export default function GameContainer(props: { data: GameViewData }) {
   return (
     <Layout>
       <Box>
-        {/* <Board ref={boardRef}
-          enabled={
-            role === turnColor.value &&
-            gameStatus.value.catagory === GameStatusCatagory.Ongoing
-          }
-          layout={layout}
-          turnColor={turnColor}
-          onTurnEnd={(from, to, promotion) => {
-            console.log(promotion);
-            SOCKET.emit("playerMove", id, from, to, promotion);
-          }}
-        /> */}
         <Board2
           enabled={
             role === turnColor.value &&
@@ -69,7 +55,7 @@ export default function GameContainer(props: { data: GameViewData }) {
           }
           layout={layout.value}
           turnColor={turnColor.value}
-          onMove={(from, to)=>{
+          onMove={(from, to) => {
             const fromI = pointToIndex(from);
             const toI = pointToIndex(to);
 
@@ -78,18 +64,24 @@ export default function GameContainer(props: { data: GameViewData }) {
             newLayout[fromI] = undefined;
 
             layout.set(newLayout);
-            turnColor.set(getOppositeColor(turnColor.value));
           }}
-          onPromotion={(to, promotionType)=>{
+          onPromotion={(to, promotionType) => {
             const toI = pointToIndex(to);
 
             const newLayout = layout.value;
             if (newLayout[toI] === undefined) return;
             newLayout[toI]!.type = promotionType;
-            
+
+            // useEffect(()=> {
             layout.set(newLayout);
+            // });
           }}
-          onTurnEnd={(from, to, promotionType)=>{
+          onTurnEnd={(from, to, promotionType) => {
+            console.log('onTurnEnd');
+
+            // useEffect(() => {
+              turnColor.set(getOppositeColor(turnColor.value));
+            // });
             SOCKET.emit("playerMove", id, from, to, promotionType);
           }}
         />

@@ -5,9 +5,8 @@ import { emitToUser, toValidId } from "../utils/tools/general";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
 import { PieceType } from "shared/types/piece";
-import { BOARD_SIDE } from "shared/globals";
 import { boardLayoutToRep } from "backend/src/utils/tools/rep";
-import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { BOARD_SIDE, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {

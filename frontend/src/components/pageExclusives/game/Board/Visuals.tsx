@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { SQUARE_SIZE } from "frontend/src/components/pageExclusives/game/Board";
+import { SQUARE_SIZE } from "shared/tools/boardLayout";
 import { Point } from "shared/types/game";
 
 const dia = 0.4;
