@@ -5,7 +5,7 @@ dotenv.config({ path: '../.env' })
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  // reactStrictMode: true,
   webpack: (config) => {
 
     //to load ts files from the 'shared' folder

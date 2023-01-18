@@ -22,6 +22,8 @@ export default function GameOnline(props: { data: GameViewData }) {
     turns,
   } = props.data;
 
+  console.log('game online');
+
   const gameTurns = new Stateful<GameTurn[]>(turns);
   const layout = new Stateful<BoardLayout>(startAndTurnsToBoardLayout(start, gameTurns.value));
   const turnColor = new Stateful<PieceColor>(turnsToColor(gameTurns.value));
@@ -53,29 +55,29 @@ export default function GameOnline(props: { data: GameViewData }) {
             role === turnColor.value &&
             gameStatus.value.catagory === GameStatusCatagory.Ongoing
           }
-          layout={layout.value}
-          turnColor={turnColor.value}
-          onMove={(from, to) => {
-            const fromI = pointToIndex(from);
-            const toI = pointToIndex(to);
+          layout={layout}
+          turnColor={turnColor}
+          // onMove={(from, to) => {
+          //   const fromI = pointToIndex(from);
+          //   const toI = pointToIndex(to);
 
-            const newLayout = layout.value;
-            newLayout[toI] = newLayout[fromI];
-            newLayout[fromI] = undefined;
+          //   const newLayout = layout.value;
+          //   newLayout[toI] = newLayout[fromI];
+          //   newLayout[fromI] = undefined;
 
-            layout.set(newLayout);
-          }}
-          onPromotion={(to, promotionType) => {
-            const toI = pointToIndex(to);
+          //   layout.set(newLayout);
+          // }}
+          // onPromotion={(to, promotionType) => {
+          //   const toI = pointToIndex(to);
 
-            const newLayout = layout.value;
-            if (newLayout[toI] === undefined) return;
-            newLayout[toI]!.type = promotionType;
+          //   const newLayout = layout.value;
+          //   if (newLayout[toI] === undefined) return;
+          //   newLayout[toI]!.type = promotionType;
 
-            // useEffect(()=> {
-            layout.set(newLayout);
-            // });
-          }}
+          //   // useEffect(()=> {
+          //   layout.set(newLayout);
+          //   // });
+          // }}
           onTurnEnd={(from, to, promotionType) => {
             console.log('onTurnEnd');
 

@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
-import Board from "frontend/src/components/pageExclusives/game/Board";
 import Content from "frontend/src/components/pageExclusives/index/Content";
 import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
