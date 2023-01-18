@@ -129,8 +129,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return { catagory: GameStatusCatagory.Ongoing };
     })();
 
-    emitToUser(p.webSocketServer, user, "playerMoved", gameId, gameAfter.turns, status);
-    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, gameAfter.turns, status);
+    emitToUser(p.webSocketServer, user, "playerMoved", gameId, turn, status);
+    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, turn, status);
   });
 }
 

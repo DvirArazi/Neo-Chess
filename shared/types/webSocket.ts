@@ -17,7 +17,7 @@ export interface ServerToClientEvents {
   autoSignedIn: (data: TokenPayload) => void;
   signedOut: () => void;
   createdGame: (path: string) => void;
-  playerMoved: (gameId: ObjectId, gameTurns: GameTurn[], status: GameStatus) => void;
+  playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus) => void;
 }
 
 export type AutoAuthData = {

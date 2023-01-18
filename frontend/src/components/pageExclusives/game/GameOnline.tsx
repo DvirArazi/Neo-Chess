@@ -4,8 +4,9 @@ import Board from "frontend/src/components/pageExclusives/game/Board";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
-import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { getOppositeColor } from "shared/tools/piece";
+import { BoardLayout } from "shared/types/boardLayout";
 import { GameStatusCatagory, GameStatus, GameTurn, GameViewData } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
@@ -21,27 +22,22 @@ export default function GameContainer(props: { data: GameViewData }) {
     turns,
   } = props.data;
 
-  const gameStatus = new Stateful<GameStatus>({ catagory: GameStatusCatagory.Ongoing });
   const gameTurns = new Stateful<GameTurn[]>(turns);
+  const layout = new Stateful<BoardLayout>(startAndTurnsToBoardLayout(start, gameTurns.value));
+  const turnColor = new Stateful<PieceColor>(turnsToColor(gameTurns.value));
+  const gameStatus = new Stateful<GameStatus>({ catagory: GameStatusCatagory.Ongoing });
   const openModal = new Stateful<boolean>(false);
-  const turnColor = new Stateful<PieceColor>(PieceColor.White);
-
+  
   const boardRef = useRef<Board>(null);
 
-  const layout = startAndTurnsToBoardLayout(start, gameTurns.value);
-  const turnColor = gameTurns.value.length % 2 == 0 ?
-    PieceColor.White :
-    PieceColor.Black;
-
-  boardRef.current?.update(layout, turnColor.value);
-
-  SOCKET.on("playerMoved", (gameId, gameTurns, status) => {
+  SOCKET.on("playerMoved", (gameId, turn, status) => {
     if (id.toString() !== gameId.toString()) return;
 
-    const newTurns = gameTurns.value.concat(gameTurns)
+    const newTurns = gameTurns.value.concat(turn);
     gameTurns.set(newTurns);
+    layout.set(startAndTurnsToBoardLayout(start, newTurns))
+    turnColor.set(turnsToColor(newTurns))
     gameStatus.set(status);
-    turnColor.set(newTurns.length % 2 == 0 ? PieceColor.White : PieceColor.Black)
 
     console.log(status);
     if (status.catagory !== GameStatusCatagory.Ongoing) {
@@ -58,10 +54,8 @@ export default function GameContainer(props: { data: GameViewData }) {
             gameStatus.value.catagory === GameStatusCatagory.Ongoing
           }
           layout={layout}
-          turnColor={turnColor.value}
+          turnColor={turnColor}
           onTurnEnd={(from, to, promotion) => {
-            turnColor.set(getOppositeColor(turnColor.value));
-
             SOCKET.emit("playerMove", id, from, to, promotion);
           }}
         />
@@ -76,4 +70,8 @@ export default function GameContainer(props: { data: GameViewData }) {
       </Modal>
     </Layout>
   );
+}
+
+function turnsToColor(turns: GameTurn[]) {
+  return turns.length % 2 == 0 ? PieceColor.White : PieceColor.Black;
 }
