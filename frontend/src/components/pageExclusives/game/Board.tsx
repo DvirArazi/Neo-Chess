@@ -147,6 +147,7 @@ export default class Board extends React.Component<Props, State> {
   }
 
   private onEnd = () => {
+    console.log(`delete -3`);
     if (this.fraction === undefined) return undefined;
 
     const to = fractionToPosition(this.fraction);
@@ -162,8 +163,18 @@ export default class Board extends React.Component<Props, State> {
     layout[toI] = layout[fromI];
     layout[fromI] = undefined;
 
+    console.log('delete -2');
+
     this.setState({ legalMoves: [] });
     this.props.layout.set(layout);
+
+    console.log('delete -1',
+      layout[toI]?.type === PieceType.Pawn,
+      this.props.turnColor.value === PieceColor.White,
+      toI >= BOARD_SIDE ** 2 - BOARD_SIDE,
+      this.props.turnColor.value === PieceColor.Black,
+      toI < BOARD_SIDE,
+    );
 
     if (
       layout[toI]?.type === PieceType.Pawn &&
@@ -185,8 +196,8 @@ export default class Board extends React.Component<Props, State> {
     } else {
       this.setState({
         from: undefined,
-        // turnColor: getOppositeColor(this.[].turnColor),
       });
+      this.props.turnColor.set(getOppositeColor(this.props.turnColor.value));
       this.props.onTurnEnd(this.state.from, to, null);
     }
   }
@@ -221,36 +232,34 @@ export default class Board extends React.Component<Props, State> {
     console.log(piecesCounts);
     if (!piecesCounts.some(count => count > 0)) {
       console.log('delete 3');
-      this.endPromotion();
+      this.endPromotion(null);
       return <></>
     };
 
     return (
       <PromotionBanner
         color={this.props.turnColor.value}
-        piecesCounts={piecesCounts}
+        pieceCounts={piecesCounts}
         onChoice={(type) => {
           const layout = this.props.layout.value;
           layout[this.state.promotionSquare!]!.type = type;
 
           this.props.layout.set(layout);
 
-          this.endPromotion();
+          this.endPromotion(type);
         }}
       />
     );
   }
 
-  private endPromotion() {
+  private endPromotion(promotion: PieceType | null) {
     this.setState({
       from: undefined,
       promotionSquare: undefined,
     });
-
     this.props.turnColor.set(getOppositeColor(this.props.turnColor.value));
 
-    console.log(this.state.from, this.state.promotionSquare);
-    this.props.onTurnEnd(this.state.from!, IndexToPoint(this.state.promotionSquare!), null);
+    this.props.onTurnEnd(this.state.from!, IndexToPoint(this.state.promotionSquare!), promotion);
   }
 }
 

@@ -1,3 +1,7 @@
-import { PieceData } from "shared/types/piece";
+import { PieceData, PieceType } from "shared/types/piece";
 
-export type BoardLayout = (PieceData & { key: number } | undefined)[]
+export type PieceDataWithKey = PieceData & { key: number };
+
+export type BoardLayout = (PieceDataWithKey | undefined)[]
+
+export type PieceCount = {type: PieceType, count: number};

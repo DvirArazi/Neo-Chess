@@ -2,33 +2,27 @@ import { Box } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import { pieceDataToIconName } from "frontend/src/components/pageExclusives/game/Board";
 import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
+import { PieceCount } from "shared/types/boardLayout";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 
 const heightPercent = 40;
 const insideHeightPercent = 55;
 
-const pieceTypes: PieceType[] = [
-  PieceType.Queen,
-  PieceType.Rook,
-  PieceType.Knight,
-  PieceType.Bishop,
-]
-
 export default function PromotionBanner(props: {
   color: PieceColor,
-  piecesCounts: number[],
+  pieceCounts: PieceCount[],
   onChoice: (type: PieceType) => void,
 }) {
-  const { color, piecesCounts, onChoice } = props;
+  const { color, pieceCounts, onChoice } = props;
 
   const displayPieces: JSX.Element[] = [];
 
-  for (let i = 0; i < 4; i++) {
-    if (piecesCounts[i] <= 0) continue;
+  for (let i = 0; i < pieceCounts.length; i++) {
+    if (pieceCounts[i].count <= 0) continue;
 
     displayPieces.push(<DisplayPiece key={i}
-      data={{ type: pieceTypes[i], color: color }}
-      count={piecesCounts[i]}
+      data={{ type: pieceCounts[i].type, color: color }}
+      count={pieceCounts[i].count}
       onChoice={onChoice}
     />)
   }

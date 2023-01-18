@@ -5,10 +5,11 @@ import { getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayou
 import Lodash from "lodash";
 import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason } from "shared/types/game";
 import { BOARD_SIDE } from "shared/globals";
-import { PieceColor } from "shared/types/piece";
+import { PieceColor, PieceType } from "shared/types/piece";
 import { getOppositeColor } from "shared/tools/piece";
 import { GameTurnWithRep } from "backend/src/utils/types";
 import { boardLayoutToRep, hasCausedRepetition } from "backend/src/utils/tools/rep";
+import { BoardLayout } from "shared/types/boardLayout";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotion) => {
@@ -40,10 +41,17 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
 
     if (turnColor !== (game.turns.length % 2 == 0 ? PieceColor.White : PieceColor.Black)) {
-      Terminal.warning('The user who tried to play the current turn is of the opposite color')
+      Terminal.warning('The user who tried to play the current turn is of the opposite color');
+      return;
     }
 
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
+
+    if (promotion !== null && !isPromotionValid(layout, turnColor, promotion)) {
+      Terminal.warning('The user tried to promote to an invalid piece');
+      return;
+    }
+
     const legalMovesResult = getLegalMoves(layout, turnColor, from);
     if (!legalMovesResult.ok) {
       Terminal.warning(legalMovesResult.error);
@@ -56,7 +64,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const [whiteTime, blackTime] = (()=>{
+    const [whiteTime, blackTime] = (() => {
       if (game.turns.length !== 0) {
         const lastTurn = game.turns[game.turns.length - 1];
         const delta = p.date.getTime() - game.timeLastTurn;
@@ -76,8 +84,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
       action: pointsToAction(from, to),
       whiteTime: whiteTime,
       blackTime: blackTime,
+      promotion: promotion,
       rep: boardLayoutToRep(step(layout, from, to)),
-      promotion: promotion
     };
 
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
@@ -141,4 +149,29 @@ function pointsToAction(from: Point, to: Point) {
     to.x * BOARD_SIDE ** 2 +
     to.y * BOARD_SIDE ** 3
   );
+}
+
+function isPromotionValid(layout: BoardLayout, turnColor: PieceColor, promotion: PieceType) {
+  const pieceLimits: { type: PieceType, limit: number }[] = [
+    { type: PieceType.Queen, limit: 1 },
+    { type: PieceType.Rook, limit: 2 },
+    { type: PieceType.Knight, limit: 2 },
+    { type: PieceType.Bishop, limit: 2 },
+  ];
+
+  for (let i = 0; i < pieceLimits.length; i++) {
+    if (promotion === pieceLimits[i].type) {
+      let count = 0;
+      for (const square of layout) {
+        if (square?.type === promotion && square.color === turnColor) {
+          count += 1;
+          if (count >= pieceLimits[i].limit) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  return true;
 }

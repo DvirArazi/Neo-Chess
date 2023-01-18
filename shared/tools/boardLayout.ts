@@ -3,7 +3,7 @@ import { err, ok, Result } from "shared/tools/result";
 import { GameTurn, MoveError, Point } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
-import { BoardLayout } from "shared/types/boardLayout";
+import { BoardLayout, PieceCount } from "shared/types/boardLayout";
 import { Terminal } from "backend/src/utils/terminal";
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
@@ -206,6 +206,26 @@ export function step(layout: BoardLayout, from: Point, to: Point) {
   newLayout[fromI] = undefined;
 
   return newLayout;
+}
+
+export function getPieceCounts(layout: BoardLayout, turnColor: PieceColor) {
+  const piecesCounts: PieceCount[] = [
+    {type: PieceType.Queen, count: 1}, 
+    {type: PieceType.Rook, count: 2},
+    {type: PieceType.Knight, count: 2},
+    {type: PieceType.Bishop, count: 2},
+  ];
+
+  for (const square of layout) {
+    if (square?.color !== turnColor) continue;
+
+    const pieceCount = piecesCounts.find(x => x.type == square.type);
+    if (pieceCount === undefined) continue;
+
+    pieceCount.count--;
+  }
+
+  return piecesCounts;
 }
 
 export function isOnBoard(square: Point) {
