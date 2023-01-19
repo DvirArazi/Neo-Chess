@@ -42,7 +42,8 @@ export type GameTurn = {
   action: number,
   whiteTime: number,
   blackTime: number,
-  promotion: PieceType | null
+  promotionType: PieceType | null,
+  rep: string,
 }
 
 export type Player = {
@@ -55,6 +56,9 @@ export type GameData = {
   isRated: boolean,
   start: PieceType[],
   timeLastTurn: number,
+  startRep: string,
+  turns: GameTurn[],
+  status: GameStatus,
 }
 
 export type GameViewData = {
@@ -62,7 +66,6 @@ export type GameViewData = {
   role: GameRole,
   white: Player,
   black: Player,
-  turns: GameTurn[],
 } & GameData
 
 export enum MoveError {
@@ -80,6 +83,7 @@ export enum GameStatusCatagory {
 export enum WinReason {
   Resignation,
   Checkmate,
+  Stalemate,
   KingCaptured,
   Timeout,
 }
@@ -96,7 +100,7 @@ export type GameStatus =
   } |
   {
     catagory: GameStatusCatagory.Win,
-    winSide: PieceColor,
+    winColor: PieceColor,
     reason: WinReason,
   } |
   {

@@ -5,8 +5,9 @@ import { emitToUser, toValidId } from "../utils/tools/general";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
 import { PieceType } from "shared/types/piece";
-import { boardLayoutToRep } from "backend/src/utils/tools/rep";
-import { BOARD_SIDE, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { boardLayoutToRep } from "shared/tools/rep";
+import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { GameStatusCatagory } from "shared/types/game";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -93,7 +94,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       start: start,
       startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],
-      timeLastTurn: p.date.getTime()
+      timeLastTurn: p.date.getTime(),
+      status: { catagory: GameStatusCatagory.Ongoing }
     });
 
     p.usersCollection.updateOne({ _id: user0._id }, { $push: { ongoingGamesIds: game.insertedId } });
@@ -102,40 +104,4 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     emitToUser(p.webSocketServer, user0, "createdGame", path);
     emitToUser(p.webSocketServer, user1, "createdGame", path);
   });
-}
-
-export function generateStart() {
-  const layout = Array<PieceType>(BOARD_SIDE);
-
-  layout[Math.floor(Math.random() * 4) * 2] = PieceType.Bishop;
-  layout[Math.floor(Math.random() * 4) * 2 + 1] = PieceType.Bishop;
-
-  const pieceTypes = [
-    PieceType.King,
-    PieceType.Queen,
-    PieceType.Knight,
-    PieceType.Knight,
-  ];
-
-  for (let pieceI = 0; pieceI < pieceTypes.length; pieceI++) {
-    let goal = Math.floor(Math.random() * (6 - pieceI));
-    let steps = 0;
-    for (let position = 0; position < BOARD_SIDE; position++) {
-      if (layout[position] === undefined) {
-        if (steps === goal) {
-          layout[position] = pieceTypes[pieceI];
-          break;
-        }
-        steps++;
-      }
-    }
-  }
-
-  for (let i = 0; i < BOARD_SIDE; i++) {
-    if (layout[i] === undefined) {
-      layout[i] = PieceType.Rook
-    }
-  }
-
-  return layout;
 }

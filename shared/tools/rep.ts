@@ -1,6 +1,7 @@
-import { Game } from "backend/src/utils/types";
+import { BOARD_SIDE } from "shared/tools/boardLayout";
 import { comparePieces } from "shared/tools/piece";
 import { BoardLayout } from "shared/types/boardLayout";
+import { GameData, GameTurn, GameViewData, Point } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 
 export function pieceDataToRepChar(data: PieceData): string {
@@ -38,15 +39,15 @@ export function boardLayoutToRep(layout: BoardLayout) {
   return rep;
 }
 
-export function hasCausedRepetition(game: Game): boolean {
-  const repLast = game.turns[game.turns.length - 1].rep;
-  if (game.startRep === repLast) {
+export function hasCausedRepetition(turns: GameTurn[], startRep: string): boolean {
+  const repLast = turns[turns.length - 1].rep;
+  if (startRep === repLast) {
     console.log('start rep', repLast);
     return true;
   }
 
-  for (let i = 0; i < game.turns.length - 2; i++) {
-    if (game.turns[i].rep === repLast) {
+  for (let i = 0; i < turns.length - 2; i++) {
+    if (turns[i].rep === repLast) {
       console.log('rep', repLast);
       return true;
     }

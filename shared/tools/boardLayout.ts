@@ -1,8 +1,10 @@
 import { err, ok, Result } from "shared/tools/result";
-import { GameTurn, MoveError, Point } from "shared/types/game";
+import { DrawReason, GameData, GameStatus, GameStatusCatagory, GameTurn, GameViewData, MoveError, Point, WinReason } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
 import { BoardLayout, PieceCount } from "shared/types/boardLayout";
+import { comparePieces, getOppositeColor } from "shared/tools/piece";
+import { hasCausedRepetition } from "shared/tools/rep";
 
 export const BOARD_SIDE = 8;
 export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
@@ -25,8 +27,8 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
     layout[fromI] = undefined;
 
     if (
-      turn.promotion !== null && layout[toI] !== undefined) {
-      layout[toI]!.type = turn.promotion;
+      turn.promotionType !== null && layout[toI] !== undefined) {
+      layout[toI]!.type = turn.promotionType;
     }
   }
 
@@ -150,16 +152,25 @@ export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square
 }
 
 function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
+  const oppositeColor = getOppositeColor(turnColor);
 
   for (let i = 0; i < BOARD_SIDE ** 2; i++) {
     const value = layout[i];
-    if (value !== undefined && value.color !== turnColor) {
-      const movesResult = getLegalMoves(layout, turnColor, IndexToPoint(i));
+    if (value !== undefined && value.color === oppositeColor) {
+
+      const movesResult = getLegalMoves(layout, oppositeColor, indexToPoint(i));
       if (!movesResult.ok) continue;
       const moves = movesResult.value;
 
+      console.log('start' ,indexToPoint(i));
       for (const move of moves) {
-        if (Lodash.isEqual(layout[pointToIndex(move)], { type: PieceType.King, color: turnColor })) {
+        console.log('end', move);
+
+        const moveValue = layout[pointToIndex(move)];
+        if (moveValue === undefined) continue;
+
+        if (comparePieces(moveValue, { type: PieceType.King, color: turnColor })) {
+          console.log('check move', indexToPoint(i), move)
           return true;
         }
       }
@@ -170,20 +181,30 @@ function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
 }
 
 export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boolean {
+  console.warn('is in check?', layout, turnColor);
+
   if (!isInCheck(layout, turnColor)) { return false; }
 
-  for (let i = 0; i < BOARD_SIDE ** 2; i++) {
-    const value = layout[i];
-    if (value !== undefined && value.color === turnColor) {
-      const movesResult = getLegalMoves(layout, turnColor, IndexToPoint(i));
-      if (!movesResult.ok) continue;
-      const moves = movesResult.value;
+  console.log('is in check!')
+  console.log(layout);
 
-      for (const move in moves) {
-        // if (!isInCheck(la))
-      }
-    }
-  }
+  // for (let i = 0; i < BOARD_SIDE ** 2; i++) {
+  //   const value = layout[i];
+  //   if (value === undefined || value.color !== turnColor) continue;
+
+  //   const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
+  //   if (!movesResult.ok) continue;
+
+  //   const moves = movesResult.value;
+
+  //   for (const move of moves) {
+  //     if (isInCheck(step(layout, indexToPoint(i), move, null), turnColor)) continue;
+
+  //     console.log(step(layout, indexToPoint(i), move, null));
+  //     console.log(indexToPoint(i), move);
+  //     return false;
+  //   }
+  // }
 
   return true;
 }
@@ -198,7 +219,36 @@ export function isKingCaptured(layout: BoardLayout, color: PieceColor): boolean 
   return true;
 }
 
-export function step(layout: BoardLayout, from: Point, to: Point) {
+export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns: GameTurn[], startRep: string): GameStatus {
+  if (isKingCaptured(layout, getOppositeColor(turnColor))) {
+    return {
+      catagory: GameStatusCatagory.Win,
+      winColor: turnColor,
+      reason: WinReason.KingCaptured,
+    }
+  }
+  if (isInCheckmate(layout, getOppositeColor(turnColor))) {
+    return {
+      catagory: GameStatusCatagory.Win,
+      winColor: turnColor,
+      reason: WinReason.Checkmate,
+    }
+  }
+  if (hasCausedRepetition(turns, startRep)) {
+    return {
+      catagory: GameStatusCatagory.Draw,
+      reason: DrawReason.Repetition,
+    }
+  }
+
+  return { catagory: GameStatusCatagory.Ongoing };
+}
+
+export function step(
+  layout: BoardLayout,
+  from: Point, to: Point,
+  promotionType: PieceType | null
+) {
   let newLayout = [...layout];
   const fromI = from.x + BOARD_SIDE * from.y;
   const toI = to.x + BOARD_SIDE * to.y;
@@ -206,15 +256,19 @@ export function step(layout: BoardLayout, from: Point, to: Point) {
   newLayout[toI] = newLayout[fromI];
   newLayout[fromI] = undefined;
 
+  if (promotionType !== null && newLayout[toI] !== undefined) {
+    newLayout[toI]!.type = promotionType;
+  }
+
   return newLayout;
 }
 
 export function getPieceCounts(layout: BoardLayout, turnColor: PieceColor) {
   const piecesCounts: PieceCount[] = [
-    {type: PieceType.Queen, count: 1}, 
-    {type: PieceType.Rook, count: 2},
-    {type: PieceType.Knight, count: 2},
-    {type: PieceType.Bishop, count: 2},
+    { type: PieceType.Queen, count: 1 },
+    { type: PieceType.Rook, count: 2 },
+    { type: PieceType.Knight, count: 2 },
+    { type: PieceType.Bishop, count: 2 },
   ];
 
   for (const square of layout) {
@@ -240,6 +294,42 @@ export function pointToIndex(point: Point) {
   return point.x + BOARD_SIDE * point.y;
 }
 
-export function IndexToPoint(square: number): Point {
+export function indexToPoint(square: number): Point {
   return { x: square % BOARD_SIDE, y: Math.floor(square / BOARD_SIDE) };
+}
+
+export function generateStart() {
+  const layout = Array<PieceType>(BOARD_SIDE);
+
+  layout[Math.floor(Math.random() * 4) * 2] = PieceType.Bishop;
+  layout[Math.floor(Math.random() * 4) * 2 + 1] = PieceType.Bishop;
+
+  const pieceTypes = [
+    PieceType.King,
+    PieceType.Queen,
+    PieceType.Knight,
+    PieceType.Knight,
+  ];
+
+  for (let pieceI = 0; pieceI < pieceTypes.length; pieceI++) {
+    let goal = Math.floor(Math.random() * (6 - pieceI));
+    let steps = 0;
+    for (let position = 0; position < BOARD_SIDE; position++) {
+      if (layout[position] === undefined) {
+        if (steps === goal) {
+          layout[position] = pieceTypes[pieceI];
+          break;
+        }
+        steps++;
+      }
+    }
+  }
+
+  for (let i = 0; i < BOARD_SIDE; i++) {
+    if (layout[i] === undefined) {
+      layout[i] = PieceType.Rook
+    }
+  }
+
+  return layout;
 }

@@ -33,7 +33,5 @@ export default function Game() {
     );
   }
 
-  console.log('returning game online');
-
   return <GameOnline data={gameViewData.value} />;
 }

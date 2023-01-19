@@ -3,12 +3,12 @@ import { Terminal } from "backend/src/utils/terminal";
 import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 import { BOARD_SIDE, getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
 import Lodash from "lodash";
-import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason } from "shared/types/game";
+import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason, GameTurn } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
 import { getOppositeColor } from "shared/tools/piece";
-import { GameTurnWithRep } from "backend/src/utils/types";
-import { boardLayoutToRep, hasCausedRepetition } from "backend/src/utils/tools/rep";
+import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
+import { pointsToAction } from "shared/tools/board";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   Terminal.warning('delete 0');
@@ -19,23 +19,17 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    Terminal.warning('delete 1');
-
     const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
     if (user === null) {
       Terminal.error('Couldn\'nt find user with saved user ID');
       return;
     }
 
-    Terminal.warning('delete 2');
-
     const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
     if (game === null) {
       Terminal.warning('Couldn\'nt find game using the id provided by the user');
       return;
     }
-
-    Terminal.warning('delete 3');
 
     const turnColor = (() => {
       if (game.white.id.toString() === user._id.toString()) return PieceColor.White;
@@ -47,14 +41,10 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    Terminal.warning('delete 4');
-
     if (turnColor !== (game.turns.length % 2 == 0 ? PieceColor.White : PieceColor.Black)) {
       Terminal.warning('The user who tried to play the current turn is of the opposite color');
       return;
     }
-
-    Terminal.warning('delete 5');
 
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
 
@@ -63,8 +53,6 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    Terminal.warning('delete 6');
-
     const legalMovesResult = getLegalMoves(layout, turnColor, from);
     if (!legalMovesResult.ok) {
       Terminal.warning(legalMovesResult.error);
@@ -72,14 +60,10 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
     const legalMoves = legalMovesResult.value;
 
-    Terminal.warning('delete 7');
-
     if (!Lodash.some(legalMoves, to)) {
       Terminal.warning('The move sent by the user is illigal');
       return;
     }
-
-    Terminal.warning('delete 8');
 
     const [whiteTime, blackTime] = (() => {
       if (game.turns.length !== 0) {
@@ -97,17 +81,13 @@ export default function handlePlayerMoved(p: HandlerParams) {
       }
     })();
 
-    Terminal.warning('delete 9');
-
-    const turn: GameTurnWithRep = {
+    const turn: GameTurn = {
       action: pointsToAction(from, to),
       whiteTime: whiteTime,
       blackTime: blackTime,
-      promotion: promotion,
-      rep: boardLayoutToRep(step(layout, from, to)),
+      promotionType: promotion,
+      rep: boardLayoutToRep(step(layout, from, to, promotion)),
     };
-
-    Terminal.warning('delete 10');
 
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/
@@ -124,8 +104,6 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
     const gameAfter = gameAfterResult.value;
 
-    Terminal.warning('delete 11');
-
     const otherUserId = turnColor ? game.white.id : game.black.id;
     const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
     if (otherUser === null) {
@@ -133,26 +111,24 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    Terminal.warning('delete 12');
-
     const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
 
     const status: GameStatus = (() => {
       if (isKingCaptured(layoutAfter, getOppositeColor(turnColor))) {
         return {
           catagory: GameStatusCatagory.Win,
-          winSide: turnColor,
+          winColor: turnColor,
           reason: WinReason.KingCaptured,
         }
       }
       if (isInCheckmate(layoutAfter, getOppositeColor(turnColor))) {
         return {
           catagory: GameStatusCatagory.Win,
-          winSide: turnColor,
+          winColor: turnColor,
           reason: WinReason.Checkmate,
         }
       }
-      if (hasCausedRepetition(gameAfter)) {
+      if (hasCausedRepetition(gameAfter.turns, gameAfter.startRep)) {
         return {
           catagory: GameStatusCatagory.Draw,
           reason: DrawReason.Repetition,
@@ -162,20 +138,9 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return { catagory: GameStatusCatagory.Ongoing };
     })();
 
-    Terminal.warning('delete 13');
-
     emitToUser(p.webSocketServer, user, "playerMoved", gameId, turn, status);
     emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, turn, status);
   });
-}
-
-function pointsToAction(from: Point, to: Point) {
-  return (
-    from.x +
-    from.y * BOARD_SIDE +
-    to.x * BOARD_SIDE ** 2 +
-    to.y * BOARD_SIDE ** 3
-  );
 }
 
 function isPromotionValid(layout: BoardLayout, turnColor: PieceColor, promotion: PieceType) {

@@ -14,9 +14,9 @@ import PromotionBanner from "frontend/src/components/pageExclusives/game/Board/P
 
 let mousePercentPos: Point | null = null;
 
-export default function Board2(props: {
-  layout: Stateful<BoardLayout>,
-  turnColor: Stateful<PieceColor>,
+export default function Board(props: {
+  layout: BoardLayout,
+  turnColor: PieceColor,
   enabled: boolean,
   // onMove: (from: Point, to: Point) => void,
   // onPromotion: (to: Point, promotionType: PieceType) => void,
@@ -80,7 +80,7 @@ export default function Board2(props: {
   };
 
   function getPieces(): JSX.Element[] {
-    return layout.value
+    return layout
       .map((data, i) => data !== undefined ? { ...data, ...{ index: i } } : undefined)
       .filter(data => data !== undefined)
       .sort((a, b) => a!.key > b!.key ? 1 : -1)
@@ -89,7 +89,7 @@ export default function Board2(props: {
         return <Piece key={data.key}
           data={data}
           index={data.index}
-          isEnabled={enabled && data.color === turnColor.value}
+          isEnabled={enabled && data.color === turnColor}
           slide={pieceSlide.value}
           onStart={onStart}
           onEnd={() => {
@@ -118,17 +118,11 @@ export default function Board2(props: {
   }
 
   function getPromotionBanner(): JSX.Element {
-    console.log('from:', from.value, 'promotionTo: ', promotionTo);
-
     if (from.value === null || promotionTo.value === null) return <></>;
 
-    console.log('delete 0');
-
-    const pieceCounts = getPieceCounts(layout.value, turnColor.value);
+    const pieceCounts = getPieceCounts(layout, turnColor);
 
     if (!pieceCounts.some(pieceCount => pieceCount.count > 0)) {
-
-      console.log('delete 1');
 
       onTurnEnd(from.value, promotionTo.value, null);
 
@@ -138,31 +132,23 @@ export default function Board2(props: {
     }
 
     return <PromotionBanner
-      color={turnColor.value}
+      color={turnColor}
       pieceCounts={pieceCounts}
-      onChoice={(type)=>{
+      onChoice={(type) => {
         if (from.value === null || promotionTo.value === null) return;
 
-        console.log('delete 2');
-
-        // onPromotion(promotionTo.value, type);
-        //===onPromotion code===
+        //doesn't actually change the state
+        //but it does change it visually apperantly
+        //which is exactly what I need
         const toI = pointToIndex(promotionTo.value);
-
-        const newLayout = layout.value;
+        const newLayout = layout;
         if (newLayout[toI] === undefined) return;
         newLayout[toI]!.type = type;
 
-        // layout.set(newLayout);
-        //======================
-
         onTurnEnd(from.value, promotionTo.value, type);
-
-        console.log('setting from and promotionTo to null');
 
         from.set(null);
         promotionTo.set(null);
-        // layout.set(newLayout); //moved from onPromotion
       }}
     />
   }
@@ -171,7 +157,7 @@ export default function Board2(props: {
     if (mousePercentPos === null) return;
 
     const mouseSquarePos: Point = percentPosToSquarePos(mousePercentPos);
-    const moves = getLegalMoves(layout.value, turnColor.value, mouseSquarePos);
+    const moves = getLegalMoves(layout, turnColor, mouseSquarePos);
     if (moves.ok) {
       from.set(mouseSquarePos);
       legalMoves.set(moves.value);
@@ -184,17 +170,13 @@ export default function Board2(props: {
     const to = percentPosToSquarePos(mousePercentPos);
     if (!legalMoves.value.some(legalMove => comparePoints(legalMove, to))) return;
 
-    // onMove(from.value, to);
-    //===onMove code===
+    //doesn't actually change the state
+    //but it does change it visually apperantly
+    //which is exactly what I need
     const fromI = pointToIndex(from.value);
     const toI = pointToIndex(to);
-
-    const newLayout = layout.value;
-    newLayout[toI] = newLayout[fromI];
-    newLayout[fromI] = undefined;
-
-    // layout.set(newLayout);
-    //=================
+    layout[toI] = layout[fromI];
+    layout[fromI] = undefined;
 
     if (!isPromotion(to)) {
       onTurnEnd(from.value, to, null);
@@ -204,7 +186,6 @@ export default function Board2(props: {
     }
 
     legalMoves.set([]);
-    // layout.set(newLayout); //moved from onMove
   }
 
   function percentPosToSquarePos(percentPos: Point): Point {
@@ -217,10 +198,10 @@ export default function Board2(props: {
   function isPromotion(to: Point) {
     const toI = pointToIndex(to);
 
-    return layout.value[toI]?.type === PieceType.Pawn &&
+    return layout[toI]?.type === PieceType.Pawn &&
       (
-        (turnColor.value === PieceColor.White && toI >= BOARD_SIDE ** 2 - BOARD_SIDE) ||
-        (turnColor.value === PieceColor.Black && toI < BOARD_SIDE)
+        (turnColor === PieceColor.White && toI >= BOARD_SIDE ** 2 - BOARD_SIDE) ||
+        (turnColor === PieceColor.Black && toI < BOARD_SIDE)
       );
   }
 }
