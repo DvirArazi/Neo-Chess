@@ -83,7 +83,10 @@ function DisplayPiece(props: {
           cursor: `pointer`,
         }
       }}
-      onMouseDown={() => onChoice(data.type)}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        onChoice(data.type)
+      }}
     >
       <Icon path={`chess/${pieceDataToIconName(data)}`} />
       <Box>{`x${count}`}</Box>

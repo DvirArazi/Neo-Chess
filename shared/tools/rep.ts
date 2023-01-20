@@ -42,13 +42,11 @@ export function boardLayoutToRep(layout: BoardLayout) {
 export function hasCausedRepetition(turns: GameTurn[], startRep: string): boolean {
   const repLast = turns[turns.length - 1].rep;
   if (startRep === repLast) {
-    console.log('start rep', repLast);
     return true;
   }
 
   for (let i = 0; i < turns.length - 2; i++) {
     if (turns[i].rep === repLast) {
-      console.log('rep', repLast);
       return true;
     }
   }

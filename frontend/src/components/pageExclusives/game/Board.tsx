@@ -5,36 +5,37 @@ import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Boar
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
 import { BOARD_SIDE, getLegalMoves, getPieceCounts, pointToIndex } from "shared/tools/boardLayout";
-import { BoardLayout, PieceDataWithKey } from "shared/types/boardLayout";
+import { BoardLayout, PieceCount, PieceDataWithKey } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
-import Lodash from "lodash";
 import { comparePoints } from "shared/tools/point";
 import PromotionBanner from "frontend/src/components/pageExclusives/game/Board/PromotionBanner";
 
-let mousePercentPos: Point | null = null;
+// let mousePercentPos: Point | null = null;
 
 export default function Board(props: {
   layout: BoardLayout,
   turnColor: PieceColor,
   enabled: boolean,
-  // onMove: (from: Point, to: Point) => void,
-  // onPromotion: (to: Point, promotionType: PieceType) => void,
-  onTurnEnd: (from: Point, to: Point, promotionType: PieceType | null) => void,
+  onMove: (from: Point, to: Point, layout: BoardLayout) => void,
+  onPromotion: (promotionType: PieceType) => void,
+  onTurnEnd: () => void,
 }) {
   const {
     layout,
     turnColor,
     enabled,
-    // onMove,
-    // onPromotion,
+    onMove,
+    onPromotion,
     onTurnEnd
   } = props;
 
   const boxRef = useRef<HTMLDivElement>(null);
+  const mousePercentPos = useRef<Point | null>(null);
 
   const from = new Stateful<Point | null>(null);
   const promotionTo = new Stateful<Point | null>(null);
+  const promotionPieceCounts = new Stateful<PieceCount[]>([]);
   const legalMoves = new Stateful<Point[]>([]);
   const pieceSlide = new Stateful<boolean>(false);
 
@@ -66,17 +67,14 @@ export default function Board(props: {
   function setMouseRelPos(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const rect = boxRef.current?.getBoundingClientRect();
     if (rect === undefined) return;
-    if (
+    mousePercentPos.current = (
       e.clientX < rect.left || e.clientX > rect.right ||
       e.clientY < rect.top || e.clientY > rect.bottom
-    ) {
-      mousePercentPos = null;
-    } else {
-      mousePercentPos = {
+    ) ?
+      null : {
         x: (e.clientX - rect.x) / rect.width,
         y: (e.clientY - rect.y) / rect.height,
       };
-    }
   };
 
   function getPieces(): JSX.Element[] {
@@ -118,45 +116,26 @@ export default function Board(props: {
   }
 
   function getPromotionBanner(): JSX.Element {
-    if (from.value === null || promotionTo.value === null) return <></>;
-
-    const pieceCounts = getPieceCounts(layout, turnColor);
-
-    if (!pieceCounts.some(pieceCount => pieceCount.count > 0)) {
-
-      onTurnEnd(from.value, promotionTo.value, null);
-
-      from.set(null);
-      promotionTo.set(null);
-      return <></>
+    if (promotionTo.value === null) {
+      return <></>;
     }
 
     return <PromotionBanner
       color={turnColor}
-      pieceCounts={pieceCounts}
+      pieceCounts={promotionPieceCounts.value}
       onChoice={(type) => {
-        if (from.value === null || promotionTo.value === null) return;
+        onPromotion(type);
+        onTurnEnd();
 
-        //doesn't actually change the state
-        //but it does change it visually apperantly
-        //which is exactly what I need
-        const toI = pointToIndex(promotionTo.value);
-        const newLayout = layout;
-        if (newLayout[toI] === undefined) return;
-        newLayout[toI]!.type = type;
-
-        onTurnEnd(from.value, promotionTo.value, type);
-
-        from.set(null);
         promotionTo.set(null);
       }}
-    />
+    />;
   }
 
   function onStart() {
-    if (mousePercentPos === null) return;
+    if (mousePercentPos.current === null) return;
 
-    const mouseSquarePos: Point = percentPosToSquarePos(mousePercentPos);
+    const mouseSquarePos: Point = percentPosToSquarePos(mousePercentPos.current);
     const moves = getLegalMoves(layout, turnColor, mouseSquarePos);
     if (moves.ok) {
       from.set(mouseSquarePos);
@@ -165,26 +144,32 @@ export default function Board(props: {
   }
 
   function move() {
-    if (from.value === null || mousePercentPos === null) return;
+    if (from.value === null || mousePercentPos.current === null) return;
 
-    const to = percentPosToSquarePos(mousePercentPos);
-    if (!legalMoves.value.some(legalMove => comparePoints(legalMove, to))) return;
+    const newTo = percentPosToSquarePos(mousePercentPos.current);
+    if (!legalMoves.value.some(legalMove => comparePoints(legalMove, newTo))) return;
 
-    //doesn't actually change the state
-    //but it does change it visually apperantly
-    //which is exactly what I need
     const fromI = pointToIndex(from.value);
-    const toI = pointToIndex(to);
-    layout[toI] = layout[fromI];
-    layout[fromI] = undefined;
+    const toI = pointToIndex(newTo);
+    const newLayout = [...layout]; //if works, remove wrap and try again
+    newLayout[toI] = newLayout[fromI];
+    newLayout[fromI] = undefined;
 
-    if (!isPromotion(to)) {
-      onTurnEnd(from.value, to, null);
-      from.set(null);
+    onMove(from.value, newTo, newLayout);
+
+    let pieceCounts: PieceCount[];
+    if (
+      isPromotion(newLayout, newTo) &&
+      (pieceCounts = getPieceCounts(layout, turnColor))
+        .some(pieceCount => pieceCount.count > 0)
+    ) {
+      promotionTo.set(newTo);
+      promotionPieceCounts.set(pieceCounts);
     } else {
-      promotionTo.set(to);
+      onTurnEnd();
     }
 
+    from.set(null);
     legalMoves.set([]);
   }
 
@@ -195,7 +180,7 @@ export default function Board(props: {
     }
   }
 
-  function isPromotion(to: Point) {
+  function isPromotion(layout: BoardLayout, to: Point) {
     const toI = pointToIndex(to);
 
     return layout[toI]?.type === PieceType.Pawn &&

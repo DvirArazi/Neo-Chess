@@ -56,9 +56,11 @@ export default function GameOnline(props: { data: GameViewData }) {
           }
           layout={layout.value}
           turnColor={turnColor.value}
-          onTurnEnd={(from, to, promotionType) => {
+          onMove={()=>{}}
+          onPromotion={()=>{}}
+          onTurnEnd={() => {
             // turnColor.set(getOppositeColor(turnColor.value));
-            SOCKET.emit("playerMove", id, from, to, promotionType);
+            // SOCKET.emit("playerMove", id, from, to, promotionType);
           }}
         />
       </Box>

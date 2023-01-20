@@ -227,13 +227,13 @@ export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns:
       reason: WinReason.KingCaptured,
     }
   }
-  if (isInCheckmate(layout, getOppositeColor(turnColor))) {
-    return {
-      catagory: GameStatusCatagory.Win,
-      winColor: turnColor,
-      reason: WinReason.Checkmate,
-    }
-  }
+  // if (isInCheckmate(layout, getOppositeColor(turnColor))) {
+  //   return {
+  //     catagory: GameStatusCatagory.Win,
+  //     winColor: turnColor,
+  //     reason: WinReason.Checkmate,
+  //   }
+  // }
   if (hasCausedRepetition(turns, startRep)) {
     return {
       catagory: GameStatusCatagory.Draw,
@@ -259,6 +259,20 @@ export function step(
   if (promotionType !== null && newLayout[toI] !== undefined) {
     newLayout[toI]!.type = promotionType;
   }
+
+  return newLayout;
+}
+
+export function promote(layout: BoardLayout, to: Point, promotionType: PieceType) {
+  let newLayout = [...layout];
+
+  const toI = pointToIndex(to);
+
+  if (newLayout[toI] !== undefined) {
+    throw new Error('Square at promotion sqaure is undefined');
+  }
+
+  newLayout[toI]!.type = promotionType;
 
   return newLayout;
 }
