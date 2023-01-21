@@ -11,7 +11,7 @@ export type Timeframe = {
   increment: number,
 }
 
-export enum TimeFormats {
+export enum TimeFormat {
   Untimed,
   Bullet,
   Blitz,

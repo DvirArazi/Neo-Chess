@@ -1,7 +1,10 @@
 import { Box, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
-import EndModal from "frontend/src/components/pageExclusives/game/MenuModal";
+import BottomBanner from "frontend/src/components/pageExclusives/game/BottomBanner";
+import MenuModal from "frontend/src/components/MenuModal";
+import PlayerBunner from "frontend/src/components/pageExclusives/game/PlayerBanner";
+import TopBanner from "frontend/src/components/pageExclusives/game/TopBanner";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
@@ -30,26 +33,32 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isModalOpen = new Stateful<boolean>(true);
   const layout = new Stateful(startAndTurnsToBoardLayout(game.start, game.turns));
   const layoutRef = useRef<BoardLayout>(layout.value);
-  const from = useRef<Point>({x: 0, y: 0});
-  const to = useRef<Point>({x: 0, y: 0});
+  const from = useRef<Point>({ x: 0, y: 0 });
+  const to = useRef<Point>({ x: 0, y: 0 });
   const promotionType = useRef<PieceType | null>(null);
-
-  const bla = new Stateful<boolean>(false);
-  // useEffect(()=>onTurnEnd(), [])
 
   return (
     <Layout>
-      <Box>
-        <Board
-          enabled={game.status.catagory === GameStatusCatagory.Ongoing}
-          layout={layout.value}
-          turnColor={turnsToColor(game.turns)}
-          onMove={onMove}
-          onPromotion={onPromotion}
-          onTurnEnd={onTurnEnd}
-        />
-      </Box>
-      <EndModal
+      <TopBanner
+        timeframe={{
+          timeOverall: 10*60,
+          increment: 15
+        }}
+        isRated={true}
+      />
+      <PlayerBunner name={'White'} rating={1234} />
+      <Board
+        enabled={game.status.catagory === GameStatusCatagory.Ongoing}
+        layout={layout.value}
+        turnColor={turnsToColor(game.turns)}
+        onMove={onMove}
+        onPromotion={onPromotion}
+        onTurnEnd={onTurnEnd}
+      />
+      <PlayerBunner name={'Black'} rating={null} />
+      <BottomBanner onMenuClick={() => { isModalOpen.set(true) }} />
+      <Box sx={{ padding: `10px` }} />
+      <MenuModal
         isOpen={isModalOpen}
         status={game.status}
       />
@@ -66,11 +75,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   function onPromotion(newPromotionType: PieceType) {
     const toI = pointToIndex(to.current);
 
-    const newLayout = [...layout.value]; //if works, remove wrap and try again
-    newLayout[toI]!.type = newPromotionType;
-
-    layout.set(newLayout);
-    layoutRef.current = newLayout;
+    layoutRef.current[toI]!.type = newPromotionType;
+    layout.set(layoutRef.current);
     promotionType.current = newPromotionType;
   }
 

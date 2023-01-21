@@ -40,26 +40,37 @@ export default function Board(props: {
   const pieceSlide = new Stateful<boolean>(false);
 
   return (
-    <Box sx={{ maxWidth: `700px`, maxHeight: `700px` }}>
-      <Box ref={boxRef}
-        onMouseMove={setMouseRelPos}
-        onMouseDown={(e) => {
-          from.set(null);
-          legalMoves.set([]);
-        }}
-        sx={{
-          position: `relative`,
-          width: `100%`,
-          height: `0`,
-          paddingBottom: `100%`,
-          boxSizing: `border-box`,
-          overflow: `hidden`,
-        }}
-      >
-        <Background />
-        {getPieces()}
-        {getVisuals()}
-        {getPromotionBanner()}
+    <Box sx={{
+      display: `flex`,
+      flexDirection: `row`,
+      justifyContent: `center`,
+    }}>
+      <Box sx={{
+        flex: `1`,
+        position: `absoulte`,
+        maxWidth: `450px`,
+        maxHeight: `450px`,
+      }}>
+        <Box ref={boxRef}
+          onMouseMove={setMouseRelPos}
+          onMouseDown={(e) => {
+            from.set(null);
+            legalMoves.set([]);
+          }}
+          sx={{
+            position: `relative`,
+            width: `100%`,
+            height: `0`,
+            paddingBottom: `100%`,
+            boxSizing: `border-box`,
+            overflow: `hidden`,
+          }}
+        >
+          <Background />
+          {getPieces()}
+          {getVisuals()}
+          {getPromotionBanner()}
+        </Box>
       </Box>
     </Box>
   );

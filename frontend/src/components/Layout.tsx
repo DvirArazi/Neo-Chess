@@ -15,6 +15,9 @@ export default function Layout(props: { children: ReactNode }) {
         <Box sx={{
           margin: `auto`,
           maxWidth: `500px`,
+          // display: `flex`,
+          // flexDirection: `column`,
+          // justifyContent: `center`,
         }}>
           {children}
         </Box>

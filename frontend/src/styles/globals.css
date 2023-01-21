@@ -1,8 +1,9 @@
 :root {
   text-align: center;
 
-  -webkit-scrollbar-width: none;
-  scrollbar-width: none;
+  /* -webkit-scrollbar-width: none; */
+  /* scrollbar-width: none; */
+  font-family: sans-serif;
 }
 
 body {

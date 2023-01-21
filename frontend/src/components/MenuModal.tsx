@@ -4,7 +4,7 @@ import { getOppositeColor } from "shared/tools/piece";
 import { DrawReason, GameStatus, GameStatusCatagory, WinReason } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
-export default function EndModal(props: {
+export default function MenuModal(props: {
   isOpen: Stateful<boolean>,
   status: GameStatus,
 }) {
@@ -21,13 +21,14 @@ export default function EndModal(props: {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: `100%`,
-        outline: 0
+        outline: 0,
+        display: `flex`,
+        justifyContent: `center`,
       }}>
         <Box sx={{
-          margin: `20px`,
-          // padding: `20px`,
+          margin: `30px`,
+          width: `300px`,
           bgcolor: 'background.paper',
-          // border: '2px solid #000',
           borderRadius: '15px',
           boxShadow: 24,
           textAlign: `center`,

@@ -1,7 +1,8 @@
 import { Box, Button, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material";
+import { timeFormatToString, timeToString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { timeframeToTimeFormat } from "shared/tools/general";
-import { TimeFormats, Timeframe } from "shared/types/game";
+import { TimeFormat, Timeframe } from "shared/types/game";
 
 export default function CustomeFormatPanel(props: {
   onPlay: (clock: Timeframe) => void,
@@ -115,26 +116,6 @@ const increments = [
   60 * 3
 ];
 
-const timeToString = (time: number) => {
-  if (time < 60) {
-    return `${time}s`;
-  }
-  if (time < 60 * 60) {
-    return `${time / 60}m`;
-  }
-  return `${time / (60 * 60)}h`;
-}
-
 const handleChange = (e: SelectChangeEvent<number>, time: Stateful<number>) => {
   time.set(e.target.value as number);
-}
-
-function timeFormatToString(timeFormat: TimeFormats): string {
-  switch (timeFormat) {
-    case TimeFormats.Untimed: return "Untimed";
-    case TimeFormats.Bullet: return "Bullet";
-    case TimeFormats.Blitz: return "Blitz";
-    case TimeFormats.Rapid: return "Rapid";
-    case TimeFormats.Classical: return "Classical";
-  }
 }

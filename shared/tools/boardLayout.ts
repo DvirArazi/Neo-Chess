@@ -162,15 +162,12 @@ function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
       if (!movesResult.ok) continue;
       const moves = movesResult.value;
 
-      console.log('start' ,indexToPoint(i));
       for (const move of moves) {
-        console.log('end', move);
 
         const moveValue = layout[pointToIndex(move)];
         if (moveValue === undefined) continue;
 
         if (comparePieces(moveValue, { type: PieceType.King, color: turnColor })) {
-          console.log('check move', indexToPoint(i), move)
           return true;
         }
       }
@@ -181,30 +178,25 @@ function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
 }
 
 export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boolean {
-  console.warn('is in check?', layout, turnColor);
-
   if (!isInCheck(layout, turnColor)) { return false; }
 
-  console.log('is in check!')
-  console.log(layout);
+  for (let i = 0; i < BOARD_SIDE ** 2; i++) {
+    const value = layout[i];
+    if (value === undefined || value.color !== turnColor) continue;
 
-  // for (let i = 0; i < BOARD_SIDE ** 2; i++) {
-  //   const value = layout[i];
-  //   if (value === undefined || value.color !== turnColor) continue;
+    const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
+    if (!movesResult.ok) continue;
 
-  //   const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
-  //   if (!movesResult.ok) continue;
+    const moves = movesResult.value;
 
-  //   const moves = movesResult.value;
+    for (const move of moves) {
+      if (isInCheck(step(layout, indexToPoint(i), move, null), turnColor)) continue;
 
-  //   for (const move of moves) {
-  //     if (isInCheck(step(layout, indexToPoint(i), move, null), turnColor)) continue;
-
-  //     console.log(step(layout, indexToPoint(i), move, null));
-  //     console.log(indexToPoint(i), move);
-  //     return false;
-  //   }
-  // }
+      console.log(step(layout, indexToPoint(i), move, null));
+      console.log(indexToPoint(i), move);
+      return false;
+    }
+  }
 
   return true;
 }
@@ -227,13 +219,13 @@ export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns:
       reason: WinReason.KingCaptured,
     }
   }
-  // if (isInCheckmate(layout, getOppositeColor(turnColor))) {
-  //   return {
-  //     catagory: GameStatusCatagory.Win,
-  //     winColor: turnColor,
-  //     reason: WinReason.Checkmate,
-  //   }
-  // }
+  if (isInCheckmate(layout, getOppositeColor(turnColor))) {
+    return {
+      catagory: GameStatusCatagory.Win,
+      winColor: turnColor,
+      reason: WinReason.Checkmate,
+    }
+  }
   if (hasCausedRepetition(turns, startRep)) {
     return {
       catagory: GameStatusCatagory.Draw,

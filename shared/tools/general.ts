@@ -1,4 +1,4 @@
-import { TimeFormats, Timeframe } from "../types/game";
+import { TimeFormat, Timeframe } from "../types/game";
 
 export function removeFirst<T>(arr: T[], value: T) {
   let index = arr.indexOf(value);
@@ -7,14 +7,14 @@ export function removeFirst<T>(arr: T[], value: T) {
   }
 }
 
-export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFormats {
-  if (timeframe === undefined) return TimeFormats.Untimed;
+export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFormat {
+  if (timeframe === undefined) return TimeFormat.Untimed;
 
   const total = timeframe.timeOverall + timeframe.increment * 40;
-  if (total < 180) return TimeFormats.Bullet;
-  if (total < 500) return TimeFormats.Blitz;
-  if (total < 1500) return TimeFormats.Rapid;
-  return TimeFormats.Classical;
+  if (total < 180) return TimeFormat.Bullet;
+  if (total < 500) return TimeFormat.Blitz;
+  if (total < 1500) return TimeFormat.Rapid;
+  return TimeFormat.Classical;
 }
 
 export function remove<T>(array: T[], value: T): boolean {
