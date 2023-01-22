@@ -10,7 +10,7 @@ export function removeFirst<T>(arr: T[], value: T) {
 export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFormat {
   if (timeframe === undefined) return TimeFormat.Untimed;
 
-  const total = timeframe.timeOverall + timeframe.increment * 40;
+  const total = timeframe.overallSec + timeframe.incSec * 40;
   if (total < 180) return TimeFormat.Bullet;
   if (total < 500) return TimeFormat.Blitz;
   if (total < 1500) return TimeFormat.Rapid;

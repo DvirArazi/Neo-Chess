@@ -1,6 +1,6 @@
 import { PieceData, PieceType } from "shared/types/piece";
 
-export type PieceDataWithKey = PieceData & { key: number };
+export type PieceDataWithKey = PieceData & { key: string };
 
 export type BoardLayout = (PieceDataWithKey | undefined)[]
 

@@ -7,8 +7,8 @@ export type Point = {
 }
 
 export type Timeframe = {
-  timeOverall: number,
-  increment: number,
+  overallSec: number,
+  incSec: number,
 }
 
 export enum TimeFormat {
@@ -40,8 +40,7 @@ export type GameState = {
 
 export type GameTurn = {
   action: number,
-  whiteTime: number,
-  blackTime: number,
+  timeLeftMil: number,
   promotionType: PieceType | null,
   rep: string,
 }

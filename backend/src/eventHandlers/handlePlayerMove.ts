@@ -65,26 +65,20 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const [whiteTime, blackTime] = (() => {
+    const whiteTime = (() => {
       if (game.turns.length !== 0) {
         const lastTurn = game.turns[game.turns.length - 1];
         const delta = p.date.getTime() - game.timeLastTurn;
-        return [
-          lastTurn.whiteTime - delta,
-          lastTurn.blackTime - delta,
-        ]
+
+        return lastTurn.timeLeftMil - delta;
       } else {
-        return [
-          game.timeframe.timeOverall,
-          game.timeframe.timeOverall,
-        ];
+        return game.timeframe.overallSec;
       }
     })();
 
     const turn: GameTurn = {
       action: pointsToAction(from, to),
-      whiteTime: whiteTime,
-      blackTime: blackTime,
+      timeLeftMil: whiteTime,
       promotionType: promotion,
       rep: boardLayoutToRep(step(layout, from, to, promotion)),
     };

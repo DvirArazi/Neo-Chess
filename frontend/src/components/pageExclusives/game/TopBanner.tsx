@@ -9,7 +9,7 @@ export default function TopBanner(props: {
 }) {
   const { timeframe, isRated } = props;
 
-  const timeStr = `${timeToString(timeframe.timeOverall)} | ${timeToString(timeframe.increment)}`;
+  const timeStr = `${timeToString(timeframe.overallSec)} | ${timeToString(timeframe.incSec)}`;
   const formatStr = ` • ${timeFormatToString(timeframeToTimeFormat(timeframe))}`;
   const isRatedStr = isRated === null ? '' : ` • ${isRated ? 'Rated' : 'Casual'}`
 

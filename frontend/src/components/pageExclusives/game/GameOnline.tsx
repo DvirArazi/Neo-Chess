@@ -50,18 +50,16 @@ export default function GameOnline(props: { data: GameViewData }) {
     <Layout>
       <Box>
         <Board
-          enabled={
-            role === turnColor.value &&
-            gameStatus.value.catagory === GameStatusCatagory.Ongoing
-          }
+          enabled={role === turnColor.value &&
+            gameStatus.value.catagory === GameStatusCatagory.Ongoing}
           layout={layout.value}
           turnColor={turnColor.value}
-          onMove={()=>{}}
-          onPromotion={()=>{}}
+          onMove={() => { }}
+          onPromotion={() => { }}
           onTurnEnd={() => {
             // turnColor.set(getOppositeColor(turnColor.value));
             // SOCKET.emit("playerMove", id, from, to, promotionType);
-          }}
+          }} isFlipped={false} flipPieces={false}
         />
       </Box>
       <Modal

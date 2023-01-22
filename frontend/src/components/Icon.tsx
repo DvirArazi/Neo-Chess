@@ -30,6 +30,7 @@ export default function Icon(props: { path: string, color?: string | undefined, 
           style={{
             width: `100%`,
             height: `100%`,
+            shapeRendering: `crispEdges`,
           }}
           src={`/${path}.svg`}
         ></img>

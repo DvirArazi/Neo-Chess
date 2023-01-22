@@ -2,8 +2,8 @@ import { err, ok, Result } from "shared/tools/result";
 import { DrawReason, GameData, GameStatus, GameStatusCatagory, GameTurn, GameViewData, MoveError, Point, WinReason } from "shared/types/game";
 import { PieceColor, PieceData, PieceType } from "shared/types/piece";
 import Lodash from "lodash";
-import { BoardLayout, PieceCount } from "shared/types/boardLayout";
-import { comparePieces, getOppositeColor } from "shared/tools/piece";
+import { BoardLayout, PieceCount, PieceDataWithKey } from "shared/types/boardLayout";
+import { comparePieces, getOppositeColor, pieceDataToRepChar } from "shared/tools/piece";
 import { hasCausedRepetition } from "shared/tools/rep";
 
 export const BOARD_SIDE = 8;
@@ -12,11 +12,19 @@ export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
   const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
 
+  const pieceCrntIs = new Map<PieceType, number>(
+    Object.values(PieceType).map(pieceType => [pieceType as PieceType, 0])
+  );
+  const backRankKeyIs = start.map(pieceType => {
+    pieceCrntIs.set(pieceType, pieceCrntIs.get(pieceType)! + 1);
+    return pieceCrntIs.get(pieceType)!;
+  })
+
   for (let x = 0; x < BOARD_SIDE; x++) {
-    layout[x] = { type: start[x], color: PieceColor.White, key: x };
-    layout[BOARD_SIDE + x] = { type: PieceType.Pawn, color: PieceColor.White, key: x + BOARD_SIDE };
-    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = { type: PieceType.Pawn, color: PieceColor.Black, key: x + BOARD_SIDE * 2 };
-    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = { type: start[x], color: PieceColor.Black, key: x + BOARD_SIDE * 3 };
+    layout[x] = getPiece({ type: start[x], color: PieceColor.White }, backRankKeyIs[x]);
+    layout[BOARD_SIDE + x] = getPiece({ type: PieceType.Pawn, color: PieceColor.White }, x);
+    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = getPiece({ type: PieceType.Pawn, color: PieceColor.Black }, x);
+    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = getPiece({ type: start[x], color: PieceColor.Black }, backRankKeyIs[x]);;
   }
 
   for (const turn of turns) {
@@ -33,6 +41,10 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
   }
 
   return layout;
+
+  function getPiece(data: PieceData, i: number): PieceDataWithKey {
+    return { ...data, key: `${pieceDataToRepChar(data)}${i}` }
+  }
 }
 
 export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square0: Point): Result<Point[], MoveError> {

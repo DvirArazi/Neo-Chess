@@ -14,7 +14,7 @@ export default function CustomeFormatPanel(props: {
 
   const format = timeFormatToString(
     timeframeToTimeFormat({
-      timeOverall: timePerTurn.value, increment: increment.value
+      overallSec: timePerTurn.value, incSec: increment.value
     })
   );
 
@@ -58,8 +58,8 @@ export default function CustomeFormatPanel(props: {
           </Box>
         </Box>
         <Button onClick={() => onPlay({
-          timeOverall: timePerTurn.value,
-          increment: increment.value
+          overallSec: timePerTurn.value,
+          incSec: increment.value
         })}>Play</Button>
       </Paper>
     </Box>

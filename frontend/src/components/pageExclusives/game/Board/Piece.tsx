@@ -13,10 +13,11 @@ export default function Piece(props: {
   index: number,
   isEnabled: boolean,
   slide: boolean,
+  isFlipped: boolean,
   onStart: () => void,
   onEnd: () => void,
 }) {
-  const { data, isEnabled, index, slide, onStart, onEnd } = props;
+  const { data, isEnabled, index, slide, isFlipped, onStart, onEnd } = props;
 
   const mouseDownTime = new Stateful(0);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -60,7 +61,15 @@ export default function Piece(props: {
           transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
       >
-        <Icon path={`chess/${pieceDataToIconName(data)}`} />
+        <Box sx={{
+          position: `absolute`,
+          width: `100%`,
+          height: `100%`,
+          transform: isFlipped  ? `rotate(0.5turn)` : `none`,
+          transition: `transform 0.3s`
+        }}>
+          <Icon path={`chess/${pieceDataToIconName(data)}`} />
+        </Box>
       </Box>
     </Draggable>
   );

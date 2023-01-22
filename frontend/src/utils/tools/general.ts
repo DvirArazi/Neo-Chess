@@ -1,4 +1,5 @@
 import { TimeFormat } from "shared/types/game";
+import { PieceColor } from "shared/types/piece";
 
 export function timeToString(time: number) {
   if (time < 60) {
@@ -17,5 +18,12 @@ export function timeFormatToString(timeFormat: TimeFormat): string {
     case TimeFormat.Blitz: return "Blitz";
     case TimeFormat.Rapid: return "Rapid";
     case TimeFormat.Classical: return "Classical";
+  }
+}
+
+export function getColorName(color: PieceColor) {
+  switch (color) {
+    case PieceColor.White: return 'White';
+    case PieceColor.Black: return 'Black';
   }
 }

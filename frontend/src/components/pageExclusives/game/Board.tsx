@@ -11,12 +11,12 @@ import { PieceColor, PieceType } from "shared/types/piece";
 import { comparePoints } from "shared/tools/point";
 import PromotionBanner from "frontend/src/components/pageExclusives/game/Board/PromotionBanner";
 
-// let mousePercentPos: Point | null = null;
-
 export default function Board(props: {
   layout: BoardLayout,
   turnColor: PieceColor,
   enabled: boolean,
+  isFlipped: boolean,
+  flipPieces: boolean,
   onMove: (from: Point, to: Point, layout: BoardLayout) => void,
   onPromotion: (promotionType: PieceType) => void,
   onTurnEnd: () => void,
@@ -25,6 +25,8 @@ export default function Board(props: {
     layout,
     turnColor,
     enabled,
+    isFlipped,
+    flipPieces,
     onMove,
     onPromotion,
     onTurnEnd
@@ -37,7 +39,7 @@ export default function Board(props: {
   const promotionTo = new Stateful<Point | null>(null);
   const promotionPieceCounts = new Stateful<PieceCount[]>([]);
   const legalMoves = new Stateful<Point[]>([]);
-  const pieceSlide = new Stateful<boolean>(false);
+  const pieceSlide = new Stateful<boolean>(true);
 
   return (
     <Box sx={{
@@ -78,14 +80,23 @@ export default function Board(props: {
   function setMouseRelPos(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const rect = boxRef.current?.getBoundingClientRect();
     if (rect === undefined) return;
-    mousePercentPos.current = (
-      e.clientX < rect.left || e.clientX > rect.right ||
-      e.clientY < rect.top || e.clientY > rect.bottom
-    ) ?
-      null : {
+
+    const getPos = () => {
+      const pos: Point = {
         x: (e.clientX - rect.x) / rect.width,
         y: (e.clientY - rect.y) / rect.height,
       };
+
+      return isFlipped ? pos : {
+        x: 1 - pos.x,
+        y: 1 - pos.y
+      } ;
+    }
+
+    mousePercentPos.current = (
+      e.clientX < rect.left || e.clientX > rect.right ||
+      e.clientY < rect.top || e.clientY > rect.bottom
+    ) ? null : getPos()
   };
 
   function getPieces(): JSX.Element[] {
@@ -97,9 +108,10 @@ export default function Board(props: {
         const data = dataO!;
         return <Piece key={data.key}
           data={data}
-          index={data.index}
+          index={getIndex(data.index)}
           isEnabled={enabled && data.color === turnColor}
           slide={pieceSlide.value}
+          isFlipped={flipPieces}
           onStart={onStart}
           onEnd={() => {
             move();
@@ -113,10 +125,10 @@ export default function Board(props: {
     if (from.value === null) return [];
 
     return [
-      ...[<Highlight key={-1} position={from.value} />],
+      ...[<Highlight key={-1} position={getPoint(from.value)} />],
       ...legalMoves.value.map((legalMove, i) =>
         <Dot key={i}
-          position={legalMove}
+          position={getPoint(legalMove)}
           onPressed={() => {
             move();
             pieceSlide.set(true);
@@ -200,5 +212,15 @@ export default function Board(props: {
         (turnColor === PieceColor.Black && toI < BOARD_SIDE)
       );
   }
-}
 
+  function getIndex(index: number) {
+    return isFlipped ? index : BOARD_SIDE ** 2 - 1 - index; 
+  }
+
+  function getPoint(point: Point) {
+    return isFlipped ? point : {
+      x: BOARD_SIDE - 1 - point.x,
+      y: BOARD_SIDE - 1 - point.y,
+    };
+  }
+}
