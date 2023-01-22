@@ -94,7 +94,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       start: start,
       startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],
-      timeLastTurn: p.date.getTime(),
+      timeLastTurnMil: p.date.getTime(),
       status: { catagory: GameStatusCatagory.Ongoing }
     });
 

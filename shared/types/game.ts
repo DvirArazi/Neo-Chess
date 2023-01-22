@@ -54,7 +54,7 @@ export type GameData = {
   timeframe: Timeframe,
   isRated: boolean,
   start: PieceType[],
-  timeLastTurn: number,
+  timeLastTurnMil: number,
   startRep: string,
   turns: GameTurn[],
   status: GameStatus,

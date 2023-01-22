@@ -4,40 +4,38 @@ import { useEffect, useRef } from "react";
 
 export default function Clock(props: {
   timeLeftMil: number,
-  tick: boolean,
+  isTicking: boolean,
+  initDateTimeMil: number,
 }) {
-  const { timeLeftMil, tick } = props;
+  const { timeLeftMil, isTicking, initDateTimeMil } = props;
 
-  function InnerClock(props: { initDateTime: number }) {
-    const { initDateTime } = props;
+  //I'm not actually using this variable cause it doe
+  const dateTimeMil = new Stateful(new Date().getTime());
 
-    const dateTime = new Stateful(new Date().getTime());
+  useEffect(() => {
+    if (isTicking) {
+      const interval = setInterval(() => {
+        dateTimeMil.set(new Date().getTime())
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [isTicking]);
 
-    useEffect(() => {
-      if (tick) {
-        const interval = setInterval(() => {
-          dateTime.set(new Date().getTime())
-        }, 100);
-        return () => clearInterval(interval);
-      }
-    }, [tick]);
+  const crntMillis = isTicking ?
+    timeLeftMil - (new Date().getTime() - initDateTimeMil) :
+    timeLeftMil;
 
+  const minutes = Math.floor(crntMillis / (60 * 1000));
+  const seconds = Math.floor(crntMillis / 1000) % 60;
 
-    const crntMillis = timeLeftMil - (dateTime.value - initDateTime);
-
-    const minutes = Math.floor(crntMillis / (60 * 1000));
-    const seconds = Math.floor(crntMillis / 1000) % 60;
-
-    return (<>
-      <Box sx={{
-        padding: `5px 10px`,
-        background: `lightgray`,
-        fontSize: `24px`,
-      }}>
-        {minutes}:{seconds}
-      </Box>
-    </>);
-  }
-
-  return <InnerClock initDateTime={new Date().getTime()} />
+  return (<>
+    <Box sx={{
+      padding: `5px 5px`,
+      background: `lightgray`,
+      fontSize: `24px`,
+      fontFamily: `roboto-regular`
+    }}>
+      {minutes < 10 ? '0' : ''}{minutes}:{seconds < 10 ? '0' : ''}{seconds}
+    </Box>
+  </>);
 }

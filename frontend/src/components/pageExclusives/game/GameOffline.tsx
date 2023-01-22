@@ -30,6 +30,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const to = useRef<Point>({ x: 0, y: 0 });
   const promotionType = useRef<PieceType | null>(null);
 
+  const isWhiteTurn = game.turns.length % 2 === 0;
+
   return (
     <Layout>
       <TopBanner
@@ -39,25 +41,18 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         }}
         isRated={true}
       />
-      <PlayerBanner
-        name={'White'}
-        rating={1234}
-        timeLeftMil={(game.turns.length === 0 ?
-          game.timeframe.overallSec * 1000 :
-          game.turns[game.turns.length - 1].timeLeftMil
-        )}
-        tick={game.turns.length % 2 === 0}
-      />
+      {getPlayerBanner(isFlipped.value)}
       <Board
         enabled={game.status.catagory === GameStatusCatagory.Ongoing}
         layout={layout.value}
         turnColor={turnsToColor(game.turns)}
         isFlipped={isFlipped.value}
-        flipPieces={game.turns.length % 2 === 0 === isFlipped.value && flipPieces.value}
+        flipPieces={isWhiteTurn === isFlipped.value && flipPieces.value}
         onMove={onMove}
         onPromotion={onPromotion}
-        onTurnEnd={onTurnEnd} />
-      {/* <PlayerBunner name={'Black'} rating={null} /> */}
+        onTurnEnd={onTurnEnd}
+      />
+      {getPlayerBanner(!isFlipped.value)}
       <BottomBanner onMenuClick={() => { isMenuOpen.set(true) }} />
       <Box sx={{ padding: `10px` }} />
       <MenuOffline
@@ -76,7 +71,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       timeframe: timeframe,
       isRated: false,
       start: start,
-      timeLastTurn: new Date().getTime(),
+      timeLastTurnMil: new Date().getTime(),
       startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],
       status: { catagory: GameStatusCatagory.Ongoing }
@@ -99,11 +94,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function onTurnEnd() {
-    const timeCrntTurn = new Date().getTime();
+    const timeCrntTurnMil = new Date().getTime();
+
     const newTurns = game.turns.concat({
       action: pointsToAction(from.current, to.current),
-      timeLeftMil: game.turns.length > 2 ?
-        (game.turns[game.turns.length - 2].timeLeftMil - (game.timeLastTurn - timeCrntTurn)) :
+      timeLeftMil: game.turns.length >= 2 ?
+        (game.turns[game.turns.length - 2].timeLeftMil - (timeCrntTurnMil - game.timeLastTurnMil)) :
         game.timeframe.overallSec * 1000,
       promotionType: promotionType.current,
       rep: boardLayoutToRep(layoutRef.current),
@@ -114,6 +110,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       ...game,
       turns: newTurns,
       status: newStatus,
+      timeLastTurnMil: timeCrntTurnMil
     });
 
     promotionType.current = null;
@@ -128,5 +125,37 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     setGame(newGame);
     layout.set(startAndTurnsToBoardLayout(newGame.start, newGame.turns));
     isFlipped.set(Math.random() < 0.5);
+  }
+
+  function getPlayerBanner(isWhite: boolean) {
+    // console.log(isWhiteTurn, game.turns.map(turn=>turn.timeLeftMil));
+    // console.log((game.turns.length > 1 ?
+    //   game.turns[game.turns.length - 1  + (isWhiteTurn ? 0: 0)].timeLeftMil :
+    //   game.timeframe.overallSec * 1000
+    // ));
+    // const crntDateTimeMil = new Date().getTime();
+    console.log('rendeing 1')
+
+    return isWhite ?
+      <PlayerBanner
+        name={'White'}
+        rating={null}
+        timeLeftMil={(game.turns.length > 1 ?
+          game.turns[game.turns.length - 1  + (isWhiteTurn ? -1: 0)].timeLeftMil :
+          game.timeframe.overallSec * 1000
+        )}
+        isTicking={isWhiteTurn && game.turns.length > 1}
+        initDateTimeMil={game.timeLastTurnMil}
+      /> :
+      <PlayerBanner
+        name={'Black'}
+        rating={null}
+        timeLeftMil={(game.turns.length > 2 ?
+          game.turns[game.turns.length - 1  + (isWhiteTurn ? 0: -1)].timeLeftMil :
+          game.timeframe.overallSec * 1000
+        )}
+        isTicking={!isWhiteTurn && game.turns.length > 2}
+        initDateTimeMil={game.timeLastTurnMil}
+      />
   }
 }

@@ -163,6 +163,16 @@ export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square
   return ok(moves);
 }
 
+export function isKingCaptured(layout: BoardLayout, color: PieceColor): boolean {
+  for (const square of layout) {
+    if (square?.type === PieceType.King && square.color === color) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
   const oppositeColor = getOppositeColor(turnColor);
 
@@ -206,16 +216,6 @@ export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boole
 
       console.log(step(layout, indexToPoint(i), move, null));
       console.log(indexToPoint(i), move);
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export function isKingCaptured(layout: BoardLayout, color: PieceColor): boolean {
-  for (const square of layout) {
-    if (square?.type === PieceType.King && square.color === color) {
       return false;
     }
   }

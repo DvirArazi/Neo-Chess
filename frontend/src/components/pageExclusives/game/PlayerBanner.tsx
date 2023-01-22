@@ -7,11 +7,10 @@ export default function PlayerBunner(props: {
   name: string,
   rating: number | null,
   timeLeftMil: number,
-  tick: boolean,
+  isTicking: boolean,
+  initDateTimeMil: number,
 }) {
-  const { name, rating, timeLeftMil, tick } = props;
-
-  console.log(timeLeftMil);
+  const { name, rating, timeLeftMil, isTicking, initDateTimeMil } = props;
 
   return <Box sx={{
     margin: `10px`,
@@ -26,7 +25,8 @@ export default function PlayerBunner(props: {
     </Box>
     <Clock
       timeLeftMil={timeLeftMil}
-      tick={tick}
+      isTicking={isTicking}
+      initDateTimeMil={initDateTimeMil}
     />
   </Box>
 }

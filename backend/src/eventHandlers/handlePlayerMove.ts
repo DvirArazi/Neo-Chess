@@ -68,7 +68,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
     const whiteTime = (() => {
       if (game.turns.length !== 0) {
         const lastTurn = game.turns[game.turns.length - 1];
-        const delta = p.date.getTime() - game.timeLastTurn;
+        const delta = p.date.getTime() - game.timeLastTurnMil;
 
         return lastTurn.timeLeftMil - delta;
       } else {

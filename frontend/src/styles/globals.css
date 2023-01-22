@@ -1,8 +1,5 @@
 :root {
   text-align: center;
-
-  /* -webkit-scrollbar-width: none; */
-  /* scrollbar-width: none; */
   font-family: sans-serif;
 }
 
@@ -12,4 +9,9 @@ body {
 
 :root::-webkit-scrollbar {
   display: none;
+}
+
+@font-face {
+  font-family: 'roboto-regular';
+  src: url('/fonts/Roboto-Regular.ttf');
 }
