@@ -223,19 +223,48 @@ export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boole
   return true;
 }
 
+function isInStalemate(layout: BoardLayout, turnColor: PieceColor): boolean {
+  if (isInCheck(layout, turnColor)) return false;
+
+  for (let i = 0; i < layout.length; i++) {
+    const crntValue = layout[i];
+    if (crntValue === undefined || crntValue.color !== turnColor) continue;
+
+    const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
+    if (movesResult.ok) {
+      const moves = movesResult.value;
+      for (const move of moves) {
+        const newLayout = step(layout, indexToPoint(i), move, null);
+        if (!isInCheck(newLayout, turnColor)) return true;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns: GameTurn[], startRep: string): GameStatus {
-  if (isKingCaptured(layout, getOppositeColor(turnColor))) {
+  const oppositeColor = getOppositeColor(turnColor)
+  
+  if (isKingCaptured(layout, oppositeColor)) {
     return {
       catagory: GameStatusCatagory.Win,
       winColor: turnColor,
       reason: WinReason.KingCaptured,
     }
   }
-  if (isInCheckmate(layout, getOppositeColor(turnColor))) {
+  if (isInCheckmate(layout, oppositeColor)) {
     return {
       catagory: GameStatusCatagory.Win,
       winColor: turnColor,
       reason: WinReason.Checkmate,
+    }
+  }
+  if (isInStalemate(layout, oppositeColor)) { //needs testing
+    return {
+      catagory: GameStatusCatagory.Win,
+      winColor: turnColor,
+      reason: WinReason.Stalemate,
     }
   }
   if (hasCausedRepetition(turns, startRep)) {
