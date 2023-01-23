@@ -25,6 +25,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isMenuOpen = new Stateful<boolean>(true);
   const isFlipped = new Stateful(Math.random() < 0.5); //switch with 
   const flipPieces = new Stateful(true);
+  const stepsBack = new Stateful(0);
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
   const to = useRef<Point>({ x: 0, y: 0 });
@@ -34,13 +35,10 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   return (
     <Layout>
-      <TopBanner
-        timeframe={{
-          overallSec: 10 * 60,
-          incSec: 15
-        }}
+      {/* <TopBanner
+        timeframe={{ overallSec: 10 * 60, incSec: 15 }}
         isRated={true}
-      />
+      /> */}
       {getPlayerBanner(isFlipped.value)}
       <Board
         enabled={game.status.catagory === GameStatusCatagory.Ongoing}
@@ -53,7 +51,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         onTurnEnd={onTurnEnd}
       />
       {getPlayerBanner(!isFlipped.value)}
-      <BottomBanner onMenuClick={() => { isMenuOpen.set(true) }} />
+      <BottomBanner
+        canStepBack={stepsBack.value < game.turns.length}
+        canStepForward={stepsBack.value > 0}
+        onMenuClick={() => { isMenuOpen.set(true) }}
+        onBackClick={() => stepsBack.set(stepsBack.value - 1)}
+        onForwardClick={() => stepsBack.set(stepsBack.value + 1)}
+      />
       <Box sx={{ padding: `10px` }} />
       <MenuOffline
         isOpen={isMenuOpen}
@@ -128,20 +132,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getPlayerBanner(isWhite: boolean) {
-    // console.log(isWhiteTurn, game.turns.map(turn=>turn.timeLeftMil));
-    // console.log((game.turns.length > 1 ?
-    //   game.turns[game.turns.length - 1  + (isWhiteTurn ? 0: 0)].timeLeftMil :
-    //   game.timeframe.overallSec * 1000
-    // ));
-    // const crntDateTimeMil = new Date().getTime();
-    console.log('rendeing 1')
-
     return isWhite ?
       <PlayerBanner
         name={'White'}
         rating={null}
         timeLeftMil={(game.turns.length > 1 ?
-          game.turns[game.turns.length - 1  + (isWhiteTurn ? -1: 0)].timeLeftMil :
+          game.turns[game.turns.length - 1 + (isWhiteTurn ? -1 : 0)].timeLeftMil :
           game.timeframe.overallSec * 1000
         )}
         isTicking={isWhiteTurn && game.turns.length > 1}
@@ -151,7 +147,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         name={'Black'}
         rating={null}
         timeLeftMil={(game.turns.length > 2 ?
-          game.turns[game.turns.length - 1  + (isWhiteTurn ? 0: -1)].timeLeftMil :
+          game.turns[game.turns.length - 1 + (isWhiteTurn ? 0 : -1)].timeLeftMil :
           game.timeframe.overallSec * 1000
         )}
         isTicking={!isWhiteTurn && game.turns.length > 2}

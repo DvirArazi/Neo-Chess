@@ -15,3 +15,8 @@ body {
   font-family: 'roboto-regular';
   src: url('/fonts/Roboto-Regular.ttf');
 }
+
+@font-face {
+  font-family: 'robotoslab';
+  src: url('/fonts/RobotoSlab-VariableFont_wght.ttf');
+}

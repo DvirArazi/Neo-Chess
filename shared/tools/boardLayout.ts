@@ -260,13 +260,13 @@ export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns:
       reason: WinReason.Checkmate,
     }
   }
-  if (isInStalemate(layout, oppositeColor)) { //needs testing
-    return {
-      catagory: GameStatusCatagory.Win,
-      winColor: turnColor,
-      reason: WinReason.Stalemate,
-    }
-  }
+  // if (isInStalemate(layout, oppositeColor)) { //needs testing
+  //   return {
+  //     catagory: GameStatusCatagory.Win,
+  //     winColor: turnColor,
+  //     reason: WinReason.Stalemate,
+  //   }
+  // }
   if (hasCausedRepetition(turns, startRep)) {
     return {
       catagory: GameStatusCatagory.Draw,

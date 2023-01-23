@@ -3,7 +3,7 @@ import Background from "frontend/src/components/pageExclusives/game/Board/Backgr
 import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { BOARD_SIDE, getLegalMoves, getPieceCounts, pointToIndex } from "shared/tools/boardLayout";
 import { BoardLayout, PieceCount, PieceDataWithKey } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
@@ -41,6 +41,13 @@ export default function Board(props: {
   const legalMoves = new Stateful<Point[]>([]);
   const pieceSlide = new Stateful<boolean>(true);
 
+  useEffect(()=>{
+    window.onmousedown = () => {
+      from.set(null);
+      legalMoves.set([]);
+    }
+  }, []);
+
   return (
     <Box sx={{
       display: `flex`,
@@ -55,10 +62,6 @@ export default function Board(props: {
       }}>
         <Box ref={boxRef}
           onMouseMove={setMouseRelPos}
-          onMouseDown={(e) => {
-            from.set(null);
-            legalMoves.set([]);
-          }}
           sx={{
             position: `relative`,
             width: `100%`,

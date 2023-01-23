@@ -3,10 +3,21 @@ import { GoogleLogin } from "@react-oauth/google";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
 import { AAD_COOKIE } from "frontend/src/utils/tools/cookies";
 
+export function AuthButton() {
+  return USER_DATA.value === undefined ?
+  <SignInButton /> :
+  <SignOutButton />;
+}
+
 export function SignInButton() {
   return (
     <GoogleLogin
-      text="signin"
+      // text="signup"
+      // shape="circle"
+      // logo_alignment="center"
+      // theme="filled_blue"
+      // type="icon"
+      // width="20px"
       onSuccess={(credentialResponse) => {
         const idToken = credentialResponse.credential!;
 

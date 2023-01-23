@@ -18,8 +18,8 @@ export default function Icon(props: { path: string, color?: string | undefined, 
           width: `100%`,
           height: `100%`,
           
-          WebkitMask: `url(/${path}.svg) no-repeat 50% 50%`,
-          mask: `url(/${path}.svg) no-repeat 50% 50%`,
+          WebkitMask: `url(/svgs/${path}.svg) no-repeat 50% 50%`,
+          mask: `url(/svgs/${path}.svg) no-repeat 50% 50%`,
           WebkitMaskSize: `cover`,
           maskSize: `cover`,
 
@@ -36,8 +36,4 @@ export default function Icon(props: { path: string, color?: string | undefined, 
       } 
     </Box>
   );
-}
-
-export enum SvgNames {
-  history
 }

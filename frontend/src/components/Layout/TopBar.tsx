@@ -1,65 +1,64 @@
-import { Box, SxProps, Button } from "@mui/material";
+import { Box, SxProps, Button, IconButton, Divider } from "@mui/material";
 import { USER_DATA } from "frontend/src/pages/_app";
+import Stateful from "frontend/src/utils/tools/stateful";
+import { useEffect } from "react";
 import Icon from "../Icon";
-import { SignInButton, SignOutButton } from "./TopBar/AuthButtons";
+import { AuthButton, SignInButton, SignOutButton } from "./TopBar/AuthButtons";
 
 export default function TopBar() {
   const barSx: SxProps = {
     display: `flex`,
     justifyContent: `space-between`,
-  };
-  const rowSx: SxProps = {
-    display: `flex`,
+    alignItems: `center`,
     flexDirection: `row`,
   };
-  const itemSx: SxProps = {
-    padding: `5px`,
-  };
 
-  function GoogleLogout() {
-    throw new Error("Function not implemented.");
-  }
+  const isWide = new Stateful(isWindowWide());
 
-  return (
-    <Box sx={barSx}>
-      <Box sx={rowSx}>
-        <Box sx={itemSx}>
-          {
-            USER_DATA.value === undefined ?
-              <SignInButton /> :
-              <SignOutButton />
-          }
-        </Box>
+  useEffect(() => {
+    window.onresize = () => {
+      isWide.set(isWindowWide());
+    }
+  }, []);
+
+  return <>
+    <Box sx={{
+      ...barSx,
+      height: `64px`,
+    }}>
+      <Box sx={{
+        ...barSx,
+        paddingLeft: `15px`,
+        fontFamily: `robotoslab`,
+        fontSize: `28px`,
+        whiteSpace: `nowrap`,
+      }}>
+        <Icon path='logo' side={30} />
+        <Box sx={{ padding: `5px` }} />
+        {isWide.value ? 'NEO-CHESS' : <></>}
       </Box>
-      <Box sx={rowSx}>
-        <Box sx={{
-          ...itemSx,
-          ...{
-            width: `25px`,
-            height: `25px`,
-          }
-        }}>
-          <Icon path="fight" />
-        </Box>
-        <Box sx={{
-          ...itemSx,
-          ...{
-            width: `23px`,
-            height: `23px`,
-          }
-        }}>
-          <Icon path="history" />
-        </Box>
-        <Box sx={{
-          ...itemSx,
-          ...{
-            width: `30px`,
-            height: `30px`,
-          }
-        }}>
-          <Icon path="friends" />
-        </Box>
+      <Box sx={{
+        ...barSx,
+      }}>
+        {getIconButton('fight', 28)}
+        {getIconButton('history', 28)}
+        {getIconButton('friends', 35)}
+        <Box sx={{ padding: `0 10px 0 5px` }}><AuthButton /></Box>
       </Box>
     </Box>
-  );
+    <Divider />
+  </>;
+
+  function getIconButton(path: string, side: number) {
+    return <Box sx={{
+      cursor: `pointer`,
+      padding: `0 5px`,
+    }}>
+      <Icon path={path} side={side} color={'#5F6368'} />
+    </Box>
+  }
+}
+
+function isWindowWide() {
+  return window.innerWidth > 700;
 }

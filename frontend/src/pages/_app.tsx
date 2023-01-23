@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
-import { WebSocketClient } from '../utils/types';
+import { WebSocketClient } from '../utils/types/webSocket';
 import Stateful from '../utils/tools/stateful';
 import React from 'react';
 import { TokenPayload } from 'google-auth-library';
@@ -11,14 +11,20 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AAD_COOKIE } from '../utils/tools/cookies';
 import { useRouter } from 'next/router';
 
+import { LIGHT_THEME } from 'frontend/src/utils/tools/theme';
+import { Theme } from 'frontend/src/utils/types/theme';
+
 export let SOCKET: WebSocketClient;
 export let USER_DATA: Stateful<TokenPayload | undefined>;
+export let THEME: Stateful<Theme>;
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   const isReady = new Stateful(false);
+
   USER_DATA = new Stateful<TokenPayload | undefined>(undefined);
+  THEME = new Stateful<Theme>(LIGHT_THEME);
 
   useEffect(() => {
     SOCKET = io();
