@@ -23,7 +23,7 @@ export default function BottomBanner(props: {
     justifyContent: `space-around`,
   }}>
     <IconButton onClick={onMenuClick}>
-      <Icon path="menu" side={40} color={THEME.value.icon} />
+      <Icon path="menu" side={40} color={THEME.icon} />
     </IconButton>
     <IconButton
       disabled={!canStepBack}
@@ -32,7 +32,7 @@ export default function BottomBanner(props: {
       <Icon
         path="navigate_left"
         side={40}
-        color={canStepBack ? THEME.value.icon : THEME.value.iconDisabled}
+        color={canStepBack ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
     <IconButton
@@ -42,7 +42,7 @@ export default function BottomBanner(props: {
       <Icon
         path="navigate_right"
         side={40}
-        color={canStepForward ? THEME.value.icon : THEME.value.iconDisabled}
+        color={canStepForward ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
   </Box>;

@@ -41,10 +41,18 @@ export default function Board(props: {
   const legalMoves = new Stateful<Point[]>([]);
   const pieceSlide = new Stateful<boolean>(true);
 
-  useEffect(()=>{
-    window.onmousedown = () => {
+  useEffect(
+    () => { if (!pieceSlide.value) pieceSlide.set(true) },
+    [turnColor]
+  );
+  useEffect(() => {
+    const handler = () => {
       from.set(null);
       legalMoves.set([]);
+    }
+    window.addEventListener("mousedown", handler)
+    return () => {
+      window.removeEventListener("mousedown", handler, true);
     }
   }, []);
 
@@ -93,7 +101,7 @@ export default function Board(props: {
       return isFlipped ? pos : {
         x: 1 - pos.x,
         y: 1 - pos.y
-      } ;
+      };
     }
 
     mousePercentPos.current = (
@@ -197,6 +205,7 @@ export default function Board(props: {
 
     from.set(null);
     legalMoves.set([]);
+    pieceSlide.set(true);
   }
 
   function percentPosToSquarePos(percentPos: Point): Point {
@@ -217,7 +226,7 @@ export default function Board(props: {
   }
 
   function getIndex(index: number) {
-    return isFlipped ? index : BOARD_SIDE ** 2 - 1 - index; 
+    return isFlipped ? index : BOARD_SIDE ** 2 - 1 - index;
   }
 
   function getPoint(point: Point) {

@@ -1,30 +1,31 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
-import { useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import Head from 'next/head';
 import { WebSocketClient } from '../utils/types/webSocket';
 import Stateful from '../utils/tools/stateful';
-import React from 'react';
 import { TokenPayload } from 'google-auth-library';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AAD_COOKIE } from '../utils/tools/cookies';
 import { useRouter } from 'next/router';
-
 import { LIGHT_THEME } from 'frontend/src/utils/tools/theme';
 import { Theme } from 'frontend/src/utils/types/theme';
+import React from 'react';
 
 export let SOCKET: WebSocketClient;
-export let USER_DATA: Stateful<TokenPayload | undefined>;
-export let THEME: Stateful<Theme>;
+export let USER_DATA: TokenPayload | undefined;
+export let SET_USER_DATA: Dispatch<SetStateAction<TokenPayload | undefined>>;
+export let THEME: Theme;
+export let SET_THEME: Dispatch<SetStateAction<Theme>>;
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   const isReady = new Stateful(false);
 
-  USER_DATA = new Stateful<TokenPayload | undefined>(undefined);
-  THEME = new Stateful<Theme>(LIGHT_THEME);
+  [USER_DATA, SET_USER_DATA] = useState<TokenPayload | undefined>(undefined);
+  [THEME, SET_THEME] = useState(LIGHT_THEME);
 
   useEffect(() => {
     SOCKET = io();
@@ -34,17 +35,17 @@ export default function App({ Component, pageProps }: AppProps) {
 
       SOCKET.emit("removeKey", aad);
       AAD_COOKIE.set(aad);
-      USER_DATA.set(data);
+      SET_USER_DATA(data);
     });
 
     SOCKET.on("autoSignedIn", (data) => {
       console.log('auto signed in')
-      USER_DATA.set(data);
+      SET_USER_DATA(data);
     });
 
     SOCKET.on("signedOut", () => {
       AAD_COOKIE.set(undefined);
-      USER_DATA.set(undefined);
+      SET_USER_DATA(undefined);
     });
 
     SOCKET.on("createdGame", (path) => {

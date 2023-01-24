@@ -1,10 +1,9 @@
 import { Box, Button } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
-import { AAD_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export function AuthButton() {
-  return USER_DATA.value === undefined ?
+  return USER_DATA === undefined ?
   <SignInButton /> :
   <SignOutButton />;
 }
@@ -33,7 +32,7 @@ export function SignInButton() {
 export function SignOutButton() {
   return (
     <Box sx={{ display: `flex`, flexDirection: `row` }}>
-      <Box>{USER_DATA.value!.name!}</Box>
+      <Box>{USER_DATA!.name!}</Box>
       <Button onClick={() => {
 
         SOCKET.emit("signOut");

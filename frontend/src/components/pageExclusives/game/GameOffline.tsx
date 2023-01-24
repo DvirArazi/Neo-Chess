@@ -33,6 +33,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   const isWhiteTurn = game.turns.length % 2 === 0;
 
+  useEffect(()=>{
+    layout.set(startAndTurnsToBoardLayout(
+      game.start,
+      game.turns.slice(0, game.turns.length - stepsBack.value)
+    ));
+  }, [stepsBack.value]);
+
   return (
     <Layout>
       {/* <TopBanner
@@ -41,11 +48,17 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       /> */}
       {getPlayerBanner(isFlipped.value)}
       <Board
-        enabled={game.status.catagory === GameStatusCatagory.Ongoing}
+        enabled={
+          game.status.catagory === GameStatusCatagory.Ongoing &&
+          stepsBack.value === 0
+        }
         layout={layout.value}
         turnColor={turnsToColor(game.turns)}
         isFlipped={isFlipped.value}
-        flipPieces={isWhiteTurn === isFlipped.value && flipPieces.value}
+        flipPieces={
+          isWhiteTurn === isFlipped.value === (stepsBack.value % 2 === 0) &&
+          flipPieces.value
+        }
         onMove={onMove}
         onPromotion={onPromotion}
         onTurnEnd={onTurnEnd}
@@ -55,8 +68,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         canStepBack={stepsBack.value < game.turns.length}
         canStepForward={stepsBack.value > 0}
         onMenuClick={() => { isMenuOpen.set(true) }}
-        onBackClick={() => stepsBack.set(stepsBack.value - 1)}
-        onForwardClick={() => stepsBack.set(stepsBack.value + 1)}
+        onBackClick={() => stepsBack.set(stepsBack.value + 1)}
+        onForwardClick={() => stepsBack.set(stepsBack.value - 1)}
       />
       <Box sx={{ padding: `10px` }} />
       <MenuOffline
@@ -70,6 +83,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getNewGame(): GameData {
     const start = generateStart();
+
+    // stepsBack.set(0);
 
     return {
       timeframe: timeframe,
@@ -116,12 +131,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       status: newStatus,
       timeLastTurnMil: timeCrntTurnMil
     });
-
-    promotionType.current = null;
-
     if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
       isMenuOpen.set(true);
     }
+    stepsBack.set(0);
+
+    promotionType.current = null;
   }
 
   function handleStartANewGame() {
@@ -129,6 +144,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     setGame(newGame);
     layout.set(startAndTurnsToBoardLayout(newGame.start, newGame.turns));
     isFlipped.set(Math.random() < 0.5);
+    stepsBack.set(0);
   }
 
   function getPlayerBanner(isWhite: boolean) {
