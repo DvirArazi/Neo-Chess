@@ -9,8 +9,8 @@ export default function Clock(props: {
 }) {
   const { timeLeftMil, isTicking, initDateTimeMil } = props;
 
-  //I'm not actually using this variable cause it doe
-  const dateTimeMil = new Stateful(new Date().getTime());
+  //I'm not actually using this variable, just need it for rerendering
+  const dateTimeMil = new Stateful(initDateTimeMil);
 
   useEffect(() => {
     if (isTicking) {
@@ -21,12 +21,11 @@ export default function Clock(props: {
     }
   }, [isTicking]);
 
-  const crntMillis = isTicking ?
+  const crntTimeMs = isTicking ?
     timeLeftMil - (new Date().getTime() - initDateTimeMil) :
     timeLeftMil;
 
-  const minutes = Math.floor(crntMillis / (60 * 1000));
-  const seconds = Math.floor(crntMillis / 1000) % 60;
+  
 
   return (<>
     <Box sx={{
@@ -35,7 +34,18 @@ export default function Clock(props: {
       fontSize: `24px`,
       fontFamily: `roboto-regular`
     }}>
-      {minutes < 10 ? '0' : ''}{minutes}:{seconds < 10 ? '0' : ''}{seconds}
+      {getTimeString()}
     </Box>
   </>);
+
+  function getTimeString() {
+    if (crntTimeMs <= 0) {
+      return '00:00';
+    }
+
+    const minutes = Math.floor(crntTimeMs / (60 * 1000));
+    const seconds = Math.floor(crntTimeMs / 1000) % 60;
+
+    return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+  }
 }

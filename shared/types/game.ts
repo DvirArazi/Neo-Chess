@@ -40,7 +40,7 @@ export type GameState = {
 
 export type GameTurn = {
   action: number,
-  timeLeftMil: number,
+  timeLeftMs: number,
   promotionType: PieceType | null,
   rep: string,
 }
@@ -54,7 +54,7 @@ export type GameData = {
   timeframe: Timeframe,
   isRated: boolean,
   start: PieceType[],
-  timeLastTurnMil: number,
+  timeLastTurnMs: number,
   startRep: string,
   turns: GameTurn[],
   status: GameStatus,

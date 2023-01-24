@@ -21,7 +21,7 @@ export default function Content() {
   const chosen = new Stateful("");
   const isSnackbarOpen = new Stateful(false);
 
-  const isAuthed = USER_DATA.value != undefined;
+  const isAuthed = USER_DATA != undefined;
 
   const start = (timeframe: Timeframe) => {
     if (isOnline) {
