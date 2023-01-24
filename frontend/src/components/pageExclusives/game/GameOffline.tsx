@@ -54,8 +54,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     gameJustOver.set(false);
   }, [stepsBack.value]);
 
-  console.log(game.timeLastTurnMs);
-
   return (
     <Layout>
       {/* <TopBanner
@@ -128,13 +126,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function onTurnEnd() {
     const timeCrntTurnMs = new Date().getTime();
-    const timeLeftMs = game.turns.length >= 2 ?
+    const newTimeLeftMs = game.turns.length >= 2 ?
       (game.turns[game.turns.length - 2].timeLeftMs - (timeCrntTurnMs - game.timeLastTurnMs)) :
       game.timeframe.overallSec * 1000;
 
     const newTurns = game.turns.concat({
       action: pointsToAction(from.current, to.current),
-      timeLeftMs: timeLeftMs,
+      timeLeftMs: newTimeLeftMs,
       promotionType: promotionType.current,
       rep: boardLayoutToRep(layoutRef.current),
     });
@@ -160,7 +158,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     if (timeoutId.current !== undefined) {
       clearTimeout(timeoutId.current);
     }
-    if (game.turns.length >= 1) {
+    if (newTurns.length >= 2) {
       timeoutId.current = setTimeout(() => {
         setGame((game) => ({
           ...game,
@@ -172,7 +170,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
           timeLastTurnMs: new Date().getTime()
         }));
         gameJustOver.set(true);
-      }, timeLeftMs);
+      }, game.turns[game.turns.length - 1].timeLeftMs);
     }
   }
 
@@ -194,21 +192,21 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     />;
 
     function getTimeLeft() {
-      if (
-        isWhite && game.turns.length <= 1 ||
-        !isWhite && game.turns.length <= 2
-      ) {
-        return game.timeframe.overallSec * 1000;
-      }
-
       if (gameJustOver.value &&
         game.status.catagory === GameStatusCatagory.Win &&
         game.status.winColor === PieceColor.White !== isWhite
       ) {
         return 0;
       }
+      console.log('turns length', game.turns.length);
+      if (game.turns.length <= 1) {
+        return game.timeframe.overallSec * 1000;
+      }
+
+      
 
       const add = isWhiteTurn === isWhite ? -1 : 0;
+      console.log('add', isWhiteTurn, isWhite, add);
       return game.turns[game.turns.length - 1 + add].timeLeftMs;
     }
 

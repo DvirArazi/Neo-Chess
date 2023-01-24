@@ -235,7 +235,7 @@ function isInStalemate(layout: BoardLayout, turnColor: PieceColor): boolean {
       const moves = movesResult.value;
       for (const move of moves) {
         const newLayout = step(layout, indexToPoint(i), move, null);
-        if (!isInCheck(newLayout, turnColor)) return true;
+        if (!isInCheck(newLayout, turnColor)) return false;
       }
     }
   }
@@ -260,13 +260,13 @@ export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns:
       reason: WinReason.Checkmate,
     }
   }
-  // if (isInStalemate(layout, oppositeColor)) { //needs testing
-  //   return {
-  //     catagory: GameStatusCatagory.Win,
-  //     winColor: turnColor,
-  //     reason: WinReason.Stalemate,
-  //   }
-  // }
+  if (isInStalemate(layout, oppositeColor)) { //needs testing
+    return {
+      catagory: GameStatusCatagory.Win,
+      winColor: turnColor,
+      reason: WinReason.Stalemate,
+    }
+  }
   if (hasCausedRepetition(turns, startRep)) {
     return {
       catagory: GameStatusCatagory.Draw,
