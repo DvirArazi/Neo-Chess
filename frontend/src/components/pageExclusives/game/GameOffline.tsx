@@ -33,26 +33,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const promotionType = useRef<PieceType | null>(null);
   const timeoutId = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const isWhiteTurn = game.turns.length % 2 === 0;
+  const turnsLength = game.turns.length - stepsBack.value;
+  const isWhiteTurn = turnsLength % 2 === 0;
 
-  useEffect(() => {
-    if (game.status.catagory !== GameStatusCatagory.Ongoing) {
-      isMenuOpen.set(true);
-    }
-    if (game.status.catagory !== GameStatusCatagory.Win ||
-      game.status.reason !== WinReason.Timeout
-    ) {
-      gameJustOver.set(false);
-    } 
-  }, [game.status.catagory]);
-
-  useEffect(() => {
-    layout.set(startAndTurnsToBoardLayout(
-      game.start,
-      game.turns.slice(0, game.turns.length - stepsBack.value)
-    ));
-    gameJustOver.set(false);
-  }, [stepsBack.value]);
+  handleGameStatusChange();
+  handleStepsBackChange();
+  handleGameTurnsChange();
 
   return (
     <Layout>
@@ -63,14 +49,14 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       {getPlayerBanner(isFlipped.value)}
       <Board
         enabled={
-          game.status.catagory === GameStatusCatagory.Ongoing &&
-          stepsBack.value === 0
+          game.status.catagory === GameStatusCatagory.Ongoing// &&
+          // stepsBack.value === 0
         }
         layout={layout.value}
-        turnColor={turnsToColor(game.turns)}
+        turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
         isFlipped={isFlipped.value}
         flipPieces={
-          isWhiteTurn === isFlipped.value === (stepsBack.value % 2 === 0) &&
+          isWhiteTurn === isFlipped.value &&
           flipPieces.value
         }
         onMove={onMove}
@@ -82,8 +68,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         canStepBack={stepsBack.value < game.turns.length}
         canStepForward={stepsBack.value > 0}
         onMenuClick={() => { isMenuOpen.set(true) }}
-        onBackClick={() => stepsBack.set(stepsBack.value + 1)}
-        onForwardClick={() => stepsBack.set(stepsBack.value - 1)}
+        onBackClick={() => stepsBack.set(v => v + 1)}
+        onForwardClick={() => stepsBack.set(v => v - 1)}
       />
       <Box sx={{ padding: `10px` }} />
       <MenuOffline
@@ -126,16 +112,20 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function onTurnEnd() {
     const timeCrntTurnMs = new Date().getTime();
-    const newTimeLeftMs = game.turns.length >= 2 ?
-      (game.turns[game.turns.length - 2].timeLeftMs - (timeCrntTurnMs - game.timeLastTurnMs)) :
+
+    const newTimeLeftMs = turnsLength >= 2 ?
+      (game.turns[turnsLength - 2].timeLeftMs - (timeCrntTurnMs - game.timeLastTurnMs)) :
       game.timeframe.overallSec * 1000;
 
-    const newTurns = game.turns.concat({
-      action: pointsToAction(from.current, to.current),
-      timeLeftMs: newTimeLeftMs,
-      promotionType: promotionType.current,
-      rep: boardLayoutToRep(layoutRef.current),
-    });
+    const newTurns = [
+      ...game.turns.slice(0, game.turns.length - stepsBack.value),
+      {
+        action: pointsToAction(from.current, to.current),
+        timeLeftMs: newTimeLeftMs,
+        promotionType: promotionType.current,
+        rep: boardLayoutToRep(layoutRef.current),
+      }
+    ];
 
     const newStatus = getGameStatus(
       layoutRef.current,
@@ -154,24 +144,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     stepsBack.set(0);
 
     promotionType.current = null;
-
-    if (timeoutId.current !== undefined) {
-      clearTimeout(timeoutId.current);
-    }
-    if (newTurns.length >= 2) {
-      timeoutId.current = setTimeout(() => {
-        setGame((game) => ({
-          ...game,
-          status: {
-            catagory: GameStatusCatagory.Win,
-            winColor: getOppositeColor(turnsToColor(game.turns)),
-            reason: WinReason.Timeout,
-          },
-          timeLastTurnMs: new Date().getTime()
-        }));
-        gameJustOver.set(true);
-      }, game.turns[game.turns.length - 1].timeLeftMs);
-    }
   }
 
   function handleStartANewGame() {
@@ -198,22 +170,66 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       ) {
         return 0;
       }
-      console.log('turns length', game.turns.length);
-      if (game.turns.length <= 1) {
+      if (turnsLength <= 1) {
         return game.timeframe.overallSec * 1000;
       }
 
-      
+
 
       const add = isWhiteTurn === isWhite ? -1 : 0;
-      console.log('add', isWhiteTurn, isWhite, add);
-      return game.turns[game.turns.length - 1 + add].timeLeftMs;
+      return game.turns[turnsLength - 1 + add].timeLeftMs;
     }
 
     function getIsTicking() {
       return isWhite === isWhiteTurn &&
-        game.turns.length > (isWhite ? 1 : 2) &&
+        turnsLength > (isWhite ? 1 : 2) &&
         game.status.catagory === GameStatusCatagory.Ongoing
     }
+  }
+
+  function handleGameStatusChange() {
+    useEffect(() => {
+      if (game.status.catagory !== GameStatusCatagory.Ongoing) {
+        isMenuOpen.set(true);
+      }
+      if (game.status.catagory !== GameStatusCatagory.Win ||
+        game.status.reason !== WinReason.Timeout
+      ) {
+        gameJustOver.set(false);
+      }
+    }, [game.status]);
+  }
+
+  function handleStepsBackChange() {
+    useEffect(() => {
+      layout.set(startAndTurnsToBoardLayout(
+        game.start,
+        game.turns.slice(0, turnsLength)
+      ));
+      gameJustOver.set(false);
+    }, [stepsBack.value]);
+  }
+
+  function handleGameTurnsChange() {
+    useEffect(() => {
+      if (timeoutId.current !== undefined) {
+        clearTimeout(timeoutId.current);
+      }
+
+      if (turnsLength >= 2) {
+        timeoutId.current = setTimeout(() => {
+          setGame((game) => ({
+            ...game,
+            status: {
+              catagory: GameStatusCatagory.Win,
+              winColor: getOppositeColor(turnsToColor(game.turns)),
+              reason: WinReason.Timeout,
+            },
+            timeLastTurnMs: new Date().getTime()
+          }));
+          gameJustOver.set(true);
+        }, game.turns[turnsLength - 1].timeLeftMs);
+      }
+    }, [game.turns]);
   }
 }
