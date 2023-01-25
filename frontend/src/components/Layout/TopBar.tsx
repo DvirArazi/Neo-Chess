@@ -60,5 +60,5 @@ export default function TopBar() {
 }
 
 function isWindowWide() {
-  return window.innerWidth > 700;
+  return window.innerWidth > 550;
 }
