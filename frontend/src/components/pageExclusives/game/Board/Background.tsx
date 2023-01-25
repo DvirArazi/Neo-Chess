@@ -1,3 +1,4 @@
+import { THEME } from "frontend/src/pages/_app";
 import { useEffect, useRef } from "react";
 import { BOARD_SIDE } from "shared/tools/boardLayout";
 
@@ -10,7 +11,7 @@ export default function Background() {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = color0;
+    ctx.fillStyle = THEME.boardDark;
     for (let x = 0; x < BOARD_SIDE; x++) {
       for (let y = 0; y < BOARD_SIDE; y++) {
         if (x % 2 != y % 2) {
@@ -28,7 +29,7 @@ export default function Background() {
       style={{
         position: `absolute`,
         left: `0%`,
-        background: color1,
+        background: THEME.boardLight,
         imageRendering: `pixelated`,
         width: `100%`,
         height: `100%`,
@@ -36,6 +37,3 @@ export default function Background() {
     />
   );
 }
-
-const color0 = `lightblue`;
-const color1 = `white`;

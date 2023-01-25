@@ -1,5 +1,5 @@
 import { Box, SxProps, Button, IconButton, Divider } from "@mui/material";
-import { USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
+import { THEME, USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect } from "react";
 import Icon from "../Icon";
@@ -25,6 +25,7 @@ export default function TopBar() {
     <Box sx={{
       ...barSx,
       height: `64px`,
+      background: THEME.topBar,
     }}>
       <Box sx={{
         ...barSx,

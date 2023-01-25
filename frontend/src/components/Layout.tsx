@@ -1,5 +1,6 @@
 
 import { Box } from "@mui/material";
+import { THEME } from "frontend/src/pages/_app";
 import Head from "next/head";
 import React from "react";
 import { ReactNode } from "react";
@@ -10,21 +11,16 @@ export default function Layout(props: { children: ReactNode }) {
 
   return (
     <>
+      <style jsx global>{`
+        body {
+          background: ${THEME.background};
+        }
+      `}</style>
       <main>
         <TopBar />
-        <Box sx={{
-          // margin: `auto`,
-          // maxWidth: `500px`,
-          // display: `flex`,
-          // flexDirection: `row`,
-          // justifyContent: `center`,
-        }}>
-          {/* <Box sx={{
-            flex: `1`,
-          }}> */}
+        {/* <Box> */}
           {children}
-          {/* </Box> */}
-        </Box>
+        {/* </Box> */}
       </main>
     </>
   );

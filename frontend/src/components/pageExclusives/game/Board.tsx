@@ -58,14 +58,14 @@ export default function Board(props: {
 
   return (
     <Box sx={{
+      
+
       display: `flex`,
       flexDirection: `row`,
       justifyContent: `center`,
     }}>
       <Box sx={{
         flex: `1`,
-        // maxWidth: `450px`,
-        // maxHeight: `450px`,
       }}>
         <Box ref={boxRef}
           onMouseMove={setMouseRelPos}

@@ -34,6 +34,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const promotionType = useRef<PieceType | null>(null);
   const timeoutId = useRef<NodeJS.Timeout | undefined>(undefined);
 
+  const isWide = WINDOW_WIDTH > 600;
   const turnsLength = game.turns.length - stepsBack.value;
   const isWhiteTurn = turnsLength % 2 === 0;
 
@@ -42,7 +43,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   handleGameTurnsChange();
 
   return (<>
-    {WINDOW_WIDTH > 600 ? getWideLayout() : getNarrowLayout()}
+    {isWide ? getWideLayout() : getNarrowLayout()}
     {getMenuOffline()}
   </>);
 
@@ -171,6 +172,10 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         game.start,
         game.turns.slice(0, turnsLength)
       ));
+      setGame({
+        ...game,
+        status: { catagory: GameStatusCatagory.Ongoing }
+      });
       gameJustOver.set(false);
     }, [stepsBack.value]);
   }
@@ -193,7 +198,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
             timeLastTurnMs: new Date().getTime()
           }));
           gameJustOver.set(true);
-        }, game.turns[turnsLength - 1].timeLeftMs);
+        }, game.turns[turnsLength - 2].timeLeftMs);
       }
     }, [game.turns]);
   }
@@ -202,7 +207,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     return <FormatBanner
       timeframe={timeframe}
       isRated={true}
-    />
+      isWide={isWide}
+    />;
   }
 
   function getBoard() {
@@ -258,32 +264,43 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getWideLayout() {
     return <Layout>
-      <Box sx={{ padding: `10px` }}></Box>
+      {/* <Box sx={{ padding: `10px` }}></Box> */}
       <Box sx={{
         display: `flex`,
         flexDirection: `row`,
         justifyContent: `center`,
         maxWidth: `1000px`,
         margin: `auto`,
+        padding: `10px`,
       }}>
         <Box sx={{
-          flex: `1`,
+          flexBasis: `500px`,
+          boxShadow: `0px 8px 15px 2px rgba(0,0,0,0.3)`,
           margin: `10px`,
-          background: THEME.boxBackground
+          borderRadius: `7px`,
+        overflow: `hidden`,
         }}>
-          {getFormatBanner()}
-          {getButtonsBanner()}
-        </Box>
-        <Box sx={{ flexBasis: `500px` }}>
           {getBoard()}
         </Box>
+
         <Box sx={{
           flex: `1`,
           margin: `10px`,
-          background: THEME.boxBackground,
+          maxWidth: `250px`,
+
+          display: `flex`,
+          flexDirection: `column`,
+          justifyContent: `center`,
         }}>
-          {getPlayerBanner(isFlipped.value)}
+          <Box sx={{
+            background: THEME.boxBackground,
+            boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
+          }}>
+            {getFormatBanner()}
+            {getPlayerBanner(isFlipped.value)}
           {getPlayerBanner(!isFlipped.value)}
+            {getButtonsBanner()}
+          </Box>
         </Box>
       </Box>
     </Layout>

@@ -5,19 +5,20 @@ import { TimeFormat, Timeframe } from "shared/types/game";
 
 export default function FormatBanner(props: {
   timeframe: Timeframe,
-  isRated: boolean | null
+  isRated: boolean | null,
+  isWide: boolean,
 }) {
-  const { timeframe, isRated } = props;
+  const { timeframe, isRated, isWide } = props;
 
   const timeStr = `${timeToString(timeframe.overallSec)} | ${timeToString(timeframe.incSec)}`;
   const formatStr = ` • ${timeFormatToString(timeframeToTimeFormat(timeframe))}`;
-  const isRatedStr = isRated === null ? '' : ` • ${isRated ? 'Rated' : 'Casual'}`
+  const isRatedStr = isRated === null ? '' : `${isRated ? 'Rated' : 'Casual'}`
 
   return <Box sx={{
     padding: `15px 0 0 0`,
     textAlign: 'center',
     fontFamily: 'robotoslab',
   }}>
-    {timeStr}{formatStr}{isRatedStr}
+    {timeStr}{formatStr}{isWide ? <Box>{isRatedStr}</Box> : ` • ${isRatedStr}`}
   </Box>
 }

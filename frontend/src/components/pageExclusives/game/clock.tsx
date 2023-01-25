@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef } from "react";
 
@@ -25,14 +26,15 @@ export default function Clock(props: {
     timeLeftMil - (new Date().getTime() - initDateTimeMil) :
     timeLeftMil;
 
-  
+
 
   return (<>
     <Box sx={{
       padding: `5px 5px`,
-      background: `lightgray`,
-      fontSize: `24px`,
-      fontFamily: `roboto-regular`
+      background: THEME.clock,
+      fontSize: `26px`,
+      fontFamily: `robotomono`,
+      borderRadius: `10px`,
     }}>
       {getTimeString()}
     </Box>
