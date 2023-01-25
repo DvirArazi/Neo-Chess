@@ -14,6 +14,7 @@ import { Theme } from 'frontend/src/utils/types/theme';
 import React from 'react';
 
 export let SOCKET: WebSocketClient;
+export let WINDOW_WIDTH: number;
 export let USER_DATA: TokenPayload | undefined;
 export let SET_USER_DATA: Dispatch<SetStateAction<TokenPayload | undefined>>;
 export let THEME: Theme;
@@ -24,6 +25,8 @@ export default function App({ Component, pageProps }: AppProps) {
 
   const isReady = new Stateful(false);
 
+  let setWindowWidth: Dispatch<SetStateAction<number>>;
+  [WINDOW_WIDTH, setWindowWidth] = useState<number>(0);
   [USER_DATA, SET_USER_DATA] = useState<TokenPayload | undefined>(undefined);
   [THEME, SET_THEME] = useState(LIGHT_THEME);
 
@@ -57,6 +60,11 @@ export default function App({ Component, pageProps }: AppProps) {
     if (aad != undefined) {
       console.log('auto sign in');
       SOCKET.emit("autoSignIn", aad);
+    }
+
+    setWindowWidth(window.innerWidth);
+    window.onresize = () => {
+      setWindowWidth(window.innerWidth);
     }
 
     isReady.set(true);

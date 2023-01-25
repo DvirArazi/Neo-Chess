@@ -3,7 +3,7 @@ import { timeFormatToString, timeToString } from "frontend/src/utils/tools/gener
 import { timeframeToTimeFormat } from "shared/tools/general";
 import { TimeFormat, Timeframe } from "shared/types/game";
 
-export default function TopBanner(props: {
+export default function FormatBanner(props: {
   timeframe: Timeframe,
   isRated: boolean | null
 }) {
@@ -16,6 +16,7 @@ export default function TopBanner(props: {
   return <Box sx={{
     padding: `15px 0 0 0`,
     textAlign: 'center',
+    fontFamily: 'robotoslab',
   }}>
     {timeStr}{formatStr}{isRatedStr}
   </Box>

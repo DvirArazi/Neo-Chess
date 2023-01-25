@@ -13,13 +13,17 @@ export default function Layout(props: { children: ReactNode }) {
       <main>
         <TopBar />
         <Box sx={{
-          margin: `auto`,
-          maxWidth: `500px`,
+          // margin: `auto`,
+          // maxWidth: `500px`,
           // display: `flex`,
-          // flexDirection: `column`,
+          // flexDirection: `row`,
           // justifyContent: `center`,
         }}>
+          {/* <Box sx={{
+            flex: `1`,
+          }}> */}
           {children}
+          {/* </Box> */}
         </Box>
       </main>
     </>

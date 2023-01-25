@@ -64,16 +64,14 @@ export default function Board(props: {
     }}>
       <Box sx={{
         flex: `1`,
-        position: `absoulte`,
-        maxWidth: `450px`,
-        maxHeight: `450px`,
+        // maxWidth: `450px`,
+        // maxHeight: `450px`,
       }}>
         <Box ref={boxRef}
           onMouseMove={setMouseRelPos}
           sx={{
             position: `relative`,
             width: `100%`,
-            height: `0`,
             paddingBottom: `100%`,
             boxSizing: `border-box`,
             overflow: `hidden`,

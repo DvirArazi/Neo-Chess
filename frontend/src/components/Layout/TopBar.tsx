@@ -1,5 +1,5 @@
 import { Box, SxProps, Button, IconButton, Divider } from "@mui/material";
-import { USER_DATA } from "frontend/src/pages/_app";
+import { USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect } from "react";
 import Icon from "../Icon";
@@ -13,13 +13,13 @@ export default function TopBar() {
     flexDirection: `row`,
   };
 
-  const isWide = new Stateful(isWindowWide());
+  // const isWide = new Stateful(isWindowWide());
 
-  useEffect(() => {
-    window.onresize = () => {
-      isWide.set(isWindowWide());
-    }
-  }, []);
+  // useEffect(() => {
+  //   window.onresize = () => {
+  //     isWide.set(isWindowWide());
+  //   }
+  // }, []);
 
   return <>
     <Box sx={{
@@ -35,7 +35,7 @@ export default function TopBar() {
       }}>
         <Icon path='logo' side={30} />
         <Box sx={{ padding: `5px` }} />
-        {isWide.value ? 'NEO-CHESS' : <></>}
+        {WINDOW_WIDTH > 550 ? 'NEO-CHESS' : <></>}
       </Box>
       <Box sx={{
         ...barSx,
@@ -57,8 +57,4 @@ export default function TopBar() {
       <Icon path={path} side={side} color={'#5F6368'} />
     </Box>
   }
-}
-
-function isWindowWide() {
-  return window.innerWidth > 550;
 }

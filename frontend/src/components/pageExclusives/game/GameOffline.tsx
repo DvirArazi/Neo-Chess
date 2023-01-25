@@ -1,10 +1,10 @@
 import { Box, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
-import BottomBanner from "frontend/src/components/pageExclusives/game/BottomBanner";
+import ButtonsBanner from "frontend/src/components/pageExclusives/game/BottomBanner";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
-import TopBanner from "frontend/src/components/pageExclusives/game/TopBanner";
+import FormatBanner from "frontend/src/components/pageExclusives/game/TopBanner";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
@@ -15,6 +15,7 @@ import { DrawReason, GameData, GameStatus, GameStatusCatagory, Point, Timeframe,
 import { PieceColor, PieceType } from "shared/types/piece";
 import { MenuOffline } from "frontend/src/components/pageExclusives/game/GameOffline/MenuOffline";
 import { getOppositeColor } from "shared/tools/piece";
+import { THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 
 export default function GameOffline(props: { timeframe: Timeframe }) {
   const { timeframe } = props;
@@ -40,46 +41,10 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   handleStepsBackChange();
   handleGameTurnsChange();
 
-  return (
-    <Layout>
-      {/* <TopBanner
-        timeframe={{ overallSec: 10 * 60, incSec: 15 }}
-        isRated={true}
-      /> */}
-      {getPlayerBanner(isFlipped.value)}
-      <Board
-        enabled={
-          game.status.catagory === GameStatusCatagory.Ongoing// &&
-          // stepsBack.value === 0
-        }
-        layout={layout.value}
-        turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
-        isFlipped={isFlipped.value}
-        flipPieces={
-          isWhiteTurn === isFlipped.value &&
-          flipPieces.value
-        }
-        onMove={onMove}
-        onPromotion={onPromotion}
-        onTurnEnd={onTurnEnd}
-      />
-      {getPlayerBanner(!isFlipped.value)}
-      <BottomBanner
-        canStepBack={stepsBack.value < game.turns.length}
-        canStepForward={stepsBack.value > 0}
-        onMenuClick={() => { isMenuOpen.set(true) }}
-        onBackClick={() => stepsBack.set(v => v + 1)}
-        onForwardClick={() => stepsBack.set(v => v - 1)}
-      />
-      <Box sx={{ padding: `10px` }} />
-      <MenuOffline
-        isOpen={isMenuOpen}
-        status={game.status}
-        isFlipped={flipPieces}
-        onStartANewGame={handleStartANewGame}
-      />
-    </Layout>
-  );
+  return (<>
+    {WINDOW_WIDTH > 600 ? getWideLayout() : getNarrowLayout()}
+    {getMenuOffline()}
+  </>);
 
   function getNewGame(): GameData {
     const start = generateStart();
@@ -231,5 +196,96 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         }, game.turns[turnsLength - 1].timeLeftMs);
       }
     }, [game.turns]);
+  }
+
+  function getFormatBanner() {
+    return <FormatBanner
+      timeframe={timeframe}
+      isRated={true}
+    />
+  }
+
+  function getBoard() {
+    return <Board
+      enabled={
+        game.status.catagory === GameStatusCatagory.Ongoing// &&
+        // stepsBack.value === 0
+      }
+      layout={layout.value}
+      turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
+      isFlipped={isFlipped.value}
+      flipPieces={
+        isWhiteTurn === isFlipped.value &&
+        flipPieces.value
+      }
+      onMove={onMove}
+      onPromotion={onPromotion}
+      onTurnEnd={onTurnEnd}
+    />;
+  }
+
+  function getButtonsBanner() {
+    return <ButtonsBanner
+      canStepBack={stepsBack.value < game.turns.length}
+      canStepForward={stepsBack.value > 0}
+      onMenuClick={() => { isMenuOpen.set(true) }}
+      onBackClick={() => stepsBack.set(v => v + 1)}
+      onForwardClick={() => stepsBack.set(v => v - 1)}
+    />;
+  }
+
+  function getMenuOffline() {
+    return <MenuOffline
+      isOpen={isMenuOpen}
+      status={game.status}
+      isFlipped={flipPieces}
+      onStartANewGame={handleStartANewGame}
+    />
+  }
+
+  function getNarrowLayout() {
+    return <Layout>
+      <Box sx={{margin: `auto`}}>
+        {getFormatBanner()}
+        {getPlayerBanner(isFlipped.value)}
+        {getBoard()}
+        {getPlayerBanner(!isFlipped.value)}
+        {getButtonsBanner()}
+        <Box sx={{ padding: `5px` }} />
+      </Box>
+    </Layout>
+  }
+
+  function getWideLayout() {
+    return <Layout>
+      <Box sx={{ padding: `10px` }}></Box>
+      <Box sx={{
+        display: `flex`,
+        flexDirection: `row`,
+        justifyContent: `center`,
+        maxWidth: `1000px`,
+        margin: `auto`,
+      }}>
+        <Box sx={{
+          flex: `1`,
+          margin: `10px`,
+          background: THEME.boxBackground
+        }}>
+          {getFormatBanner()}
+          {getButtonsBanner()}
+        </Box>
+        <Box sx={{ flexBasis: `500px` }}>
+          {getBoard()}
+        </Box>
+        <Box sx={{
+          flex: `1`,
+          margin: `10px`,
+          background: THEME.boxBackground,
+        }}>
+          {getPlayerBanner(isFlipped.value)}
+          {getPlayerBanner(!isFlipped.value)}
+        </Box>
+      </Box>
+    </Layout>
   }
 }

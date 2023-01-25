@@ -2,12 +2,12 @@ import { Box, IconButton } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import { THEME } from "frontend/src/pages/_app";
 
-export default function BottomBanner(props: {
+export default function ButtonsBanner(props: {
   canStepBack: boolean,
   canStepForward: boolean,
   onMenuClick: () => void,
   onBackClick: () => void,
-  onForwardClick: ()=> void,
+  onForwardClick: () => void,
 }) {
   const {
     onMenuClick,
