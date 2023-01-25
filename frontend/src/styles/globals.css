@@ -1,6 +1,7 @@
 :root {
   text-align: center;
   font-family: sans-serif;
+  user-select: none;
 }
 
 body {

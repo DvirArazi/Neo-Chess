@@ -15,7 +15,7 @@ export default function FormatBanner(props: {
   const isRatedStr = isRated === null ? '' : `${isRated ? 'Rated' : 'Casual'}`
 
   return <Box sx={{
-    padding: `15px 0 0 0`,
+    padding: `0 0 0 0`,
     textAlign: 'center',
     fontFamily: 'robotoslab',
   }}>

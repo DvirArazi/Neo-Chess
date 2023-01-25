@@ -80,7 +80,11 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     const timeCrntTurnMs = new Date().getTime();
 
     const newTimeLeftMs = turnsLength >= 2 ?
-      (game.turns[turnsLength - 2].timeLeftMs - (timeCrntTurnMs - game.timeLastTurnMs)) :
+      (
+        game.turns[turnsLength - 2].timeLeftMs
+        - (timeCrntTurnMs - game.timeLastTurnMs)
+        + timeframe.incSec * 1000
+      ) :
       game.timeframe.overallSec * 1000;
 
     const newTurns = [
@@ -251,7 +255,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getNarrowLayout() {
     return <Layout>
-      <Box sx={{margin: `auto`}}>
+      <Box sx={{ margin: `auto` }}>
         {getFormatBanner()}
         {getPlayerBanner(isFlipped.value)}
         {getBoard()}
@@ -278,13 +282,14 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
           boxShadow: `0px 8px 15px 2px rgba(0,0,0,0.3)`,
           margin: `10px`,
           borderRadius: `7px`,
-        overflow: `hidden`,
+          overflow: `hidden`,
         }}>
           {getBoard()}
         </Box>
 
         <Box sx={{
           flex: `1`,
+
           margin: `10px`,
           maxWidth: `250px`,
 
@@ -293,12 +298,15 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
           justifyContent: `center`,
         }}>
           <Box sx={{
+            borderRadius: `7px`,
+            padding: `10px 0`,
+
             background: THEME.boxBackground,
             boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
           }}>
             {getFormatBanner()}
             {getPlayerBanner(isFlipped.value)}
-          {getPlayerBanner(!isFlipped.value)}
+            {getPlayerBanner(!isFlipped.value)}
             {getButtonsBanner()}
           </Box>
         </Box>
