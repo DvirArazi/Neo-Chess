@@ -8,7 +8,7 @@ import FormatBanner from "frontend/src/components/pageExclusives/game/TopBanner"
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { getGameStatus, generateStart, startAndTurnsToBoardLayout, step, pointToIndex, promote } from "shared/tools/boardLayout";
+import { getGameStatus, generateStart, startAndTurnsToBoardLayout, step, pointToIndex, promote, getCapturedCountsWithoutPawns } from "shared/tools/boardLayout";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { DrawReason, GameData, GameStatus, GameStatusCatagory, Point, Timeframe, WinReason } from "shared/types/game";
@@ -26,7 +26,9 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isFlipped = new Stateful(Math.random() < 0.5);
   const flipPieces = new Stateful(true);
   const stepsBack = new Stateful(0);
-  const gameJustOver = new Stateful(false);
+  const isGameJustOverByTimeout = new Stateful(false);
+  // const isGameOver = new Stateful(false);
+  const hasTimedOut = new Stateful(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -37,10 +39,15 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isWide = WINDOW_WIDTH > 600;
   const turnsLength = game.turns.length - stepsBack.value;
   const isWhiteTurn = turnsLength % 2 === 0;
+  const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
+  const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
+    && game.status.reason === WinReason.Timeout;
+  const isGameOver = !(isStatusOngoing || isStatusTimeout);
+  console.log(game.status)
 
   handleGameStatusChange();
   handleStepsBackChange();
-  handleGameTurnsChange();
+  handleStepsBackAndTurnsChange();
 
   return (<>
     {isWide ? getWideLayout() : getNarrowLayout()}
@@ -81,9 +88,14 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
     const newTimeLeftMs = turnsLength >= 2 ?
       (
-        game.turns[turnsLength - 2].timeLeftMs
-        - (timeCrntTurnMs - game.timeLastTurnMs)
-        + timeframe.incSec * 1000
+        isGameJustOverByTimeout.value ?
+          0 :
+          game.turns[turnsLength - 2].timeLeftMs + (
+            hasTimedOut.value ?
+              0 :
+              - (timeCrntTurnMs - game.timeLastTurnMs)
+              + timeframe.incSec * 1000
+          )
       ) :
       game.timeframe.overallSec * 1000;
 
@@ -112,6 +124,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     });
 
     stepsBack.set(0);
+    // isGameOver.set(false);
 
     promotionType.current = null;
   }
@@ -122,6 +135,82 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     layout.set(startAndTurnsToBoardLayout(newGame.start, newGame.turns));
     isFlipped.set(Math.random() < 0.5);
     stepsBack.set(0);
+    // isGameOver.set(false);
+    hasTimedOut.set(false);
+  }
+
+  function handleGameStatusChange() {
+    useEffect(() => {
+      if (
+        !(isStatusOngoing || isStatusTimeout)
+        || (isStatusTimeout && !hasTimedOut.value)
+      ) {
+        isMenuOpen.set(true);
+      }
+
+      if (isStatusTimeout) {
+        hasTimedOut.set(true);
+      } else {
+        isGameJustOverByTimeout.set(false);
+      }
+
+      // // console.log(isStatusOngoing, isStatusTimeout)
+      // if (!(isStatusOngoing || isStatusTimeout)) {
+      //   // console.log('game is over')
+      //   // isGameOver.set(true);
+      // }
+
+    }, [game.status]);
+  }
+
+  function handleStepsBackChange() {
+    useEffect(() => {
+      layout.set(startAndTurnsToBoardLayout(
+        game.start,
+        game.turns.slice(0, turnsLength)
+      ));
+
+      setGame({
+        ...game,
+        timeLastTurnMs: new Date().getTime(),
+        status: { catagory: GameStatusCatagory.Ongoing }
+      });
+      
+      isGameJustOverByTimeout.set(false);
+
+    }, [stepsBack.value]);
+  }
+
+  function handleStepsBackAndTurnsChange() {
+    useEffect(() => {
+      if (timeoutId.current !== undefined) {
+        clearTimeout(timeoutId.current);
+      }
+
+      if (turnsLength >= 2 && !hasTimedOut.value && !isGameOver) {
+        timeoutId.current = setTimeout(() => {
+          setGame((game) => ({
+            ...game,
+            status: {
+              catagory: GameStatusCatagory.Win,
+              winColor: getOppositeColor(turnsToColor(game.turns)),
+              reason: WinReason.Timeout,
+            },
+            timeLastTurnMs: new Date().getTime()
+          }));
+          isGameJustOverByTimeout.set(true);
+        }, game.turns[turnsLength - 2].timeLeftMs);
+      }
+
+    }, [stepsBack.value, game.turns]);
+  }
+
+  function getFormatBanner() {
+    return <FormatBanner
+      timeframe={timeframe}
+      isRated={null}
+      isWide={isWide}
+    />;
   }
 
   function getPlayerBanner(isWhite: boolean) {
@@ -131,10 +220,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       timeLeftMil={getTimeLeft()}
       isTicking={getIsTicking()}
       initDateTimeMil={game.timeLastTurnMs}
+      color={isWhite ? PieceColor.White : PieceColor.Black}
+      layout={layout.value}
     />;
 
     function getTimeLeft() {
-      if (gameJustOver.value &&
+      if (isGameJustOverByTimeout.value &&
         game.status.catagory === GameStatusCatagory.Win &&
         game.status.winColor === PieceColor.White !== isWhite
       ) {
@@ -153,73 +244,18 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     function getIsTicking() {
       return isWhite === isWhiteTurn &&
         turnsLength > (isWhite ? 1 : 2) &&
-        game.status.catagory === GameStatusCatagory.Ongoing
+        game.status.catagory === GameStatusCatagory.Ongoing &&
+        !hasTimedOut.value &&
+        !isGameOver
     }
-  }
-
-  function handleGameStatusChange() {
-    useEffect(() => {
-      if (game.status.catagory !== GameStatusCatagory.Ongoing) {
-        isMenuOpen.set(true);
-      }
-      if (game.status.catagory !== GameStatusCatagory.Win ||
-        game.status.reason !== WinReason.Timeout
-      ) {
-        gameJustOver.set(false);
-      }
-    }, [game.status]);
-  }
-
-  function handleStepsBackChange() {
-    useEffect(() => {
-      layout.set(startAndTurnsToBoardLayout(
-        game.start,
-        game.turns.slice(0, turnsLength)
-      ));
-      setGame({
-        ...game,
-        status: { catagory: GameStatusCatagory.Ongoing }
-      });
-      gameJustOver.set(false);
-    }, [stepsBack.value]);
-  }
-
-  function handleGameTurnsChange() {
-    useEffect(() => {
-      if (timeoutId.current !== undefined) {
-        clearTimeout(timeoutId.current);
-      }
-
-      if (turnsLength >= 2) {
-        timeoutId.current = setTimeout(() => {
-          setGame((game) => ({
-            ...game,
-            status: {
-              catagory: GameStatusCatagory.Win,
-              winColor: getOppositeColor(turnsToColor(game.turns)),
-              reason: WinReason.Timeout,
-            },
-            timeLastTurnMs: new Date().getTime()
-          }));
-          gameJustOver.set(true);
-        }, game.turns[turnsLength - 2].timeLeftMs);
-      }
-    }, [game.turns]);
-  }
-
-  function getFormatBanner() {
-    return <FormatBanner
-      timeframe={timeframe}
-      isRated={true}
-      isWide={isWide}
-    />;
   }
 
   function getBoard() {
     return <Board
       enabled={
-        game.status.catagory === GameStatusCatagory.Ongoing// &&
-        // stepsBack.value === 0
+        // (game.status.catagory === GameStatusCatagory.Ongoing || isInTimeout)
+        // && 
+        !isGameOver
       }
       layout={layout.value}
       turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}

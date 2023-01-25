@@ -4,7 +4,7 @@ import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef } from "react";
-import { BOARD_SIDE, getLegalMoves, getPieceCounts, pointToIndex } from "shared/tools/boardLayout";
+import { BOARD_SIDE, getLegalMoves, getCapturedCountsWithoutPawns, pointToIndex } from "shared/tools/boardLayout";
 import { BoardLayout, PieceCount, PieceDataWithKey } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
@@ -58,8 +58,6 @@ export default function Board(props: {
 
   return (
     <Box sx={{
-      
-
       display: `flex`,
       flexDirection: `row`,
       justifyContent: `center`,
@@ -192,7 +190,7 @@ export default function Board(props: {
     let pieceCounts: PieceCount[];
     if (
       isPromotion(newLayout, newTo) &&
-      (pieceCounts = getPieceCounts(layout, turnColor))
+      (pieceCounts = getCapturedCountsWithoutPawns(layout, turnColor))
         .some(pieceCount => pieceCount.count > 0)
     ) {
       promotionTo.set(newTo);

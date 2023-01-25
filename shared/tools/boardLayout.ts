@@ -245,7 +245,7 @@ function isInStalemate(layout: BoardLayout, turnColor: PieceColor): boolean {
 
 export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns: GameTurn[], startRep: string): GameStatus {
   const oppositeColor = getOppositeColor(turnColor)
-  
+
   if (isKingCaptured(layout, oppositeColor)) {
     return {
       catagory: GameStatusCatagory.Win,
@@ -310,14 +310,11 @@ export function promote(layout: BoardLayout, to: Point, promotionType: PieceType
   return newLayout;
 }
 
-export function getPieceCounts(layout: BoardLayout, turnColor: PieceColor) {
-  const piecesCounts: PieceCount[] = [
-    { type: PieceType.Queen, count: 1 },
-    { type: PieceType.Rook, count: 2 },
-    { type: PieceType.Knight, count: 2 },
-    { type: PieceType.Bishop, count: 2 },
-  ];
-
+function getCapturedCounts(
+  layout: BoardLayout,
+  turnColor: PieceColor,
+  piecesCounts: PieceCount[]
+) {
   for (const square of layout) {
     if (square?.color !== turnColor) continue;
 
@@ -328,6 +325,29 @@ export function getPieceCounts(layout: BoardLayout, turnColor: PieceColor) {
   }
 
   return piecesCounts;
+}
+
+export function getCapturedCountsWithoutPawns(layout: BoardLayout, turnColor: PieceColor) {
+  const piecesCounts: PieceCount[] = [
+    { type: PieceType.Queen, count: 1 },
+    { type: PieceType.Rook, count: 2 },
+    { type: PieceType.Knight, count: 2 },
+    { type: PieceType.Bishop, count: 2 },
+  ];
+
+  return getCapturedCounts(layout, turnColor, piecesCounts);
+}
+
+export function getCapturedCountsWithPawns(layout: BoardLayout, turnColor: PieceColor) {
+  const piecesCounts: PieceCount[] = [
+    { type: PieceType.Queen, count: 1 },
+    { type: PieceType.Rook, count: 2 },
+    { type: PieceType.Knight, count: 2 },
+    { type: PieceType.Bishop, count: 2 },
+    { type: PieceType.Pawn, count: 8 },
+  ];
+
+  return getCapturedCounts(layout, turnColor, piecesCounts);
 }
 
 export function isOnBoard(square: Point) {
