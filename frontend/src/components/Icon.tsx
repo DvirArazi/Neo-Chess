@@ -19,9 +19,10 @@ export default function Icon(props: { path: string, color?: string | undefined, 
           height: `100%`,
           
           WebkitMask: `url(/svgs/${path}.svg) no-repeat 50% 50%`,
-          mask: `url(/svgs/${path}.svg) no-repeat 50% 50%`,
           WebkitMaskSize: `cover`,
-          maskSize: `cover`,
+          // removed these cause React complained
+          // mask: `url(/svgs/${path}.svg) cover no-repeat 50% 50%`,
+          // maskSize: `cover`,
 
           backgroundColor: color,
         }}>

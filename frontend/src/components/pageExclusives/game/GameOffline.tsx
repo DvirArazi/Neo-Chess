@@ -26,15 +26,16 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isFlipped = new Stateful(Math.random() < 0.5);
   const flipPieces = new Stateful(true);
   const stepsBack = new Stateful(0);
+  const isPaused = new Stateful(false);
+  const timeUnpausedMs = new Stateful(0);
   const isGameJustOverByTimeout = new Stateful(false);
-  // const isGameOver = new Stateful(false);
   const hasTimedOut = new Stateful(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
   const to = useRef<Point>({ x: 0, y: 0 });
   const promotionType = useRef<PieceType | null>(null);
-  const timeoutId = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timeoutId = useRef<NodeJS.Timeout | null>(null);
 
   const isWide = WINDOW_WIDTH > 600;
   const turnsLength = game.turns.length - stepsBack.value;
@@ -43,11 +44,10 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
-  console.log(game.status)
 
   handleGameStatusChange();
   handleStepsBackChange();
-  handleStepsBackAndTurnsChange();
+  handleStepsBackOrTurnsOrIsPausedChange();
 
   return (<>
     {isWide ? getWideLayout() : getNarrowLayout()}
@@ -124,7 +124,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     });
 
     stepsBack.set(0);
-    // isGameOver.set(false);
+    isPaused.set(false);
+    timeUnpausedMs.set(0);
 
     promotionType.current = null;
   }
@@ -135,8 +136,9 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     layout.set(startAndTurnsToBoardLayout(newGame.start, newGame.turns));
     isFlipped.set(Math.random() < 0.5);
     stepsBack.set(0);
-    // isGameOver.set(false);
     hasTimedOut.set(false);
+    isPaused.set(false);
+    timeUnpausedMs.set(0);
   }
 
   function handleGameStatusChange() {
@@ -175,19 +177,19 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         timeLastTurnMs: new Date().getTime(),
         status: { catagory: GameStatusCatagory.Ongoing }
       });
-      
+
       isGameJustOverByTimeout.set(false);
 
     }, [stepsBack.value]);
   }
 
-  function handleStepsBackAndTurnsChange() {
+  function handleStepsBackOrTurnsOrIsPausedChange() {
     useEffect(() => {
-      if (timeoutId.current !== undefined) {
+      if (timeoutId.current !== null) {
         clearTimeout(timeoutId.current);
       }
 
-      if (turnsLength >= 2 && !hasTimedOut.value && !isGameOver) {
+      if (turnsLength >= 2 && !hasTimedOut.value && !isGameOver && !isPaused.value) {
         timeoutId.current = setTimeout(() => {
           setGame((game) => ({
             ...game,
@@ -199,10 +201,10 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
             timeLastTurnMs: new Date().getTime()
           }));
           isGameJustOverByTimeout.set(true);
-        }, game.turns[turnsLength - 2].timeLeftMs);
+        }, game.turns[turnsLength - 2].timeLeftMs - timeUnpausedMs.value);
       }
 
-    }, [stepsBack.value, game.turns]);
+    }, [stepsBack.value, game.turns, isPaused.value]);
   }
 
   function getFormatBanner() {
@@ -214,7 +216,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getPlayerBanner(isWhite: boolean) {
-    return <PlayerBanner
+    return <PlayerBanner key={Number(isWhite)}
       name={isWhite ? 'White' : 'Black'}
       rating={null}
       timeLeftMil={getTimeLeft()}
@@ -231,14 +233,19 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       ) {
         return 0;
       }
+
       if (turnsLength <= 1) {
         return game.timeframe.overallSec * 1000;
       }
 
+      const [iMod, timeMod] = isWhiteTurn === isWhite ? [-1, -timeUnpausedMs.value] : [0, 0];
 
+      // if (isWhiteTurn === isWhite && isPaused) {
+      //   return game.turns[turnsLength - 1 + add].timeLeftMs
+      //     - (isPaused.value.timeSincePauseMs)
+      // }
 
-      const add = isWhiteTurn === isWhite ? -1 : 0;
-      return game.turns[turnsLength - 1 + add].timeLeftMs;
+      return game.turns[turnsLength - 1 + iMod].timeLeftMs + timeMod;
     }
 
     function getIsTicking() {
@@ -246,7 +253,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         turnsLength > (isWhite ? 1 : 2) &&
         game.status.catagory === GameStatusCatagory.Ongoing &&
         !hasTimedOut.value &&
-        !isGameOver
+        !isGameOver &&
+        !isPaused.value
     }
   }
 
@@ -274,7 +282,20 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     return <ButtonsBanner
       canStepBack={stepsBack.value < game.turns.length}
       canStepForward={stepsBack.value > 0}
-      onMenuClick={() => { isMenuOpen.set(true) }}
+      isPaused={isPaused.value}
+      isWide={isWide}
+      onMenuClick={() => isMenuOpen.set(true)}
+      onPauseClick={() => {
+        const crntTimeMs = new Date().getTime();
+
+        if (isPaused.value) {
+          setGame(v=>({...v, timeLastTurnMs: crntTimeMs}));
+        } else {
+          timeUnpausedMs.set(v => v + crntTimeMs - game.timeLastTurnMs); 
+        }
+
+        isPaused.set(v => !v);
+      }}
       onBackClick={() => stepsBack.set(v => v + 1)}
       onForwardClick={() => stepsBack.set(v => v - 1)}
     />;
@@ -349,4 +370,14 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       </Box>
     </Layout>
   }
+
+  // function getTimeRemaining() {
+  //   return game.turns[turnsLength - 2].timeLeftMs - timePausedMs.value;
+  // }
 }
+
+// type PauseStatus = {
+//   catagory: "paused" | "unpaused" | "play"
+//   timeSincePauseMs: number,
+//   timeAtPauseMs: number,
+// }
