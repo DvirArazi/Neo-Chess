@@ -32,7 +32,7 @@ export default function Home() {
         throw new Error("Function not implemented.");
       } }
     /> */}
-    <GameOffline timeframe={{ overallSec: 5, incSec: 5 }} />
+    <GameOffline timeframe={{ overallSec: 10*60, incSec: 5 }} />
     {/* <Box>Hello</Box> */}
     {/* <Icon name="wifi" /> */}
   </>;

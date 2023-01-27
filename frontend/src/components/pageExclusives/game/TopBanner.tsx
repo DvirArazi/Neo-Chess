@@ -11,7 +11,7 @@ export default function FormatBanner(props: {
   const { timeframe, isRated, isWide } = props;
 
   const timeStr = `${timeToString(timeframe.overallSec)} | ${timeToString(timeframe.incSec)}`;
-  const formatStr = ` • ${timeFormatToString(timeframeToTimeFormat(timeframe))}`;
+  const formatStr = timeFormatToString(timeframeToTimeFormat(timeframe));
   const isRatedStr = isRated === null ? '' : `${isRated ? 'Rated' : 'Casual'}`
 
   return <Box sx={{
@@ -19,6 +19,17 @@ export default function FormatBanner(props: {
     textAlign: 'center',
     fontFamily: 'robotoslab',
   }}>
-    {timeStr}{formatStr}{isWide ? <Box>{isRatedStr}</Box> : ` • ${isRatedStr}`}
-  </Box>
+    <>
+      {`${timeStr} • ${formatStr}`}
+      {getRatedComponent()}
+    </>
+  </Box>;
+
+  function getRatedComponent() {
+    if (isRated === null) return <></>;
+
+    const isRatedStr = isRated ? 'Rated' : 'Casual';
+
+    return isWide ? <Box>{isRatedStr}</Box> : ` • ${isRatedStr}`;
+  }
 }
