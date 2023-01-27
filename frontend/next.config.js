@@ -22,10 +22,21 @@ const nextConfig = {
       ]
     });
 
+    // //to load svgs
+    // //============
+    // config.module.rules.push({
+    //   test: /\.svg$/,
+    //   use: [
+    //     {
+    //       loader: 'svg-inline-loader',
+    //     }
+    //   ]
+    // });
+
     //to enable using SVGR
     //====================
     config.module.rules.push({
-      test: /\.svg$/i,
+      test: /\.svg$/,
       issuer: /\.[jt]sx?$/,
       use: ['@svgr/webpack'],
     });

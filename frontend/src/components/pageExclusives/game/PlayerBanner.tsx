@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import Clock from "frontend/src/components/pageExclusives/game/clock";
+import { IconName } from "frontend/src/utils/types/iconName";
 import { getCapturedCountsWithoutPawns, getCapturedCountsWithPawns } from "shared/tools/boardLayout";
 import { getOppositeColor, pieceDataToIconName } from "shared/tools/piece";
 import { BoardLayout, PieceCount } from "shared/types/boardLayout";
@@ -48,7 +49,7 @@ export default function PlayerBunner(props: {
       if (pieceCount.count === 0) continue;
       for (let i = 0; i < pieceCount.count; i++) {
         pieces.push(<MiniPiece
-          pieceName={pieceDataToIconName({ type: pieceCount.type, color: oppositeColor })}
+          iconName={pieceDataToIconName({ type: pieceCount.type, color: oppositeColor })}
           x={crntX}
         />);
 
@@ -62,14 +63,14 @@ export default function PlayerBunner(props: {
   }
 }
 
-function MiniPiece(props: { pieceName: string, x: number }) {
-  const { pieceName, x, } = props;
+function MiniPiece(props: { iconName: IconName, x: number }) {
+  const { iconName, x, } = props;
 
   return <Box sx={{
     position: `absolute`,
     left: `${x}px`,
     height: `100%`,
   }}>
-    <Icon path={`chess/${pieceName}`} />
+    <Icon name={iconName} />
   </Box>
 }

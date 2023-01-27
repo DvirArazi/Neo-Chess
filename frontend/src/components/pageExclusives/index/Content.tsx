@@ -37,8 +37,8 @@ export default function Content() {
       <Layout>
         <h1>Neo-Chess</h1>
         <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
-          <Icon path="wifi" side={25} color={isAuthed ? "#000000" : "#808080"} />
-          <Icon path="wifi_off" side={25} />
+          <Icon name="wifi" side={25} filter={isAuthed ? "#000000" : "#808080"} />
+          <Icon name="wifiOff" side={25} />
         </Toggle>
         <Box sx={{ textAlign: `center`, padding: `10px` }}>
           <Collapsible isOpen={isOnline.value}>

@@ -6,6 +6,7 @@
     "dev": "nodemon --watch backend/**/*.ts --exec ts-node backend/src/index.ts",
     "build": "cd frontend && next build && cd .. && tsc --project backend/tsconfig.json",
     "start": "cross-env NODE_ENV=production NODE_PATH=backend/dist/ node backend/dist/backend/src/index.js",
+    "generate": "ts-node -r esm generate/generate.ts",
     "lint": "next lint"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
     "@svgr/webpack": "^6.5.1",
     "@types/js-cookie": "^3.0.2",
     "cross-env": "^7.0.3",
+    "esm": "^3.2.25",
     "nodemon": "^2.0.20",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",

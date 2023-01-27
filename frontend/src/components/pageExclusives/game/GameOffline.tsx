@@ -1,8 +1,7 @@
 import { Box, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
-import ButtonsBanner from "frontend/src/components/pageExclusives/game/BottomBanner";
-import ModalFrame from "frontend/src/components/ModalFrame";
+import ButtonsBanner from "frontend/src/components/pageExclusives/game/ButtonsBanner";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import FormatBanner from "frontend/src/components/pageExclusives/game/TopBanner";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -240,11 +239,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
       const [iMod, timeMod] = isWhiteTurn === isWhite ? [-1, -timeUnpausedMs.value] : [0, 0];
 
-      // if (isWhiteTurn === isWhite && isPaused) {
-      //   return game.turns[turnsLength - 1 + add].timeLeftMs
-      //     - (isPaused.value.timeSincePauseMs)
-      // }
-
       return game.turns[turnsLength - 1 + iMod].timeLeftMs + timeMod;
     }
 
@@ -260,11 +254,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getBoard() {
     return <Board
-      enabled={
-        // (game.status.catagory === GameStatusCatagory.Ongoing || isInTimeout)
-        // && 
-        !isGameOver
-      }
+      enabled={!isGameOver}
       layout={layout.value}
       turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
       isFlipped={isFlipped.value}
@@ -289,9 +279,9 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         const crntTimeMs = new Date().getTime();
 
         if (isPaused.value) {
-          setGame(v=>({...v, timeLastTurnMs: crntTimeMs}));
+          setGame(v => ({ ...v, timeLastTurnMs: crntTimeMs }));
         } else {
-          timeUnpausedMs.set(v => v + crntTimeMs - game.timeLastTurnMs); 
+          timeUnpausedMs.set(v => v + crntTimeMs - game.timeLastTurnMs);
         }
 
         isPaused.set(v => !v);
@@ -370,14 +360,4 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       </Box>
     </Layout>
   }
-
-  // function getTimeRemaining() {
-  //   return game.turns[turnsLength - 2].timeLeftMs - timePausedMs.value;
-  // }
 }
-
-// type PauseStatus = {
-//   catagory: "paused" | "unpaused" | "play"
-//   timeSincePauseMs: number,
-//   timeAtPauseMs: number,
-// }

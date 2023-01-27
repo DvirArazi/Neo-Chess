@@ -30,7 +30,7 @@ export default function ModalFrame(props: {
         }}
       >
         <Box
-          onClick={(e)=>{e.stopPropagation()}}
+          onClick={(e) => { e.stopPropagation() }}
           sx={{
             margin: `30px`,
             width: `350px`,

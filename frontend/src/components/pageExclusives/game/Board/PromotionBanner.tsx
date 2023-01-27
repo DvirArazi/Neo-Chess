@@ -88,7 +88,7 @@ function DisplayPiece(props: {
         onChoice(data.type)
       }}
     >
-      <Icon path={`chess/${pieceDataToIconName(data)}`} />
+      <Icon name={pieceDataToIconName(data)} />
       <Box>{`x${count}`}</Box>
     </Box>
   )

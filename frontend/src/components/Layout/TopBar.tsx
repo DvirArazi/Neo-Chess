@@ -1,5 +1,6 @@
 import { Box, SxProps, Button, IconButton, Divider } from "@mui/material";
 import { THEME, USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
+import { IconName } from "frontend/src/utils/types/iconName";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect } from "react";
 import Icon from "../Icon";
@@ -34,7 +35,7 @@ export default function TopBar() {
         fontSize: `28px`,
         whiteSpace: `nowrap`,
       }}>
-        <Icon path='logo' side={30} />
+        <Icon name="logo" side={30} />
         <Box sx={{ padding: `5px` }} />
         {WINDOW_WIDTH > 550 ? 'NEO-CHESS' : <></>}
       </Box>
@@ -50,12 +51,12 @@ export default function TopBar() {
     <Divider />
   </>;
 
-  function getIconButton(path: string, side: number) {
+  function getIconButton(name: IconName, side: number) {
     return <Box sx={{
       cursor: `pointer`,
       padding: `0 5px`,
     }}>
-      <Icon path={path} side={side} color={'#5F6368'} />
+      <Icon name={name} side={side} filter={'#5F6368'} />
     </Box>
   }
 }

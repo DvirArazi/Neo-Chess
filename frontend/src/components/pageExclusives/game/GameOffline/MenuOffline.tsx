@@ -33,7 +33,7 @@ export function MenuOffline(props: {
             alignItems: `center`,
             height: `30px`,
           }}>
-            <Icon path="flip" side={25} />
+            <Icon name="flip" side={25} />
             <Box sx={{ padding: `5px` }}></Box>
             <Box>Flip pieces after each turn</Box>
             <Switch

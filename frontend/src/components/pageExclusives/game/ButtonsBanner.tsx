@@ -29,18 +29,20 @@ export default function ButtonsBanner(props: {
   }}>
     <IconButton onClick={onMenuClick}>
       <Icon
-        path="menu"
+        name="menu"
         side={40}
-        color={THEME.icon}
+        filter={THEME.icon}
       />
     </IconButton>
 
     <IconButton onClick={onPauseClick}>
-      <Icon
-        path={isPaused ? "play" : "pause"}
-        side={40}
-        color='gray'
-      />
+      <Box sx={{ padding: `5px` }}>
+        <Icon
+          name={isPaused ? "play" : "pause"}
+          side={30}
+          filter={THEME.icon}
+        />
+      </Box>
     </IconButton>
 
     <IconButton
@@ -48,9 +50,9 @@ export default function ButtonsBanner(props: {
       onClick={onBackClick}
     >
       <Icon
-        path="navigate_left"
+        name="navigateLeft"
         side={40}
-        color={canStepBack ? THEME.icon : THEME.iconDisabled}
+        filter={canStepBack ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
 
@@ -59,9 +61,9 @@ export default function ButtonsBanner(props: {
       onClick={onForwardClick}
     >
       <Icon
-        path="navigate_right"
+        name="navigateRight"
         side={40}
-        color={canStepForward ? THEME.icon : THEME.iconDisabled}
+        filter={canStepForward ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
 

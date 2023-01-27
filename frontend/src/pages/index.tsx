@@ -33,5 +33,7 @@ export default function Home() {
       } }
     /> */}
     <GameOffline timeframe={{ overallSec: 5, incSec: 5 }} />
+    {/* <Box>Hello</Box> */}
+    {/* <Icon name="wifi" /> */}
   </>;
 }

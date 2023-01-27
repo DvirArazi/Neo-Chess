@@ -24,12 +24,12 @@ export default function Piece(props: {
   // const boxRef = useRef<HTMLDivElement>(null);
   const flipTurns = new Stateful(0);
 
-  useEffect(()=>{
+  useEffect(() => {
     if (
       isFlipped && flipTurns.value * 2 % 2 === 0 ||
       !isFlipped && flipTurns.value * 2 % 2 !== 0
     ) {
-      flipTurns.set((v)=>v+0.5)
+      flipTurns.set((v) => v + 0.5)
     }
   }, [isFlipped]);
   // useEffect(()=>{flipTurns.current += 1}, [isFlipped]);
@@ -90,13 +90,13 @@ export default function Piece(props: {
             transform: `rotate(${flipTurns.value}turn)`,
             transition: `transform 0.3s`
           }}
-          // onTransitionEnd={(e)=>{
-          //   console.log('again');
-          // }}
+        // onTransitionEnd={(e)=>{
+        //   console.log('again');
+        // }}
         >
-        <Icon path={`chess/${pieceDataToIconName(data)}`} />
+          <Icon name={pieceDataToIconName(data)} />
+        </Box>
       </Box>
-    </Box>
     </Draggable >
   );
 }

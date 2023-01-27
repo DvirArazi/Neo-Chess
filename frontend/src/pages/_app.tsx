@@ -7,7 +7,7 @@ import { WebSocketClient } from '../utils/types/webSocket';
 import Stateful from '../utils/tools/stateful';
 import { TokenPayload } from 'google-auth-library';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AAD_COOKIE } from '../utils/tools/cookies';
+import { AAD_COOKIE } from '../utils/tools/cookie';
 import { useRouter } from 'next/router';
 import { LIGHT_THEME } from 'frontend/src/utils/tools/theme';
 import { Theme } from 'frontend/src/utils/types/theme';
