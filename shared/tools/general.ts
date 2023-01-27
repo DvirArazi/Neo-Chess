@@ -26,6 +26,12 @@ export function remove<T>(array: T[], value: T): boolean {
   return true;
 }
 
+export function getOrFallback<T>(value: T | undefined, fallback: T): T {
+  if (value === undefined) return fallback;
+
+  return value;
+}
+
 // export class Ref<T> {
 //   value: T;
   

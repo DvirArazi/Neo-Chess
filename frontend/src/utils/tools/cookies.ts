@@ -27,6 +27,8 @@ class Cookie<T> {
 
 export const AAD_COOKIE = new Cookie<AutoAuthData>("aad");
 
+export const FLIP_PIECES_COOKIE = new Cookie<boolean>("flipPieces");
+
 // function cookie<T>(name: string) {
 //   return {
 //     set: (value: T | undefined) => {

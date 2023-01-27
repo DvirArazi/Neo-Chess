@@ -3,6 +3,7 @@ import Icon from "frontend/src/components/Icon";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import MenuOption from "frontend/src/components/pageExclusives/game/MenuOption";
 import MenuTitle from "frontend/src/components/pageExclusives/game/MenuTitle";
+import { FLIP_PIECES_COOKIE } from "frontend/src/utils/tools/cookies";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { GameStatus } from "shared/types/game";
 
@@ -24,7 +25,10 @@ export function MenuOffline(props: {
       />
       <Divider />
       <ListItemButton
-        onClick={() => { isFlipped.set(!isFlipped.value) }}
+        onClick={() => {
+          isFlipped.set(!isFlipped.value);
+          FLIP_PIECES_COOKIE.set(!isFlipped.value);
+        }}
       >
         <ListItemText>
           <Box sx={{

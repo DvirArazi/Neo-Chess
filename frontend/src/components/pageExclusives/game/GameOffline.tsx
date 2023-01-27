@@ -15,15 +15,19 @@ import { PieceColor, PieceType } from "shared/types/piece";
 import { MenuOffline } from "frontend/src/components/pageExclusives/game/GameOffline/MenuOffline";
 import { getOppositeColor } from "shared/tools/piece";
 import { THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
+import { getOrFallback } from "shared/tools/general";
+import { FLIP_PIECES_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export default function GameOffline(props: { timeframe: Timeframe }) {
   const { timeframe } = props;
+
+  const isWide = WINDOW_WIDTH > 600;
 
   const [game, setGame] = useState<GameData>(getNewGame());
   const layout = new Stateful(startAndTurnsToBoardLayout(game.start, game.turns));
   const isMenuOpen = new Stateful<boolean>(false);
   const isFlipped = new Stateful(Math.random() < 0.5);
-  const flipPieces = new Stateful(true);
+  const flipPieces = new Stateful(getFlipPiecesOrFallbackAndAssign());
   const stepsBack = new Stateful(0);
   const isPaused = new Stateful(false);
   const timeUnpausedMs = new Stateful(0);
@@ -36,7 +40,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const promotionType = useRef<PieceType | null>(null);
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
 
-  const isWide = WINDOW_WIDTH > 600;
   const turnsLength = game.turns.length - stepsBack.value;
   const isWhiteTurn = turnsLength % 2 === 0;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
@@ -364,5 +367,17 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         </Box>
       </Box>
     </Layout>
+  }
+
+  function getFlipPiecesOrFallbackAndAssign() {
+    const value = FLIP_PIECES_COOKIE.get();
+
+    if (value !== undefined) return value;
+
+    const fallback = !isWide;
+
+    FLIP_PIECES_COOKIE.set(fallback);
+
+    return fallback;
   }
 }
