@@ -7,8 +7,9 @@ export default function Clock(props: {
   timeLeftMil: number,
   isTicking: boolean,
   initDateTimeMil: number,
+  isWide: boolean,
 }) {
-  const { timeLeftMil, isTicking, initDateTimeMil } = props;
+  const { timeLeftMil, isTicking, initDateTimeMil, isWide } = props;
 
   //I'm not actually using this variable, just need it for rerendering
   const dateTimeMil = new Stateful(initDateTimeMil);
@@ -31,7 +32,7 @@ export default function Clock(props: {
   return (<>
     <Box sx={{
       padding: `5px 5px`,
-      background: THEME.clock,
+      background: isWide ? THEME.clock : THEME.boxBackground,
       fontSize: `26px`,
       fontFamily: `robotomono`,
       borderRadius: `10px`,

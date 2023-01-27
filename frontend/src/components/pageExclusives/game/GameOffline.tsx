@@ -1,4 +1,4 @@
-import { Box, Modal } from "@mui/material";
+import { Box, Divider, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import ButtonsBanner from "frontend/src/components/pageExclusives/game/ButtonsBanner";
@@ -214,7 +214,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     />;
   }
 
-  function getPlayerBanner(isWhite: boolean) {
+  function getPlayerBanner(isWhite: boolean, isOnTop: boolean) {
     return <PlayerBanner key={Number(isWhite)}
       name={isWhite ? 'White' : 'Black'}
       rating={null}
@@ -222,6 +222,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       isTicking={getIsTicking()}
       initDateTimeMil={game.timeLastTurnMs}
       color={isWhite ? PieceColor.White : PieceColor.Black}
+      isOnTop={isOnTop}
+      isWide={isWide}
       layout={layout.value}
     />;
 
@@ -303,10 +305,11 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   function getNarrowLayout() {
     return <Layout>
       <Box sx={{ margin: `auto` }}>
+        <Box sx={{padding: `7px`}}/>
         {getFormatBanner()}
-        {getPlayerBanner(isFlipped.value)}
+        {getPlayerBanner(isFlipped.value, true)}
         {getBoard()}
-        {getPlayerBanner(!isFlipped.value)}
+        {getPlayerBanner(!isFlipped.value, false)}
         {getButtonsBanner()}
         <Box sx={{ padding: `5px` }} />
       </Box>
@@ -315,7 +318,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getWideLayout() {
     return <Layout>
-      {/* <Box sx={{ padding: `10px` }}></Box> */}
       <Box sx={{
         display: `flex`,
         flexDirection: `row`,
@@ -352,8 +354,11 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
             boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
           }}>
             {getFormatBanner()}
-            {getPlayerBanner(isFlipped.value)}
-            {getPlayerBanner(!isFlipped.value)}
+            <Box sx={{padding: `5px`}}/>
+            {getPlayerBanner(isFlipped.value, true)}
+            <Divider variant="middle" />
+            {getPlayerBanner(!isFlipped.value, false)}
+            <Box sx={{padding: `5px`}}/>
             {getButtonsBanner()}
           </Box>
         </Box>

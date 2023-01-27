@@ -14,13 +14,40 @@ export default function PlayerBunner(props: {
   isTicking: boolean,
   initDateTimeMil: number,
   color: PieceColor,
+  isOnTop: boolean,
+  isWide: boolean,
   layout: BoardLayout,
 }) {
-  const { name, rating, timeLeftMil, isTicking, initDateTimeMil, color, layout } = props;
+  const {
+    name,
+    rating,
+    timeLeftMil,
+    isTicking,
+    initDateTimeMil,
+    color,
+    isOnTop,
+    isWide,
+    layout
+  } = props;
+
   const oppositeColor = getOppositeColor(color);
 
   return <Box sx={{ margin: `10px`, }}>
-    <Box sx={{
+    {
+      isOnTop ?
+      <>
+        {getMainRow()}
+        {getMiniPieces()}
+      </> :
+      <>
+        {getMiniPieces()}
+        {getMainRow()}
+      </>
+    }
+  </Box>
+
+  function getMainRow() {
+    return <Box sx={{
       display: `flex`,
       flexDirection: `row`,
       justifyContent: `space-between`,
@@ -34,10 +61,10 @@ export default function PlayerBunner(props: {
         timeLeftMil={timeLeftMil}
         isTicking={isTicking}
         initDateTimeMil={initDateTimeMil}
+        isWide={isWide}
       />
-    </Box>
-    {getMiniPieces()}
-  </Box>
+    </Box>;
+  }
 
   function getMiniPieces() {
     let pieces: JSX.Element[] = [];
