@@ -28,6 +28,7 @@ export type IconName =
   "rematch" |
   "resign" |
   "share" |
+  "signOut" |
   "takeback" |
   "user" |
   "wifi" |
@@ -64,6 +65,7 @@ export function iconNameToPath(name: IconName) {
     case "rematch": return "rematch";
     case "resign": return "resign";
     case "share": return "share";
+    case "signOut": return "sign_out";
     case "takeback": return "takeback";
     case "user": return "user";
     case "wifi": return "wifi";

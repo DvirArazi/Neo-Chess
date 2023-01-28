@@ -5,9 +5,10 @@ import Stateful from "../utils/tools/stateful";
 export default function Toggle(props: {
   isOn: Stateful<boolean>,
   children: React.ReactNode,
-  isOnDisabled?: boolean
+  isOnDisabled?: boolean,
+  background?: string,
 }) {
-  const { isOn, children } = props;
+  const { isOn, children, background } = props;
   if (children === undefined || children === null) {
     throw new Error('"children" is undefined');
   }
@@ -32,6 +33,7 @@ export default function Toggle(props: {
         }
       }
     }
+    sx={{background: background === undefined ? `white` : background}}
   >
     <ToggleButton disabled={isOnDisabled} value={true}>{childrenArray[0]}</ToggleButton>
     <ToggleButton value={false}>{childrenArray[1]}</ToggleButton>

@@ -12,28 +12,7 @@ import { THEME } from "frontend/src/pages/_app";
 
 export default function Home() {
   return <>
-    {/* <Content /> */}
-    {/* <Board
-      layout={[
-        { type: PieceType.King, color: PieceColor.White, key: 0 },
-        undefined,
-        { type: PieceType.Bishop, color: PieceColor.White, key: 1 },
-        ...(new Array(52).fill(undefined)),
-        { type: PieceType.Pawn, color: PieceColor.Black, key: 0 },
-        ...(new Array(6).fill(undefined)),
-        { type: PieceType.Bishop, color: PieceColor.Black, key: 0 },
-        { type: PieceType.King, color: PieceColor.Black, key: 2 },
-      ]}
-      turnColor={PieceColor.White}
-      enabled={true}
-      onTurnEnd={() => { } } isFlipped={false} arePiecesFlipped={false} onMove={function (from: Point, to: Point, layout: BoardLayout): void {
-        throw new Error("Function not implemented.");
-      } } onPromotion={function (promotionType: PieceType): void {
-        throw new Error("Function not implemented.");
-      } }
-    /> */}
-    <GameOffline timeframe={{ overallSec: 10*60, incSec: 5 }} />
-    {/* <Box>Hello</Box> */}
-    {/* <Icon name="wifi" /> */}
+    <Content />
+    {/* <GameOffline timeframe={{ overallSec: 10*60, incSec: 5 }} /> */}
   </>;
 }

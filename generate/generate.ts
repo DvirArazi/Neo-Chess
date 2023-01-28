@@ -9,7 +9,7 @@ function generateIconName() {
 
   fs.writeFileSync( `frontend/src/utils/types/iconName.ts`,
     `export type IconName = \n  ${fileNames.map(name=>`"${name}"`).join(' |\n  ')};\n\n` +
-    `export function iconNameToPath(name: IconName)\*hello *\ {\n` +
+    `export function iconNameToPath(name: IconName) {\n` +
     `  switch(name) {\n` +
     filePaths.map((path, i)=> `    case "${fileNames[i]}": return "${path}";\n`).join('') +
     `  }\n` +

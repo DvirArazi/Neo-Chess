@@ -12,11 +12,13 @@ import { useRouter } from 'next/router';
 import { LIGHT_THEME } from 'frontend/src/utils/tools/theme';
 import { Theme } from 'frontend/src/utils/types/theme';
 import React from 'react';
+import { UserViewData } from 'shared/types/general';
+import { ThemeProvider } from '@emotion/react';
 
 export let SOCKET: WebSocketClient;
 export let WINDOW_WIDTH: number;
-export let USER_DATA: TokenPayload | undefined;
-export let SET_USER_DATA: Dispatch<SetStateAction<TokenPayload | undefined>>;
+export let USER_DATA: UserViewData | undefined;
+export let SET_USER_DATA: Dispatch<SetStateAction<UserViewData | undefined>>;
 export let THEME: Theme;
 export let SET_THEME: Dispatch<SetStateAction<Theme>>;
 
@@ -27,15 +29,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
   let setWindowWidth: Dispatch<SetStateAction<number>>;
   [WINDOW_WIDTH, setWindowWidth] = useState<number>(0);
-  [USER_DATA, SET_USER_DATA] = useState<TokenPayload | undefined>(undefined);
+  [USER_DATA, SET_USER_DATA] = useState<UserViewData | undefined>(undefined);
   [THEME, SET_THEME] = useState(LIGHT_THEME);
 
   useEffect(() => {
     SOCKET = io();
 
     SOCKET.on("signedIn", (aad, data) => {
-      console.log(`User signed in\ndata: ${data.iss}`);
-
       SOCKET.emit("removeKey", aad);
       AAD_COOKIE.set(aad);
       SET_USER_DATA(data);

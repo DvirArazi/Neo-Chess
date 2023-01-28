@@ -1,4 +1,5 @@
-import { Box, Button, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material";
+import { Box, Button, Divider, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material";
+import { THEME } from "frontend/src/pages/_app";
 import { timeFormatToString, timeToString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { timeframeToTimeFormat } from "shared/tools/general";
@@ -6,67 +7,74 @@ import { TimeFormat, Timeframe } from "shared/types/game";
 
 export default function CustomeFormatPanel(props: {
   onPlay: (clock: Timeframe) => void,
+  ratings: number[] | undefined,
 }) {
-  const { onPlay } = props;
+  const { onPlay, ratings } = props;
 
-  const timePerTurn = new Stateful(15 * 60);
+  const timeOverall = new Stateful(15 * 60);
   const increment = new Stateful(10);
 
-  const format = timeFormatToString(
-    timeframeToTimeFormat({
-      overallSec: timePerTurn.value, incSec: increment.value
-    })
-  );
+  const format = timeframeToTimeFormat({
+    overallSec: timeOverall.value, incSec: increment.value
+  });
 
-  return (
-    <Box sx={{ margin: `auto`, maxWidth: `300px`, }}>
-      <Paper elevation={3} sx={{
-        margin: `20px`,
-        padding: `20px`,
+  const formatStr = timeFormatToString(format);
+
+  const ratingStr = ratings === undefined ?
+    '' :
+    ` • ${ratings[format as number]}`;
+
+  return <Box sx={{ margin: `auto`, maxWidth: `300px`, fontFamily: `roboto-regular`}}>
+    <Paper elevation={3} sx={{
+      margin: `20px`,
+      padding: `20px`,
+      borderRadius: `15px`,
+      background: THEME.boxBackground,
+    }}>
+      <Box sx={{ paddingBottom: `15px`, fontSize: `13px` }}>{formatStr.toUpperCase()}{ratingStr.toUpperCase()}</Box>
+      <Box sx={{
+        display: `flex`,
+        flexDirection: `row`,
+        justifyContent: `space-around`,
       }}>
-        <Box sx={{ paddingBottom: `15px` }}>{format}</Box>
-        <Box sx={{
-          display: `flex`,
-          flexDirection: `row`,
-          justifyContent: `space-around`,
-        }}>
-          <Box>
-            Time per Turn
-            <Select
-              value={timePerTurn.value}
-              onChange={(e) => handleChange(e, timePerTurn)}
-            >
-              {
-                times.map((v) =>
-                  <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
-                )
-              }
-            </Select>
-          </Box>
-          <Box>
-            Increment
-            <Select
-              value={increment.value}
-              onChange={(e: SelectChangeEvent<number>) => handleChange(e, increment)}
-            >
-              {
-                increments.map((v) =>
-                  <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
-                )
-              }
-            </Select>
-          </Box>
-        </Box>
-        <Button onClick={() => onPlay({
-          overallSec: timePerTurn.value,
+        {getSelect(timeOverall, timeOveralls)}
+        <Divider orientation="vertical" variant="middle" flexItem></Divider>
+        {getSelect(increment, increments)}
+      </Box>
+      <Box sx={{padding: `10px`}}/>
+      <Button
+        variant="outlined"
+        onClick={() => onPlay({
+          overallSec: timeOverall.value,
           incSec: increment.value
-        })}>Play</Button>
-      </Paper>
+        })}
+        sx={{fontSize: `16px`, background: THEME.clock}}
+      >Play</Button>
+    </Paper>
+  </Box>;
+
+  function getSelect(time: Stateful<number>, times: number[]) {
+    return <Box>
+      <Select
+        value={time.value}
+        onChange={(e) => handleChange(e, time)}
+        MenuProps={{sx:{overflow: `none`}}}
+        sx={{
+          width: `90px`,
+          background: `white`,
+          fontFamily: `roboto-regular`,
+          // overflow: `hidden`,
+        }}
+      >
+        {times.map((v) =>
+          <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
+        )}
+      </Select>
     </Box>
-  );
+  }
 }
 
-const times = [
+const timeOveralls = [
   15,
   30,
   45,

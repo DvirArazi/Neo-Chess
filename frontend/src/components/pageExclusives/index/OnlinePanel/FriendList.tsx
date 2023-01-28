@@ -18,8 +18,11 @@ export default function FriendList(props: { friends: string[], chosen: Stateful<
     >
       {friends.map((friend) => {
         return (
-          <ToggleButton key={friend} value={friend}>
-            <Box>{friend}</Box>
+          <ToggleButton key={friend}
+            value={friend}
+            sx={{borderRadius: `10px`,}}
+          >
+            <Box >{friend}</Box>
           </ToggleButton>
         );
       })}

@@ -4,7 +4,7 @@ import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { emitToUser, toValidId } from "../utils/tools/general";
 
-export function HandleSignOut(p: HandlerParams) {
+export function handleSignOut(p: HandlerParams) {
   p.socket.on("signOut", async () => {
     const user = await leave(p, true);
 

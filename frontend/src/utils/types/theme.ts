@@ -10,7 +10,6 @@ export type Theme = {
   boxBackground: string,
   boardLight: string,
   boardDark: string,
-  // miniPiece: string,
+  signOutButton: string,
+  infinity: string,
 }
-
-// const color: Color = ``

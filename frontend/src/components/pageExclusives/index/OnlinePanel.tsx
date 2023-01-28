@@ -1,4 +1,5 @@
 import { Box, List, ListItem, Paper, Slider } from "@mui/material";
+import { THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import Toggle from "../../Toggle";
 import FriendList from "./OnlinePanel/FriendList";
@@ -24,8 +25,8 @@ export default function OnlinePanel(
       margin: `10px 20px 20px 20px`,
       padding: `20px 5px 5px 5px`,
       height: `100%`,
-      // transition: `height 2s ease-out`,
-      // background: `blue`,
+      borderRadius: `15px`,
+      background: THEME.boxBackground
     }}>
       <Toggle isOn={isRated}>
         <Box sx={{ fontSize: `12px`, width: `50px` }}>Rated</Box>
@@ -41,7 +42,9 @@ export default function OnlinePanel(
       <Paper variant="outlined" sx={{
         padding: `20px 20px 10px 20px`,
         display: isRanged.value ? `block` : `none`,
-        // transition: `visibility 0s, opacity 0.5s linear`,
+        // background: THEME.clock,
+        
+        borderRadius: `10px`,
       }}>
         <Box>
           {rangeToString(range.value[0])} to {rangeToString(range.value[1])}
@@ -53,14 +56,13 @@ export default function OnlinePanel(
           max={500}
           step={50}
           marks={[
-            { value: -490, label: `-500` },
-            { value: 490, label: `500` }
+            { value: -495, label: `-500` },
+            { value: 495, label: `500` }
           ]}
         />
       </Paper>
       <div style={{
         display: isRanged.value ? `none` : `block`,
-        // transition: `display 0.2s ease-out`,
       }}>
         <FriendList
           friends={["Avishay", "Yonatan"]}
