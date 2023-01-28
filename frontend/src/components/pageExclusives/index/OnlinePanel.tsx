@@ -26,7 +26,7 @@ export default function OnlinePanel(
       padding: `20px 5px 5px 5px`,
       height: `100%`,
       borderRadius: `15px`,
-      background: THEME.boxBackground
+      background: THEME.boxBackground2
     }}>
       <Toggle isOn={isRated}>
         <Box sx={{ fontSize: `12px`, width: `50px` }}>Rated</Box>

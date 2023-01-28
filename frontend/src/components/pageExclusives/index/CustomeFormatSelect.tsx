@@ -29,7 +29,7 @@ export default function CustomeFormatPanel(props: {
       margin: `20px`,
       padding: `20px`,
       borderRadius: `15px`,
-      background: THEME.boxBackground,
+      background: THEME.boxBackground2,
     }}>
       <Box sx={{ paddingBottom: `15px`, fontSize: `13px` }}>{formatStr.toUpperCase()}{ratingStr.toUpperCase()}</Box>
       <Box sx={{
@@ -48,7 +48,7 @@ export default function CustomeFormatPanel(props: {
           overallSec: timeOverall.value,
           incSec: increment.value
         })}
-        sx={{fontSize: `16px`, background: THEME.clock}}
+        sx={{fontSize: `16px`}}
       >Play</Button>
     </Paper>
   </Box>;
@@ -63,7 +63,7 @@ export default function CustomeFormatPanel(props: {
           width: `90px`,
           background: `white`,
           fontFamily: `roboto-regular`,
-          // overflow: `hidden`,
+          borderRadius: `10px`,
         }}
       >
         {times.map((v) =>

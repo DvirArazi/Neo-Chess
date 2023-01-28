@@ -8,6 +8,7 @@ export type Theme = {
   icon: string,
   iconDisabled: string,
   boxBackground: string,
+  boxBackground2: string,
   boardLight: string,
   boardDark: string,
   signOutButton: string,

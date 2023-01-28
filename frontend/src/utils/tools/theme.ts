@@ -7,6 +7,7 @@ export const LIGHT_THEME: Theme = {
   icon: "invert(35%) sepia(6%) saturate(463%) hue-rotate(173deg) brightness(102%) contrast(85%)",
   iconDisabled: "invert(85%) sepia(32%) saturate(0%) hue-rotate(157deg) brightness(91%) contrast(92%)",
   boxBackground: "#d2edf9",
+  boxBackground2: "#d2f9f9",
   boardLight: "white",
   boardDark: "lightblue",
   signOutButton: "invert(31%) sepia(50%) saturate(2338%) hue-rotate(192deg) brightness(101%) contrast(86%)",

@@ -62,7 +62,7 @@ export default function Content() {
         isSnackbarOpen.set(false);
       }}
     />
-  </>
+  </>;
 
   function handleIsAuthedChange() {
     useEffect(()=>{
@@ -78,15 +78,13 @@ export default function Content() {
     }, [isAuthed]);
   }
 
-  function start() {
-    (timeframe: Timeframe) => {
-      if (isOnline) {
-        isSnackbarOpen.set(true);
-        SOCKET.emit("createGameRequest", timeframe, isRated.value, range.value[0], range.value[1]);
-      } else {
-        router.push('/game/offline');
-      }
-    };
+  function start(timeframe: Timeframe) {
+    if (isOnline.value) {
+      isSnackbarOpen.set(true);
+      SOCKET.emit("createGameRequest", timeframe, isRated.value, range.value[0], range.value[1]);
+    } else {
+      router.push(`/game/offline/${timeframeToPath(timeframe)}`);
+    }
   }
 
   function getCatagoryButtons() {
@@ -103,9 +101,9 @@ export default function Content() {
     const buttons = [
       <CatagoryButton catagory={{ title: "Untimed" }} rating={getRating(0)} />,
       <CatagoryButton catagory={{ title: "Bullet", time: 60, increment: 2 }} rating={getRating(1)} />,
-      <CatagoryButton catagory={{ title: "Blitz", time: 60, increment: 2 }} rating={getRating(2)} />,
-      <CatagoryButton catagory={{ title: "Rapid", time: 60, increment: 2 }} rating={getRating(3)} />,
-      <CatagoryButton catagory={{ title: "Classical", time: 60, increment: 2 }} rating={getRating(4)} />,
+      <CatagoryButton catagory={{ title: "Blitz", time: 5*60, increment: 3 }} rating={getRating(2)} />,
+      <CatagoryButton catagory={{ title: "Rapid", time: 10*60, increment: 5 }} rating={getRating(3)} />,
+      <CatagoryButton catagory={{ title: "Classical", time: 30*60, increment: 20 }} rating={getRating(4)} />,
     ];
 
     return <Box sx={{
@@ -127,4 +125,8 @@ export default function Content() {
       return ratings[index];
     }
   }
+}
+
+function timeframeToPath(timeframe: Timeframe) {
+  return `${timeframe.overallSec}-${timeframe.incSec}`;
 }

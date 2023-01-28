@@ -11,8 +11,6 @@ import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction } from "shared/tools/board";
 
 export default function handlePlayerMoved(p: HandlerParams) {
-  Terminal.warning('delete 0');
-
   p.socket.on("playerMove", async (gameId, from, to, promotion) => {
     if (p.userId === undefined) {
       Terminal.warning('User attempted to play a turn in an online game without being registered');

@@ -51,10 +51,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   handleStepsBackChange();
   handleStepsBackOrTurnsOrIsPausedChange();
 
-  return (<>
-    {isWide ? getWideLayout() : getNarrowLayout()}
+  return <>
+    <Layout>
+      {isWide ? getWideLayout() : getNarrowLayout()}
+    </Layout>
     {getMenuOffline()}
-  </>);
+  </>;
 
   function getNewGame(): GameData {
     const start = generateStart();
@@ -218,7 +220,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getPlayerBanner(isWhite: boolean, isOnTop: boolean) {
-    return <PlayerBanner key={Number(isWhite)}
+    return <PlayerBanner key={Number(isOnTop)}
       name={isWhite ? 'White' : 'Black'}
       rating={null}
       timeLeftMil={getTimeLeft()}
@@ -306,67 +308,63 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getNarrowLayout() {
-    return <Layout>
-      <Box sx={{ margin: `auto` }}>
-        <Box sx={{padding: `7px`}}/>
-        {getFormatBanner()}
-        {getPlayerBanner(isFlipped.value, true)}
-        {getBoard()}
-        {getPlayerBanner(!isFlipped.value, false)}
-        {getButtonsBanner()}
-        <Box sx={{ padding: `5px` }} />
-      </Box>
-    </Layout>
+    return  <Box sx={{ margin: `auto` }}>
+      <Box sx={{padding: `7px`}}/>
+      {getFormatBanner()}
+      {getPlayerBanner(isFlipped.value, true)}
+      {getBoard()}
+      {getPlayerBanner(!isFlipped.value, false)}
+      {getButtonsBanner()}
+      <Box sx={{ padding: `5px` }} />
+    </Box>
   }
 
   function getWideLayout() {
-    return <Layout>
+    return <Box sx={{
+      display: `flex`,
+      flexDirection: `row`,
+      justifyContent: `center`,
+      maxWidth: `1000px`,
+      margin: `auto`,
+      padding: `10px`,
+    }}>
       <Box sx={{
+        flexBasis: `500px`,
+        boxShadow: `0px 8px 15px 2px rgba(0,0,0,0.3)`,
+        margin: `10px`,
+        borderRadius: `7px`,
+        overflow: `hidden`,
+      }}>
+        {getBoard()}
+      </Box>
+
+      <Box sx={{
+        flex: `1`,
+
+        margin: `10px`,
+        maxWidth: `250px`,
+
         display: `flex`,
-        flexDirection: `row`,
+        flexDirection: `column`,
         justifyContent: `center`,
-        maxWidth: `1000px`,
-        margin: `auto`,
-        padding: `10px`,
       }}>
         <Box sx={{
-          flexBasis: `500px`,
-          boxShadow: `0px 8px 15px 2px rgba(0,0,0,0.3)`,
-          margin: `10px`,
           borderRadius: `7px`,
-          overflow: `hidden`,
+          padding: `10px 0`,
+
+          background: THEME.boxBackground,
+          boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
         }}>
-          {getBoard()}
-        </Box>
-
-        <Box sx={{
-          flex: `1`,
-
-          margin: `10px`,
-          maxWidth: `250px`,
-
-          display: `flex`,
-          flexDirection: `column`,
-          justifyContent: `center`,
-        }}>
-          <Box sx={{
-            borderRadius: `7px`,
-            padding: `10px 0`,
-
-            background: THEME.boxBackground,
-            boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
-          }}>
-            {getFormatBanner()}
-            <Box sx={{padding: `5px`}}/>
-            {getPlayerBanner(isFlipped.value, true)}
-            <Divider variant="middle" />
-            {getPlayerBanner(!isFlipped.value, false)}
-            <Box sx={{padding: `5px`}}/>
-            {getButtonsBanner()}
-          </Box>
+          {getFormatBanner()}
+          <Box sx={{padding: `5px`}}/>
+          {getPlayerBanner(isFlipped.value, true)}
+          <Divider variant="middle" />
+          {getPlayerBanner(!isFlipped.value, false)}
+          <Box sx={{padding: `5px`}}/>
+          {getButtonsBanner()}
         </Box>
       </Box>
-    </Layout>
+    </Box>
   }
 
   function getFlipPiecesOrFallbackAndAssign() {

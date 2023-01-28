@@ -38,6 +38,7 @@ export default function ModalFrame(props: {
             borderRadius: '15px',
             boxShadow: 24,
             textAlign: `center`,
+            overflow: `hidden`,
           }}
         >
           {children}

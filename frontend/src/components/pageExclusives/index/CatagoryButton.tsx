@@ -21,6 +21,7 @@ export default function CatagoryButton(props: {
           background: `white`,
           fontFamily: `roboto-regular`,
           whiteSpace: `nowrap`,
+          borderRadius: `10px`,
         }}
       >
         <Box sx={{fontSize: `13px`}}>{catagory.title}</Box>
