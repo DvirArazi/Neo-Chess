@@ -37,6 +37,7 @@ export function SignOutButton() {
       borderRadius: `999px`,
       textTransform: `none`,
       color: `gray`,
+      background: THEME.topBar,
       ":hover": {
         color: `#595959`
       },
