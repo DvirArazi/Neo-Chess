@@ -70,6 +70,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
         return lastTurn.timeLeftMs - delta;
       } else {
+        if (game.timeframe === "untimed") return 0;
+
         return game.timeframe.overallSec;
       }
     })();

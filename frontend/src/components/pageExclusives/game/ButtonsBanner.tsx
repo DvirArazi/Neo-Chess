@@ -5,7 +5,7 @@ export default function ButtonsBanner(props: {
   canStepBack: boolean,
   canStepForward: boolean,
   isPaused: boolean,
-  isWide: boolean,
+  isUntimed: boolean,
   onMenuClick: () => void,
   onPauseClick: () => void,
   onBackClick: () => void,
@@ -15,7 +15,7 @@ export default function ButtonsBanner(props: {
     onMenuClick,
     onBackClick,
     isPaused,
-    isWide,
+    isUntimed,
     onForwardClick,
     onPauseClick,
     canStepBack,
@@ -35,15 +35,18 @@ export default function ButtonsBanner(props: {
       />
     </IconButton>
 
-    <IconButton onClick={onPauseClick}>
-      <Box sx={{ padding: `5px` }}>
-        <Icon
-          name={isPaused ? "play" : "pause"}
-          side={30}
-          filter={THEME.icon}
-        />
-      </Box>
-    </IconButton>
+    {
+      isUntimed ? <></> :
+      <IconButton onClick={onPauseClick}>
+        <Box sx={{ padding: `5px` }}>
+          <Icon
+            name={isPaused ? "play" : "pause"}
+            side={30}
+            filter={THEME.icon}
+          />
+        </Box>
+      </IconButton>
+    }
 
     <IconButton
       disabled={!canStepBack}

@@ -90,18 +90,18 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   function onTurnEnd() {
     const timeCrntTurnMs = new Date().getTime();
 
-    const newTimeLeftMs = turnsLength >= 2 ?
-      (
-        isGameJustOverByTimeout.value ?
-          0 :
-          game.turns[turnsLength - 2].timeLeftMs + (
-            hasTimedOut.value ?
-              0 :
-              - (timeCrntTurnMs - game.timeLastTurnMs)
-              + timeframe.incSec * 1000
-          )
-      ) :
-      game.timeframe.overallSec * 1000;
+    const newTimeLeftMs = game.timeframe === "untimed" ? 0 :
+      turnsLength >= 2 ?
+        (
+          isGameJustOverByTimeout.value ?
+            0 :
+            game.turns[turnsLength - 2].timeLeftMs + (
+              hasTimedOut.value ?
+                0 :
+                - (timeCrntTurnMs - game.timeLastTurnMs)
+                + game.timeframe.incSec * 1000
+            )
+        ) : game.timeframe.overallSec * 1000;
 
     const newTurns = [
       ...game.turns.slice(0, game.turns.length - stepsBack.value),
@@ -193,7 +193,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         clearTimeout(timeoutId.current);
       }
 
-      if (turnsLength >= 2 && !hasTimedOut.value && !isGameOver && !isPaused.value) {
+      if (
+        turnsLength >= 2 &&
+        !hasTimedOut.value &&
+        !isGameOver &&
+        !isPaused.value &&
+        game.timeframe !== "untimed"
+      ) {
         timeoutId.current = setTimeout(() => {
           setGame((game) => ({
             ...game,
@@ -213,7 +219,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function getFormatBanner() {
     return <FormatBanner
-      timeframe={timeframe}
+      timeframe={game.timeframe}
       isRated={null}
       isWide={isWide}
     />;
@@ -229,10 +235,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       color={isWhite ? PieceColor.White : PieceColor.Black}
       isOnTop={isOnTop}
       isWide={isWide}
+      isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
     />;
 
     function getTimeLeft() {
+      if (game.timeframe === "untimed") return 0;
+
       if (isGameJustOverByTimeout.value &&
         game.status.catagory === GameStatusCatagory.Win &&
         game.status.winColor === PieceColor.White !== isWhite
@@ -280,7 +289,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       canStepBack={stepsBack.value < game.turns.length}
       canStepForward={stepsBack.value > 0}
       isPaused={isPaused.value}
-      isWide={isWide}
+      isUntimed={game.timeframe === "untimed"}
       onMenuClick={() => isMenuOpen.set(true)}
       onPauseClick={() => {
         const crntTimeMs = new Date().getTime();
@@ -308,8 +317,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getNarrowLayout() {
-    return  <Box sx={{ margin: `auto` }}>
-      <Box sx={{padding: `7px`}}/>
+    return <Box sx={{ margin: `auto` }}>
+      <Box sx={{ padding: `7px` }} />
       {getFormatBanner()}
       {getPlayerBanner(isFlipped.value, true)}
       {getBoard()}
@@ -356,11 +365,11 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
           boxShadow: `0px 8px 15px -1px rgba(0,0,0,0.2)`,
         }}>
           {getFormatBanner()}
-          <Box sx={{padding: `5px`}}/>
+          <Box sx={{ padding: `5px` }} />
           {getPlayerBanner(isFlipped.value, true)}
           <Divider variant="middle" />
           {getPlayerBanner(!isFlipped.value, false)}
-          <Box sx={{padding: `5px`}}/>
+          <Box sx={{ padding: `5px` }} />
           {getButtonsBanner()}
         </Box>
       </Box>

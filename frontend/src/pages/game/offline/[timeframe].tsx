@@ -5,6 +5,7 @@ import { Timeframe } from "shared/types/game";
 export default function offline() {
   const router = useRouter();
   const path = router.query.timeframe as string;
+  console.log(path);
   const timeframe = pathToTimeframe(path);
 
   if (timeframe === undefined) return <>404</>;
@@ -13,6 +14,8 @@ export default function offline() {
 }
 
 function pathToTimeframe(path: string): Timeframe | undefined {
+  if (path === 'untimed') return "untimed";
+
   const parts = path.split('-');
 
   if (parts.length < 2) return undefined;

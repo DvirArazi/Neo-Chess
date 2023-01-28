@@ -7,8 +7,8 @@ export function removeFirst<T>(arr: T[], value: T) {
   }
 }
 
-export function timeframeToTimeFormat(timeframe: Timeframe | undefined): TimeFormat {
-  if (timeframe === undefined) return TimeFormat.Untimed;
+export function timeframeToTimeFormat(timeframe: Timeframe): TimeFormat {
+  if (timeframe === "untimed") return TimeFormat.Untimed;
 
   const total = timeframe.overallSec + timeframe.incSec * 40;
   if (total < 180) return TimeFormat.Bullet;

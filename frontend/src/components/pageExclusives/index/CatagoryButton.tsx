@@ -4,13 +4,15 @@ import Icon from "../../Icon";
 
 export default function CatagoryButton(props: {
   rating?: number,
-  catagory: Catagory
+  catagory: Catagory,
+  onClick: ()=>void,
 }) {
-  const { rating, catagory } = props;
+  const { rating, catagory, onClick } = props;
 
   return (
     <Box>
       <Button
+        onClick={onClick}
         variant="outlined"
         sx={{
           display: `flex`,
@@ -25,10 +27,10 @@ export default function CatagoryButton(props: {
         }}
       >
         <Box sx={{fontSize: `13px`}}>{catagory.title}</Box>
-        <Box sx={{fontSize: `20px`, textTransform: `none`}}>{
+        <Box sx={{fontSize: `24px`, textTransform: `none`}}>{
           catagory.title != "Untimed" ?
             `${timeToString(catagory.time)} | ${timeToString(catagory.increment)}` :
-            <Icon name="infinity" side={34} filter={THEME.infinity}/>
+            <Box sx={{padding: `4px`}}><Icon name="infinity" side={34} filter={THEME.infinity}/></Box>
         }</Box>
         {rating != null ? <Box sx={{fontSize: `13px`}}>{rating}</Box> : null}
       </Button>
@@ -48,5 +50,5 @@ export type Catagory =
   ;
 
 const timeToString = (time: number) => {
-  return time >= 60 ? `${Math.floor(time / 60)}m` : `${time}s`;
+  return time >= 60 ? `${Math.floor(time / 60)}` : `${time}`;
 }

@@ -9,7 +9,7 @@ export type Point = {
 export type Timeframe = {
   overallSec: number,
   incSec: number,
-}
+} | "untimed"
 
 export enum TimeFormat {
   Untimed,
