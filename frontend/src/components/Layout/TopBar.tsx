@@ -7,14 +7,14 @@ import { useRouter } from "next/router";
 import { keyframes } from "@mui/material";
 
 
-const slide = keyframes`
-  from {
-    transform: translateX(140px);
-  }
-  to {
-    transform: translateX(0px);
-  }
-`;
+// const slide = keyframes`
+//   from {
+//     transform: translateX(140px);
+//   }
+//   to {
+//     transform: translateX(0px);
+//   }
+// `;
 
 export default function TopBar() {
   const router = useRouter();
@@ -55,8 +55,8 @@ export default function TopBar() {
         {
           USER_DATA !== undefined ?
             <Box sx={{
-              animationIterationCount: `1`,
-              animation: `${slide} 1s normal ease`,
+              // animationIterationCount: `1`,
+              // animation: `${slide} 1s normal ease`,
             }}>
               {getButton('fight', 28)}
               {getButton('history', 25)}

@@ -8,7 +8,10 @@ import { SOCKET } from "../_app";
 
 export default function Game() {
   const router = useRouter();
+
   const path = router.query.path as string;
+  if (path === undefined) return;
+
   const gameViewData = new Stateful<GameViewData | "loading" | "404">("loading");
 
   useEffect(() => {

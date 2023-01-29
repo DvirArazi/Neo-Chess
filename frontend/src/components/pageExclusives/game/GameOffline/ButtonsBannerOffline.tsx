@@ -1,7 +1,8 @@
 import { Box, IconButton } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import { THEME } from "frontend/src/pages/_app";
-export default function ButtonsBanner(props: {
+
+export default function ButtonsBannerOffline(props: {
   canStepBack: boolean,
   canStepForward: boolean,
   isPaused: boolean,
@@ -37,15 +38,15 @@ export default function ButtonsBanner(props: {
 
     {
       isUntimed ? <></> :
-      <IconButton onClick={onPauseClick}>
-        <Box sx={{ padding: `5px` }}>
-          <Icon
-            name={isPaused ? "play" : "pause"}
-            side={30}
-            filter={THEME.icon}
-          />
-        </Box>
-      </IconButton>
+        <IconButton onClick={onPauseClick}>
+          <Box sx={{ padding: `5px` }}>
+            <Icon
+              name={isPaused ? "play" : "pause"}
+              side={30}
+              filter={THEME.icon}
+            />
+          </Box>
+        </IconButton>
     }
 
     <IconButton

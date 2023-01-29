@@ -1,9 +1,9 @@
 import { Box, Divider, Modal } from "@mui/material";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
-import ButtonsBanner from "frontend/src/components/pageExclusives/game/ButtonsBanner";
+import ButtonsBannerOffline from "frontend/src/components/pageExclusives/game/GameOffline/ButtonsBannerOffline";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
-import FormatBanner from "frontend/src/components/pageExclusives/game/TopBanner";
+import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
@@ -39,7 +39,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const to = useRef<Point>({ x: 0, y: 0 });
   const promotionType = useRef<PieceType | null>(null);
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
-  const lastStatus = useRef<GameStatus>({catagory: GameStatusCatagory.Ongoing});
+  const lastStatus = useRef<GameStatus>({ catagory: GameStatusCatagory.Ongoing });
 
   const turnsLength = game.turns.length - stepsBack.value;
   const isWhiteTurn = turnsLength % 2 === 0;
@@ -185,7 +185,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
               lastStatus.current
           )
         }
-    });
+      });
 
       isGameJustOverByTimeout.set(false);
 
@@ -290,7 +290,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getButtonsBanner() {
-    return <ButtonsBanner
+    return <ButtonsBannerOffline
       canStepBack={stepsBack.value < game.turns.length}
       canStepForward={stepsBack.value > 0}
       isPaused={isPaused.value}

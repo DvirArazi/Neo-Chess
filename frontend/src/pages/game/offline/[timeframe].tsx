@@ -4,10 +4,11 @@ import { Timeframe } from "shared/types/game";
 
 export default function offline() {
   const router = useRouter();
+  
   const path = router.query.timeframe as string;
-  console.log(path);
-  const timeframe = pathToTimeframe(path);
+  if (path === undefined) return;
 
+  const timeframe = pathToTimeframe(path);
   if (timeframe === undefined) return <>404</>;
   
   return <GameOffline timeframe={timeframe}/>;
