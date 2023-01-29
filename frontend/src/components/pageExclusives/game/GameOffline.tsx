@@ -173,8 +173,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         game.turns.slice(0, turnsLength)
       ));
 
-      console.log(layout.value);
-
       setGame({
         ...{
           ...game,

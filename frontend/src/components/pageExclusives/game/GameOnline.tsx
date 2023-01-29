@@ -40,22 +40,8 @@ export default function GameOnline(props: { data: GameViewData }) {
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
 
-  SOCKET.off("playerMoved");
-  SOCKET.on("playerMoved", (gameId, turn, newStatus) => {
-    if (game.id.toString() !== gameId.toString()) return;
-
-    const newTurns = game.turns.concat(turn);
-    layout.set(startAndTurnsToBoardLayout(game.start, newTurns));
-    setGame({
-      ...game,
-      turns: newTurns,
-      status: newStatus,
-    });
-
-    if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
-      isMenuOpen.set(true);
-    }
-  });
+  handlePlayerMovedEvent();
+  handleStepsBackChange();
 
   return <Layout>
     {isWide ? getWideLayout() : getNarrowLayout()}
@@ -121,7 +107,11 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getBoard() {
     return <Board
-      enabled={!isGameOver && game.role === turnColor}
+      enabled={
+        !isGameOver &&
+        game.role === turnColor &&
+        stepsBack.value === 0
+      }
       layout={layout.value}
       turnColor={turnColor}
       onMove={onMove}
@@ -140,14 +130,13 @@ export default function GameOnline(props: { data: GameViewData }) {
 
     function onPromotion(newPromotionType: PieceType) {
       const toI = pointToIndex(to.current);
-  
+
       layoutRef.current[toI]!.type = newPromotionType;
       layout.set(layoutRef.current);
       promotionType.current = newPromotionType;
     }
 
     function onTurnEnd() {
-      console.log(from.current, to.current);
       SOCKET.emit("playerMove", game.id,
         from.current,
         to.current,
@@ -181,13 +170,46 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getButtonsBanner() {
     return <ButtonsBannerOnline
-      canStepBack={true}
-      canStepForward={true}
+      canStepBack={stepsBack.value < game.turns.length}
+      canStepForward={stepsBack.value > 0}
       isUntimed={game.timeframe === "untimed"}
-      onBackClick={() => { }}
-      onForwardClick={() => { }}
+      onBackClick={() => stepsBack.set(v => v + 1)}
+      onForwardClick={() => stepsBack.set(v => v - 1)}
       onMenuClick={() => { }}
     />;
+  }
+
+  function handlePlayerMovedEvent() {
+    SOCKET.off("playerMoved");
+    SOCKET.on("playerMoved", (gameId, turn, newStatus) => {
+      if (game.id.toString() !== gameId.toString()) return;
+
+      const newTurns = game.turns.concat(turn);
+      layout.set(startAndTurnsToBoardLayout(game.start, newTurns));
+      setGame({
+        ...game,
+        turns: newTurns,
+        status: newStatus,
+      });
+
+      if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
+        isMenuOpen.set(true);
+      }
+
+      stepsBack.set(0);
+    });
+  }
+
+  function handleStepsBackChange() {
+    useEffect(() => {
+      layout.set(startAndTurnsToBoardLayout(
+        game.start,
+        game.turns.slice(0, game.turns.length - stepsBack.value)
+      ));
+
+      isGameJustOverByTimeout.set(false);
+
+    }, [stepsBack.value]);
   }
 }
 
