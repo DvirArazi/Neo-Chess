@@ -28,6 +28,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isFlipped = new Stateful(Math.random() < 0.5);
   const flipPieces = new Stateful(getFlipPiecesOrFallbackAndAssign());
   const stepsBack = new Stateful(0);
+  const stepsBackTrigger = new Stateful(false);
   const isPaused = new Stateful(false);
   const timeUnpausedMs = new Stateful(0);
   const isGameJustOverByTimeout = new Stateful(false);
@@ -38,6 +39,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const to = useRef<Point>({ x: 0, y: 0 });
   const promotionType = useRef<PieceType | null>(null);
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
+  const lastStatus = useRef<GameStatus>({catagory: GameStatusCatagory.Ongoing});
 
   const turnsLength = game.turns.length - stepsBack.value;
   const isWhiteTurn = turnsLength % 2 === 0;
@@ -47,7 +49,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
 
   handleGameStatusChange();
-  handleStepsBackChange();
+  handleStepsBackTriggerChange();
   handleStepsBackOrTurnsOrIsPausedChange();
 
   return <>
@@ -119,6 +121,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       game.startRep
     );
 
+    lastStatus.current = newStatus;
+
     setGame({
       ...game,
       turns: newTurns,
@@ -162,24 +166,30 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     }, [game.status]);
   }
 
-  function handleStepsBackChange() {
+  function handleStepsBackTriggerChange() {
     useEffect(() => {
-      if (stepsBack.value === 0) return;
-
       layout.set(startAndTurnsToBoardLayout(
         game.start,
         game.turns.slice(0, turnsLength)
       ));
 
+      console.log(layout.value);
+
       setGame({
-        ...game,
-        timeLastTurnMs: new Date().getTime(),
-        status: { catagory: GameStatusCatagory.Ongoing }
-      });
+        ...{
+          ...game,
+          timeLastTurnMs: new Date().getTime(),
+          status: (
+            stepsBack.value !== 0 ?
+              { catagory: GameStatusCatagory.Ongoing } :
+              lastStatus.current
+          )
+        }
+    });
 
       isGameJustOverByTimeout.set(false);
 
-    }, [stepsBack.value]);
+    }, [stepsBackTrigger.value]);
   }
 
   function handleStepsBackOrTurnsOrIsPausedChange() {
@@ -297,8 +307,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
         isPaused.set(v => !v);
       }}
-      onBackClick={() => stepsBack.set(v => v + 1)}
-      onForwardClick={() => stepsBack.set(v => v - 1)}
+      onBackClick={() => { stepsBack.set(v => v + 1); stepsBackTrigger.set(v => !v); }}
+      onForwardClick={() => { stepsBack.set(v => v - 1); stepsBackTrigger.set(v => !v); }}
     />;
   }
 
