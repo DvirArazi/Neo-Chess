@@ -12,6 +12,14 @@ body {
   display: none;
 }
 
+*::-webkit-scrollbar {
+  display: none;
+}
+
+.MuiMenuItem-root {
+  justify-content: center !important;
+}
+
 @font-face {
   font-family: 'roboto-regular';
   src: url('/fonts/Roboto-Regular.ttf');

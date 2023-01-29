@@ -243,7 +243,12 @@ function isInStalemate(layout: BoardLayout, turnColor: PieceColor): boolean {
   return true;
 }
 
-export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns: GameTurn[], startRep: string): GameStatus {
+export function getGameStatus(
+  layout: BoardLayout,
+  turnColor: PieceColor,
+  turns: GameTurn[],
+  startRep: string,
+): GameStatus {
   const oppositeColor = getOppositeColor(turnColor)
 
   if (isKingCaptured(layout, oppositeColor)) {
@@ -267,7 +272,7 @@ export function getGameStatus(layout: BoardLayout, turnColor: PieceColor, turns:
       reason: WinReason.Stalemate,
     }
   }
-  if (hasCausedRepetition(turns, startRep)) {
+  if (hasCausedRepetition(turns, startRep)) { //needs testing
     return {
       catagory: GameStatusCatagory.Draw,
       reason: DrawReason.Repetition,

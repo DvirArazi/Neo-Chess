@@ -15,7 +15,6 @@ import { PieceColor, PieceType } from "shared/types/piece";
 import { MenuOffline } from "frontend/src/components/pageExclusives/game/GameOffline/MenuOffline";
 import { getOppositeColor } from "shared/tools/piece";
 import { THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
-import { getOrFallback } from "shared/tools/general";
 import { FLIP_PIECES_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export default function GameOffline(props: { timeframe: Timeframe }) {
@@ -115,7 +114,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
     const newStatus = getGameStatus(
       layoutRef.current,
-      turnsToColor(game.turns),
+      getOppositeColor(turnsToColor(newTurns)),
       newTurns,
       game.startRep
     );
@@ -160,17 +159,13 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         isGameJustOverByTimeout.set(false);
       }
 
-      // // console.log(isStatusOngoing, isStatusTimeout)
-      // if (!(isStatusOngoing || isStatusTimeout)) {
-      //   // console.log('game is over')
-      //   // isGameOver.set(true);
-      // }
-
     }, [game.status]);
   }
 
   function handleStepsBackChange() {
     useEffect(() => {
+      if (stepsBack.value === 0) return;
+
       layout.set(startAndTurnsToBoardLayout(
         game.start,
         game.turns.slice(0, turnsLength)
