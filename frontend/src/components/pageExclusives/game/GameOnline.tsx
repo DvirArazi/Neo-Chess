@@ -34,6 +34,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isFlipped = game.role !== PieceColor.Black;
 
   const isWhiteTurn = game.turns.length % 2 === 0;
+  const turnColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
   const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
     && game.status.reason === WinReason.Timeout;
@@ -98,9 +99,9 @@ export default function GameOnline(props: { data: GameViewData }) {
         }}>
           {getFormatBanner()}
           <Box sx={{ padding: `5px` }} />
-          {getPlayerBanner(isFlipped, true)}
+          {getPlayerBanner(!isFlipped, true)}
           <Divider variant="middle" />
-          {getPlayerBanner(!isFlipped, false)}
+          {getPlayerBanner(isFlipped, false)}
           <Box sx={{ padding: `5px` }} />
           {getButtonsBanner()}
         </Box>
@@ -120,9 +121,9 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getBoard() {
     return <Board
-      enabled={!isGameOver}
+      enabled={!isGameOver && game.role === turnColor}
       layout={layout.value}
-      turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
+      turnColor={turnColor}
       onMove={onMove}
       onPromotion={onPromotion}
       onTurnEnd={onTurnEnd}
@@ -165,8 +166,8 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getPlayerBanner(isWhite: boolean, isOnTop: boolean) {
     return <PlayerBanner key={Number(isOnTop)}
-      name={isWhite ? 'White' : 'Black'}
-      rating={null}
+      name={isWhite ? game.white.name : game.black.name}
+      rating={isWhite ? game.white.rating : game.black.rating}
       timeLeftMil={0}
       isTicking={true}
       initDateTimeMil={0}
@@ -187,66 +188,6 @@ export default function GameOnline(props: { data: GameViewData }) {
       onForwardClick={() => { }}
       onMenuClick={() => { }}
     />;
-  }
-
-  function onMove(newFrom: Point, newTo: Point, newLayout: BoardLayout) {
-    layout.set(newLayout);
-    layoutRef.current = newLayout;
-    from.current = newFrom;
-    to.current = newTo;
-  }
-
-  function onPromotion(newPromotionType: PieceType) {
-    const toI = pointToIndex(to.current);
-
-    layoutRef.current[toI]!.type = newPromotionType;
-    layout.set(layoutRef.current);
-    promotionType.current = newPromotionType;
-  }
-
-  function onTurnEnd() {
-    const timeCrntTurnMs = new Date().getTime();
-
-    const newTimeLeftMs = game.timeframe === "untimed" ? 0 :
-      game.turns.length >= 2 ?
-        (
-          isGameJustOverByTimeout.value ?
-            0 :
-            game.turns[game.turns.length - 2].timeLeftMs + (
-              hasTimedOut.value ?
-                0 :
-                - (timeCrntTurnMs - game.timeLastTurnMs)
-                + game.timeframe.incSec * 1000
-            )
-        ) : game.timeframe.overallSec * 1000;
-
-    const newTurns = [
-      ...game.turns,
-      {
-        action: pointsToAction(from.current, to.current),
-        timeLeftMs: newTimeLeftMs,
-        promotionType: promotionType.current,
-        rep: boardLayoutToRep(layoutRef.current),
-      }
-    ];
-
-    const newStatus = getGameStatus(
-      layoutRef.current,
-      getOppositeColor(turnsToColor(newTurns)),
-      newTurns,
-      game.startRep
-    );
-
-    setGame({
-      ...game,
-      turns: newTurns,
-      status: newStatus,
-      timeLastTurnMs: timeCrntTurnMs
-    });
-
-    stepsBack.set(0);
-
-    promotionType.current = null;
   }
 }
 
