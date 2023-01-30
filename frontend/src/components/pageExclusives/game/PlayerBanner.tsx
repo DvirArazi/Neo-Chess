@@ -10,9 +10,9 @@ import { PieceColor } from "shared/types/piece";
 export default function PlayerBunner(props: {
   name: string,
   rating: number | null,
-  timeLeftMil: number,
+  timeLeftMs: number,
   isTicking: boolean,
-  initDateTimeMil: number,
+  initDateTimeMs: number,
   color: PieceColor,
   isOnTop: boolean,
   isWide: boolean,
@@ -22,9 +22,9 @@ export default function PlayerBunner(props: {
   const {
     name,
     rating,
-    timeLeftMil,
+    timeLeftMs,
     isTicking,
-    initDateTimeMil,
+    initDateTimeMs,
     color,
     isOnTop,
     isWide,
@@ -37,14 +37,14 @@ export default function PlayerBunner(props: {
   return <Box sx={{ margin: `10px`, }}>
     {
       isOnTop ?
-      <>
-        {getMainRow()}
-        {getMiniPieces()}
-      </> :
-      <>
-        {getMiniPieces()}
-        {getMainRow()}
-      </>
+        <>
+          {getMainRow()}
+          {getMiniPieces()}
+        </> :
+        <>
+          {getMiniPieces()}
+          {getMainRow()}
+        </>
     }
   </Box>
 
@@ -62,12 +62,12 @@ export default function PlayerBunner(props: {
       </Box>
       {
         isUntimed ? <></> :
-        <Clock
-          timeLeftMil={timeLeftMil}
-          isTicking={isTicking}
-          initDateTimeMil={initDateTimeMil}
-          isWide={isWide}
-        />
+          <Clock
+            timeLeftMil={timeLeftMs}
+            isTicking={isTicking}
+            initDateTimeMil={initDateTimeMs}
+            isWide={isWide}
+          />
       }
     </Box>;
   }

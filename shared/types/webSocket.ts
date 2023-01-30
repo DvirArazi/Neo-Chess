@@ -11,14 +11,14 @@ export interface ClientToServerEvents {
   getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
-  playerMove: (gameId: ObjectId, from: Point, to: Point, promotion: PieceType | null) => void;
+  playerMove: (gameId: ObjectId, from: Point, to: Point, promotionType: PieceType | null) => void;
 }
 export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: UserViewData) => void;
   autoSignedIn: (data: UserViewData) => void;
   signedOut: () => void;
   createdGame: (path: string) => void;
-  playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus) => void;
+  playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;
 }
 
 export type AutoAuthData = {

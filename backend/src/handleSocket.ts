@@ -13,8 +13,6 @@ import handlePlayerMoved from 'backend/src/eventHandlers/handlePlayerMove';
 import handleGetHomeData from 'backend/src/eventHandlers/handleGetHomeData';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
-  const date = new Date();
-
   const oAuth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -38,7 +36,6 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
 
   webSocketServer.on("connection", (socket) => {
     const handlerParams: HandlerParams = {
-      date: date,
       webSocketServer: webSocketServer,
       socket: socket,
       userId: undefined,
@@ -60,7 +57,6 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
 };
 
 export type HandlerParams = {
-  date: Date,
   webSocketServer: WebSocketServer,
   socket: ServerSocket,
   userId: ObjectId | undefined,

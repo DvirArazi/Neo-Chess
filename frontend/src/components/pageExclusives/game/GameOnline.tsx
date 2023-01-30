@@ -25,6 +25,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isMenuOpen = new Stateful<boolean>(false);
   const stepsBack = new Stateful<number>(0);
   const isGameJustOverByTimeout = new Stateful<boolean>(false);
+  const postTurn = new Stateful<boolean>(false);
   const hasTimedOut = new Stateful<boolean>(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
@@ -142,6 +143,8 @@ export default function GameOnline(props: { data: GameViewData }) {
         to.current,
         promotionType.current
       );
+
+      postTurn.set(true);
     }
   }
 
@@ -157,15 +160,43 @@ export default function GameOnline(props: { data: GameViewData }) {
     return <PlayerBanner key={Number(isOnTop)}
       name={isWhite ? game.white.name : game.black.name}
       rating={isWhite ? game.white.rating : game.black.rating}
-      timeLeftMil={0}
-      isTicking={true}
-      initDateTimeMil={0}
+      timeLeftMs={getTimeLeft()}
+      isTicking={isTicking()}
+      initDateTimeMs={game.timeLastTurnMs}
       color={isWhite ? PieceColor.White : PieceColor.Black}
       isOnTop={isOnTop}
       isWide={isWide}
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
     />;
+
+    function getTimeLeft() {
+      if (game.timeframe === "untimed") return 0;
+
+      if (isGameJustOverByTimeout.value &&
+        game.status.catagory === GameStatusCatagory.Win &&
+        game.status.winColor === PieceColor.White !== isWhite
+      ) {
+        return 0;
+      }
+
+      if (game.turns.length <= 1) {
+        return game.timeframe.overallSec * 1000;
+      }
+
+      const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
+        -(new Date().getTime() - game.timeLastTurnMs)
+        +game.timeframe.incSec * 1000;
+
+      const iMod = isWhiteTurn === isWhite ? -1 : 0;
+      return game.turns[game.turns.length - 1 + iMod].timeLeftMs + timeMod;
+    }
+
+    function isTicking() {
+      return game.turns.length >= 2 &&
+        isWhite === isWhiteTurn &&
+        !postTurn.value;
+    }
   }
 
   function getButtonsBanner() {
@@ -181,22 +212,27 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function handlePlayerMovedEvent() {
     SOCKET.off("playerMoved");
-    SOCKET.on("playerMoved", (gameId, turn, newStatus) => {
+    SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
       if (game.id.toString() !== gameId.toString()) return;
 
-      const newTurns = game.turns.concat(turn);
+      const newTurns = game.turns.concat(newTurn);
       layout.set(startAndTurnsToBoardLayout(game.start, newTurns));
       setGame({
         ...game,
         turns: newTurns,
         status: newStatus,
+        timeLastTurnMs: timeCrntTurnMs,
       });
 
+      console.log(newTurn.timeLeftMs);
       if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
         isMenuOpen.set(true);
       }
 
       stepsBack.set(0);
+      postTurn.set(false);
+
+      promotionType.current = null;
     });
   }
 

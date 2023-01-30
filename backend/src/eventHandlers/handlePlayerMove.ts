@@ -1,17 +1,19 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { emitToUser, toValidId } from "backend/src/utils/tools/general";
-import { BOARD_SIDE, getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
+import { BOARD_SIDE, getGameStatus, getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
 import Lodash from "lodash";
 import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason, GameTurn } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
 import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
-import { pointsToAction } from "shared/tools/board";
+import { pointsToAction, turnsToColor } from "shared/tools/board";
 
 export default function handlePlayerMoved(p: HandlerParams) {
-  p.socket.on("playerMove", async (gameId, from, to, promotion) => {
+  p.socket.on("playerMove", async (gameId, from, to, promotionType) => {
+    const timeCrntTurnMs = new Date().getTime();
+
     if (p.userId === undefined) {
       Terminal.warning('User attempted to play a turn in an online game without being registered');
       return;
@@ -19,7 +21,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
     const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
     if (user === null) {
-      Terminal.error('Couldn\'nt find user with saved user ID');
+      Terminal.error('Couldn\'nt find user with the saved user ID');
       return;
     }
 
@@ -35,7 +37,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return undefined;
     })();
     if (turnColor === undefined) {
-      Terminal.warning('The user who tried to play a turn is not part of that game');
+      Terminal.warning('The user who tried to play a turn is not a player in this game');
       return;
     }
 
@@ -46,7 +48,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
     const layout = startAndTurnsToBoardLayout(game.start, game.turns);
 
-    if (promotion !== null && !isPromotionValid(layout, turnColor, promotion)) {
+    if (promotionType !== null && !isPromotionValid(layout, turnColor, promotionType)) {
       Terminal.warning('The user tried to promote to an invalid piece');
       return;
     }
@@ -63,32 +65,26 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const whiteTime = (() => {
-      if (game.turns.length !== 0) {
-        const lastTurn = game.turns[game.turns.length - 1];
-        const delta = p.date.getTime() - game.timeLastTurnMs;
+    const newTimeLeftMs = game.timeframe === "untimed" ? 0 :
+      game.turns.length < 2 ? game.timeframe.overallSec * 1000 :
+        (
+          game.turns[game.turns.length - 2].timeLeftMs
+          - (timeCrntTurnMs - game.timeLastTurnMs)
+          + game.timeframe.incSec * 1000
+        );
 
-        return lastTurn.timeLeftMs - delta;
-      } else {
-        if (game.timeframe === "untimed") return 0;
-
-        return game.timeframe.overallSec;
-      }
-    })();
-
-    const turn: GameTurn = {
+    const newTurn: GameTurn = {
       action: pointsToAction(from, to),
-      timeLeftMs: whiteTime,
-      promotionType: promotion,
-      rep: boardLayoutToRep(step(layout, from, to, promotion)),
+      timeLeftMs: newTimeLeftMs,
+      promotionType: promotionType,
+      rep: boardLayoutToRep(step(layout, from, to, promotionType)),
     };
 
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/
       {
-        $push: {
-          turns: turn
-        }
+        $push: { turns: newTurn },
+        $set: { timeLastTurnMs: timeCrntTurnMs }
       },
       { returnDocument: "after" },
     );
@@ -107,33 +103,12 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
     const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
 
-    const status: GameStatus = (() => {
-      if (isKingCaptured(layoutAfter, getOppositeColor(turnColor))) {
-        return {
-          catagory: GameStatusCatagory.Win,
-          winColor: turnColor,
-          reason: WinReason.KingCaptured,
-        }
-      }
-      if (isInCheckmate(layoutAfter, getOppositeColor(turnColor))) {
-        return {
-          catagory: GameStatusCatagory.Win,
-          winColor: turnColor,
-          reason: WinReason.Checkmate,
-        }
-      }
-      if (hasCausedRepetition(gameAfter.turns, gameAfter.startRep)) {
-        return {
-          catagory: GameStatusCatagory.Draw,
-          reason: DrawReason.Repetition,
-        }
-      }
+    const status: GameStatus = getGameStatus(
+      layoutAfter, turnsToColor(gameAfter.turns), gameAfter.turns, game.startRep
+    );
 
-      return { catagory: GameStatusCatagory.Ongoing };
-    })();
-
-    emitToUser(p.webSocketServer, user, "playerMoved", gameId, turn, status);
-    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, turn, status);
+    emitToUser(p.webSocketServer, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
+    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
   });
 }
 

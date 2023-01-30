@@ -94,14 +94,12 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     const newTimeLeftMs = game.timeframe === "untimed" ? 0 :
       turnsLength >= 2 ?
         (
-          isGameJustOverByTimeout.value ?
-            0 :
-            game.turns[turnsLength - 2].timeLeftMs + (
-              hasTimedOut.value ?
-                0 :
-                - (timeCrntTurnMs - game.timeLastTurnMs)
-                + game.timeframe.incSec * 1000
-            )
+          isGameJustOverByTimeout.value ? 0 :
+          game.turns[turnsLength - 2].timeLeftMs + (
+            hasTimedOut.value ? 0 :
+            - (timeCrntTurnMs - game.timeLastTurnMs)
+            + game.timeframe.incSec * 1000
+          )
         ) : game.timeframe.overallSec * 1000;
 
     const newTurns = [
@@ -232,9 +230,9 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     return <PlayerBanner key={Number(isOnTop)}
       name={isWhite ? 'White' : 'Black'}
       rating={null}
-      timeLeftMil={getTimeLeft()}
+      timeLeftMs={getTimeLeft()}
       isTicking={getIsTicking()}
-      initDateTimeMil={game.timeLastTurnMs}
+      initDateTimeMs={game.timeLastTurnMs}
       color={isWhite ? PieceColor.White : PieceColor.Black}
       isOnTop={isOnTop}
       isWide={isWide}
@@ -256,8 +254,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         return game.timeframe.overallSec * 1000;
       }
 
-      const [iMod, timeMod] = isWhiteTurn === isWhite ? [-1, -timeUnpausedMs.value] : [0, 0];
-
+      const [iMod, timeMod] = isWhiteTurn === isWhite ?
+        [-1, -timeUnpausedMs.value] : [0, 0];
       return game.turns[turnsLength - 1 + iMod].timeLeftMs + timeMod;
     }
 
