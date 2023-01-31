@@ -43,7 +43,7 @@ export default function OnlinePanel(
         padding: `20px 20px 10px 20px`,
         display: isRanged.value ? `block` : `none`,
         // background: THEME.clock,
-        
+
         borderRadius: `10px`,
       }}>
         <Box>
@@ -66,7 +66,7 @@ export default function OnlinePanel(
       }}>
         <FriendList
           friends={["Avishay", "Yonatan"]}
-          chosen={chosen}
+          friendChosen={chosen}
         />
       </div>
     </Paper>

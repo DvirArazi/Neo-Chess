@@ -1,4 +1,5 @@
-import { TimeFormat } from "shared/types/game";
+import { timeframeToTimeFormat } from "shared/tools/general";
+import { TimeFormat, Timeframe } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
 export function timeToString(time: number) {
@@ -19,6 +20,18 @@ export function timeFormatToString(timeFormat: TimeFormat): string {
     case TimeFormat.Rapid: return "Rapid";
     case TimeFormat.Classical: return "Classical";
   }
+}
+
+export function timeframeToString(timeframe: Timeframe) {
+  if (timeframe === "untimed") return 'Untimed';
+
+  return `${timeToString(timeframe.overallSec)} | ${timeToString(timeframe.incSec)}`;
+}
+
+export function getFormatBannerString(timeframe: Timeframe, isRated: boolean) {
+  return `${timeframeToString(timeframe)}` +
+    ` • ${timeFormatToString(timeframeToTimeFormat(timeframe))}` +
+    ` • ${isRated ? 'Rated' : 'Casual'}`;
 }
 
 export function getColorName(color: PieceColor) {

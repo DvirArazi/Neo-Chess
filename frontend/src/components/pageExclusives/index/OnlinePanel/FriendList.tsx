@@ -1,8 +1,8 @@
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import Stateful from "frontend/src/utils/tools/stateful";
 
-export default function FriendList(props: { friends: string[], chosen: Stateful<string> }) {
-  const { friends, chosen } = props;
+export default function FriendList(props: { friends: string[], friendChosen: Stateful<string> }) {
+  const { friends, friendChosen: chosen } = props;
 
   const handleChange = (_: any, newChosen: string) => {
     chosen.set(newChosen);
@@ -20,7 +20,7 @@ export default function FriendList(props: { friends: string[], chosen: Stateful<
         return (
           <ToggleButton key={friend}
             value={friend}
-            sx={{borderRadius: `10px`,}}
+            sx={{ borderRadius: `10px`, }}
           >
             <Box >{friend}</Box>
           </ToggleButton>

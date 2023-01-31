@@ -7,9 +7,11 @@ import { PieceColor } from "shared/types/piece";
 
 export default function ModalFrame(props: {
   isOpen: Stateful<boolean>,
+  width?: number,
   children: React.ReactNode,
 }) {
-  const { isOpen, children } = props;
+  const { isOpen, children, width } = props;
+  const widthStr = props.width !== undefined ? `${props.width}px` : `350px`; 
 
   return (
     <Modal
@@ -33,7 +35,7 @@ export default function ModalFrame(props: {
           onClick={(e) => { e.stopPropagation() }}
           sx={{
             margin: `30px`,
-            width: `350px`,
+            width: widthStr,
             bgcolor: 'background.paper',
             borderRadius: '15px',
             boxShadow: 24,

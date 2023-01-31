@@ -80,11 +80,40 @@ export default function handlePlayerMoved(p: HandlerParams) {
       rep: boardLayoutToRep(step(layout, from, to, promotionType)),
     };
 
+    const otherUserId = turnColor ? game.white.id : game.black.id;
+    const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
+    if (otherUser === null) {
+      Terminal.error('Could not find other user saved on game');
+      return;
+    }
+
+    if (game.timeoutId !== null) { clearTimeout(game.timeoutId); }
+    const newTimeoutId = Number(setTimeout(()=>{
+      const winColor = turnsToColor(game.turns);
+
+      // p.ongoingGamesCollection.findOneAndUpdate(
+      //   {_id: game._id },
+      //   {
+      //     $set: { status: {
+      //       catagory: GameStatusCatagory.Win,
+      //       winColor: winColor,
+      //       reason: WinReason.Timeout,
+      //     }}
+      //   }
+      // );
+
+      emitToUser(p.webSocketServer, user, "timeout", game._id, winColor);
+      emitToUser(p.webSocketServer, otherUser, "timeout", game._id, winColor);
+    }, newTimeLeftMs));
+
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/
       {
         $push: { turns: newTurn },
-        $set: { timeLastTurnMs: timeCrntTurnMs }
+        $set: {
+          timeLastTurnMs: timeCrntTurnMs,
+          timeoutId: newTimeoutId
+        }
       },
       { returnDocument: "after" },
     );
@@ -93,13 +122,6 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
     const gameAfter = gameAfterResult.value;
-
-    const otherUserId = turnColor ? game.white.id : game.black.id;
-    const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
-    if (otherUser === null) {
-      Terminal.error('Could not find other user saved on game');
-      return;
-    }
 
     const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
 

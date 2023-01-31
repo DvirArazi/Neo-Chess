@@ -2,7 +2,7 @@ import { THEME } from "frontend/src/pages/_app";
 import { useEffect, useRef } from "react";
 import { BOARD_SIDE } from "shared/tools/boardLayout";
 
-export default function Background() {
+export default function BoardBackground() {
   const resolution = 1;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -15,7 +15,7 @@ export default function Background() {
     for (let x = 0; x < BOARD_SIDE; x++) {
       for (let y = 0; y < BOARD_SIDE; y++) {
         if (x % 2 != y % 2) {
-          ctx.fillRect(x*resolution, y*resolution, resolution, resolution);
+          ctx.fillRect(x * resolution, y * resolution, resolution, resolution);
         }
       }
     }
@@ -24,8 +24,8 @@ export default function Background() {
   return (
     <canvas
       ref={canvasRef}
-      width={BOARD_SIDE*resolution}
-      height={BOARD_SIDE*resolution}
+      width={BOARD_SIDE * resolution}
+      height={BOARD_SIDE * resolution}
       style={{
         position: `absolute`,
         left: `0%`,

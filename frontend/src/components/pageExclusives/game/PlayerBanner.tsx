@@ -7,7 +7,7 @@ import { getOppositeColor, pieceDataToIconName } from "shared/tools/piece";
 import { BoardLayout, PieceCount } from "shared/types/boardLayout";
 import { PieceColor } from "shared/types/piece";
 
-export default function PlayerBunner(props: {
+export default function PlayerBanner(props: {
   name: string,
   rating: number | null,
   timeLeftMs: number,

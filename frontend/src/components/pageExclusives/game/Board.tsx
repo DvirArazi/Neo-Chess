@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import Background from "frontend/src/components/pageExclusives/game/Board/Background";
+import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
 import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -75,7 +75,7 @@ export default function Board(props: {
             overflow: `hidden`,
           }}
         >
-          <Background />
+          <BoardBackground />
           {getPieces()}
           {getVisuals()}
           {getPromotionBanner()}

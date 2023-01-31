@@ -28,4 +28,5 @@ export type Game = {
   path: string,
   white: PlayerWithId,
   black: PlayerWithId,
+  timeoutId: number | null,
 } & GameData

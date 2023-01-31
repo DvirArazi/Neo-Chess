@@ -3,6 +3,7 @@ import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
 import ButtonsBannerOnline from "frontend/src/components/pageExclusives/game/GameOnline/ButtonsBannerOnline";
+import { MenuOnlineOngoing, MenuOnlineEnd } from "frontend/src/components/pageExclusives/game/GameOnline/OnlineMenus";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -42,10 +43,12 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
 
   handlePlayerMovedEvent();
+  handleTimeoutEvent();
   handleStepsBackChange();
 
   return <Layout>
     {isWide ? getWideLayout() : getNarrowLayout()}
+    {getMenu()}
   </Layout>;
 
   function getWideLayout() {
@@ -103,6 +106,7 @@ export default function GameOnline(props: { data: GameViewData }) {
       {getBoard()}
       {getPlayerBanner(isFlipped, false)}
       {getButtonsBanner()}
+      { }
     </>
   }
 
@@ -186,7 +190,7 @@ export default function GameOnline(props: { data: GameViewData }) {
 
       const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
         -(new Date().getTime() - game.timeLastTurnMs)
-        +game.timeframe.incSec * 1000;
+        + game.timeframe.incSec * 1000;
 
       const iMod = isWhiteTurn === isWhite ? -1 : 0;
       return game.turns[game.turns.length - 1 + iMod].timeLeftMs + timeMod;
@@ -206,8 +210,25 @@ export default function GameOnline(props: { data: GameViewData }) {
       isUntimed={game.timeframe === "untimed"}
       onBackClick={() => stepsBack.set(v => v + 1)}
       onForwardClick={() => stepsBack.set(v => v - 1)}
-      onMenuClick={() => { }}
+      onMenuClick={() => isMenuOpen.set(true)}
     />;
+  }
+
+  function getMenu() {
+    return game.status.catagory === GameStatusCatagory.Ongoing ?
+      <MenuOnlineOngoing
+        isOpen={isMenuOpen}
+        onTakebackClick={() => { }}
+        onDrawClick={() => { }}
+        onResignClick={() => { }}
+      /> :
+      <MenuOnlineEnd
+        isOpen={isMenuOpen}
+        status={game.status}
+        onRematchClick={() => { }}
+        onNewOpponentClick={() => { }}
+        onShareClick={() => { }}
+      />
   }
 
   function handlePlayerMovedEvent() {
@@ -233,6 +254,24 @@ export default function GameOnline(props: { data: GameViewData }) {
       postTurn.set(false);
 
       promotionType.current = null;
+    });
+  }
+
+  function handleTimeoutEvent() {
+    SOCKET.on("timeout", (gameId, winColor) => {
+      if (game.id.toString() !== gameId.toString()) return;
+
+      setGame({
+        ...game,
+        status: {
+          catagory: GameStatusCatagory.Win,
+          winColor: winColor,
+          reason: WinReason.Timeout,
+        }
+      });
+
+      stepsBack.set(0);
+      isMenuOpen.set(true);
     });
   }
 

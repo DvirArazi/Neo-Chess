@@ -95,7 +95,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],
       timeLastTurnMs: new Date().getTime(),
-      status: { catagory: GameStatusCatagory.Ongoing }
+      status: { catagory: GameStatusCatagory.Ongoing },
+      timeoutId: null
     });
 
     p.usersCollection.updateOne({ _id: user0._id }, { $push: { ongoingGamesIds: game.insertedId } });
