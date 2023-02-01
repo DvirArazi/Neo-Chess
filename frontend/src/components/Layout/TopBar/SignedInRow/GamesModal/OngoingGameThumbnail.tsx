@@ -21,7 +21,6 @@ export default function OngoingGameThumbnail(props: { data: GameTd }) {
       display: `flex`,
       flexDirection: `row`,
       justifyContent: `space-between`,
-      // background: `blue`,
     }}>
 
       {/* board thumbnail */}
@@ -68,7 +67,6 @@ export default function OngoingGameThumbnail(props: { data: GameTd }) {
           fontWeight: `bold`,
           fontSize: `15px`,
           color: isUserTurn ? `#00b300` : `#6666ff`,
-          // background: isUserTurn ? `#66ff66` : `#e6e6ff`,
           borderRadius: `5px`,
         }}
         >{isUserTurn ? 'Your turn' : 'Opponent\'s turn'}</Box>

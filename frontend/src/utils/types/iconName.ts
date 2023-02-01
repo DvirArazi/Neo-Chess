@@ -1,4 +1,6 @@
 export type IconName = 
+  "approve" |
+  "board" |
   "chessBishopBlack" |
   "chessBishopWhite" |
   "chessKingBlack" |
@@ -11,6 +13,7 @@ export type IconName =
   "chessQueenWhite" |
   "chessRookBlack" |
   "chessRookWhite" |
+  "deny" |
   "draw" |
   "fight" |
   "flip" |
@@ -29,6 +32,7 @@ export type IconName =
   "resign" |
   "share" |
   "signOut" |
+  "swords" |
   "takeback" |
   "user" |
   "wifi" |
@@ -36,6 +40,8 @@ export type IconName =
 
 export function iconNameToPath(name: IconName) {
   switch(name) {
+    case "approve": return "approve";
+    case "board": return "board";
     case "chessBishopBlack": return "chess/bishop_black";
     case "chessBishopWhite": return "chess/bishop_white";
     case "chessKingBlack": return "chess/king_black";
@@ -48,6 +54,7 @@ export function iconNameToPath(name: IconName) {
     case "chessQueenWhite": return "chess/queen_white";
     case "chessRookBlack": return "chess/rook_black";
     case "chessRookWhite": return "chess/rook_white";
+    case "deny": return "deny";
     case "draw": return "draw";
     case "fight": return "fight";
     case "flip": return "flip";
@@ -66,6 +73,7 @@ export function iconNameToPath(name: IconName) {
     case "resign": return "resign";
     case "share": return "share";
     case "signOut": return "sign_out";
+    case "swords": return "swords";
     case "takeback": return "takeback";
     case "user": return "user";
     case "wifi": return "wifi";

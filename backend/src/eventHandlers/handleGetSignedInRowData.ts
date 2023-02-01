@@ -8,7 +8,7 @@ import { GameTd } from "shared/types/general";
 import { PieceColor } from "shared/types/piece";
 
 export default function handleGetSignedInRowData(p: HandlerParams) {
-  p.socket.on("getSignedInRowData", async ()=>{
+  p.socket.on("getSignedInRowData", async (callback)=>{
     if (p.userId === undefined) {
       Terminal.warning('User tried to get SignedIn row data without being signed in');
       return;
@@ -36,7 +36,7 @@ export default function handleGetSignedInRowData(p: HandlerParams) {
       });
     }
 
-    emitToUser(p.webSocketServer, user, "signedInRowData", {
+    callback({
       ongoingGamesTd: gamesTd,
       invitationsTd: [], //update that!!!
       requestTd: null, //update that!!!

@@ -31,6 +31,7 @@ export function handleSignIn(p: HandlerParams) {
           ongoingGamesIds: [],
           ratings: [1200, 1000, 1000, 1200, 1200],
           friends: [],
+          friendRequests: [],
         }
       },
       {

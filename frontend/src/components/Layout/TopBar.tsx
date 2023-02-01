@@ -1,16 +1,8 @@
 import { Box, SxProps, IconButton, Divider, } from "@mui/material";
 import { SOCKET, THEME, USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
-import { IconName } from "frontend/src/utils/types/iconName";
 import Icon from "../Icon";
 import { AuthButton, SignInButton, SignOutButton } from "./TopBar/AuthButtons";
 import { useRouter } from "next/router";
-import { keyframes } from "@mui/material";
-import GamesModal from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal";
-import { ObjectId } from "mongodb";
-import Stateful from "frontend/src/utils/tools/stateful";
-import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
-import { useEffect } from "react";
-import { GamesModalData } from "shared/types/general";
 import SignedInRow from "frontend/src/components/Layout/TopBar/SignedInRow";
 
 export default function TopBar() {

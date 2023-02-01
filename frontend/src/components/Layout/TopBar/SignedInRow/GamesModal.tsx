@@ -1,5 +1,6 @@
 import { Box, Button } from "@mui/material";
 import OngoingGameThumbnail from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/OngoingGameThumbnail";
+import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
@@ -27,22 +28,13 @@ export default function GamesModal(props: {
     if (data.ongoingGamesTd.length === 0) return <></>;
 
     return <>
-      {getTitle('Ongoing Games')}
+      <ModalTitle title={'Ongoing Games'}/>
       {data.ongoingGamesTd.map(td => <OngoingGameThumbnail data={td}/>)}
     </>
   }
 
   function getInvitations() {
     if (data.invitationsTd.length === 0) return <></>;
-  }
-
-  function getTitle(title: string) {
-    return <Box sx={{
-      padding: `10px 0 0`,
-      fontWeight: `bold`,
-      fontSize: `18px`,
-      fontFamily: `robotoslab`,
-    }}>{title}</Box>;
   }
 }
 

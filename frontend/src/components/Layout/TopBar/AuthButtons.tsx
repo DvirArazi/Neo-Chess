@@ -51,7 +51,6 @@ export function SignOutButton() {
           style={{
             borderRadius: `50%`,
             width: `30px`,
-            // border: `solid 1px`,
             boxShadow: `0px 0px 2px 0.1px rgba(0,0,0,0.5)`,
           }}
         /> : <></>

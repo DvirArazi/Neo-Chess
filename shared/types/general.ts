@@ -40,3 +40,10 @@ export type GamesModalData = {
   invitationsTd: InvitationTd[],
   requestTd: RequestTd | null,
 }
+
+export type FriendRequest = {
+  id: ObjectId,
+  name: string,
+  picture: string,
+  email: string,
+}

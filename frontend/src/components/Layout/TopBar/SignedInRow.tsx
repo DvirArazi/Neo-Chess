@@ -1,5 +1,6 @@
 import { Box, IconButton } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
+import FriendsModal from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal";
 import GamesModal from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal";
 import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -14,30 +15,25 @@ export default function SignedInRow() {
     invitationsTd: [],
     requestTd: null
   });
-  const isGamesModalOpen = new Stateful(true); //change to false
-
-  handleSignInRowDataEvent();
+  const isGamesModalOpen = new Stateful(false);
+  const isFriendsModalOpen = new Stateful(true);
 
   getData();
 
   return <>
     {getButton("fight", 28, () => isGamesModalOpen.set(true))}
-    {getButton("history", 25, () => { })}
-    {getButton("friends", 33, () => { })}
+    {getButton("history", 25, () => {})}
+    {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
     {getGamesModal()}
+    {getFriendsModal()}
   </>;
 
   function getData() {
     useEffect(() => {
-      SOCKET.emit("getSignedInRowData");
+      SOCKET.emit("getSignedInRowData", (data)=>{
+        gamesModalData.set(data);
+      });
     }, []);
-  }
-
-  function handleSignInRowDataEvent() {
-    SOCKET.off("signedInRowData");
-    SOCKET.on("signedInRowData", (newGamesModalData) => {
-      gamesModalData.set(newGamesModalData);
-    });
   }
 
   function getButton(name: IconName, side: number, onClick: () => void) {
@@ -61,5 +57,12 @@ export default function SignedInRow() {
       isOpen={isGamesModalOpen}
       data={gamesModalData.value}
     />;
+  }
+
+  function getFriendsModal() {
+    return <FriendsModal
+      isOpen={isFriendsModalOpen}
+
+    />
   }
 }

@@ -1,7 +1,7 @@
 import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
 import { GameData, GameTurn, Player, Timeframe } from "shared/types/game";
-import { Friend } from "shared/types/general";
+import { Friend, FriendRequest } from "shared/types/general";
 import { ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocket";
 import { Server, Socket } from "socket.io";
 
@@ -17,6 +17,7 @@ export type User = {
   name: string,
   ratings: number[],
   friends: Friend[],
+  friendRequests: FriendRequest[],
 }
 
 export type PlayerWithId = {

@@ -12,6 +12,8 @@ import { GameRequest } from 'shared/types/game';
 import handlePlayerMoved from 'backend/src/eventHandlers/handlePlayerMove';
 import handleGetHomeData from 'backend/src/eventHandlers/handleGetHomeData';
 import handleGetSignedInRowData from 'backend/src/eventHandlers/handleGetSignedInRowData';
+import handleGetFriendsSearchData from 'backend/src/eventHandlers/handleGetFriendsSearchData';
+import handleFriendRequest from 'backend/src/eventHandlers/handleFriendRequest';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -51,6 +53,8 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleSignOut(handlerParams);
     handleGetSignedInRowData(handlerParams);
     handleGetHomeData(handlerParams);
+    handleGetFriendsSearchData(handlerParams);
+    handleFriendRequest(handlerParams);
     handleCreateGameRequest(handlerParams);
     handleGetGameViewData(handlerParams);
     handlePlayerMoved(handlerParams);
