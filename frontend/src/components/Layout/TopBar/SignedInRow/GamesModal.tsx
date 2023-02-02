@@ -1,5 +1,5 @@
 import { Box, Button } from "@mui/material";
-import OngoingGamesThumbnail from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/OngoingGameThumbnail";
+import OngoingGamesSection from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/OngoingGameThumbnail";
 import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
@@ -27,7 +27,7 @@ export default function GamesModal(props: {
   function getOngoingGames() {
     if (data.ongoingGamesTd.length === 0) return <></>;
 
-    return <OngoingGamesThumbnail ongoingGamesTd={data.ongoingGamesTd} />
+    return <OngoingGamesSection ongoingGamesTd={data.ongoingGamesTd} />
   }
 
   function getInvitations() {

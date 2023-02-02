@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
 export default function SearchSection() {
-  const name = new Stateful("");
+  const friendName = new Stateful("");
   const friends = new Stateful<FriendRequest[]>([]);
   const isSnackbarOpen = new Stateful(false);
 
@@ -21,26 +21,26 @@ export default function SearchSection() {
           fullWidth
           variant={"outlined"}
           label={'Enter friend\'s name'}
-          value={name.value}
-          onChange={handleNameChange}
+          value={friendName.value}
+          onChange={handleFriendNameChange}
         />
         {getSearchResults()}
       </Box>
     {getSnackbar()}
   </>;
 
-  function handleNameChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const newName = event.target.value;
+  function handleFriendNameChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const newFriendName = event.target.value;
 
-    if (newName != '') {
-      SOCKET.emit("getFriendsSearchData", newName, (data) => {
+    if (newFriendName != '') {
+      SOCKET.emit("getFriendsSearchData", newFriendName, (data) => {
         friends.set(data);
       });
     } else {
       friends.set([]);
     }
 
-    name.set(newName);
+    friendName.set(newFriendName);
   }
 
   function getSearchResults() {

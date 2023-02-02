@@ -6,7 +6,7 @@ import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { IconName } from "frontend/src/utils/types/iconName";
 import { useEffect } from "react";
-import { GamesModalData } from "shared/types/general";
+import { FriendsModalData, GamesModalData } from "shared/types/general";
 
 export default function SignedInRow() {
 
@@ -15,6 +15,10 @@ export default function SignedInRow() {
     invitationsTd: [],
     requestTd: null
   });
+  const friendsModalData = new Stateful<FriendsModalData>({
+    friends: [],
+    friendRequests: [],
+  });
   const isGamesModalOpen = new Stateful(false);
   const isFriendsModalOpen = new Stateful(true);
 
@@ -22,7 +26,7 @@ export default function SignedInRow() {
 
   return <>
     {getButton("fight", 28, () => isGamesModalOpen.set(true))}
-    {getButton("history", 25, () => {})}
+    {getButton("history", 25, () => { })}
     {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
     {getGamesModal()}
     {getFriendsModal()}
@@ -30,8 +34,8 @@ export default function SignedInRow() {
 
   function getData() {
     useEffect(() => {
-      SOCKET.emit("getSignedInRowData", (data)=>{
-        gamesModalData.set(data);
+      SOCKET.emit("getSignedInRowData", (newGamesModalData, newFriendsModalData) => {
+        gamesModalData.set(newGamesModalData);
       });
     }, []);
   }
@@ -62,7 +66,7 @@ export default function SignedInRow() {
   function getFriendsModal() {
     return <FriendsModal
       isOpen={isFriendsModalOpen}
-
+      data={friendsModalData.value}
     />
   }
 }

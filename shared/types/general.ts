@@ -47,3 +47,8 @@ export type FriendRequest = {
   picture: string,
   email: string,
 }
+
+export type FriendsModalData = {
+  friends: Friend[],
+  friendRequests: FriendRequest[],
+}

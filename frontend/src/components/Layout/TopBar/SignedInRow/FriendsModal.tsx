@@ -5,11 +5,13 @@ import RequestsSection from "frontend/src/components/Layout/TopBar/SignedInRow/F
 import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { FriendsModalData } from "shared/types/general";
 
 export default function FriendsModal(props: {
-  isOpen: Stateful<boolean>
+  isOpen: Stateful<boolean>,
+  data: FriendsModalData,
 }) {
-  const { isOpen } = props;
+  const { isOpen, data } = props;
 
   return <ModalFrame isOpen={isOpen} width={500}>
     <Box sx={{
@@ -20,9 +22,9 @@ export default function FriendsModal(props: {
     }}>
       <SearchSection />
       {getSpacer()}
-      <RequestsSection />
+      <RequestsSection friendRequests={data.friendRequests} />
       {getSpacer()}
-      <FriendsSection />
+      <FriendsSection friends={data.friends} />
     </Box>
   </ModalFrame>;
 

@@ -8,14 +8,17 @@ import { IconName } from "frontend/src/utils/types/iconName";
 import { useEffect, useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
-export default function RequestsSection() {
+export default function RequestsSection(props: {
+  friendRequests: FriendRequest[]
+}) {
+  const { friendRequests: initFriendRequests } = props;
 
-  const requests = new Stateful<FriendRequest[]>([]);
+  const friendRequests = new Stateful<FriendRequest[]>(initFriendRequests);
   const isSnackbarOpen = new Stateful(false);
 
   const latest = useRef({ friendName: '', isApproved: false });
 
-  fetchFriendRequestsData();
+  // fetchFriendRequestsData();
   handleFriendRequestsUpdatedEvent();
 
   return <Box>
@@ -24,41 +27,41 @@ export default function RequestsSection() {
     {getSnackbar()}
   </Box>;
 
-  function fetchFriendRequestsData() {
-    useEffect(() => {
-      SOCKET.emit("getFriendRequests", (newRequests) => {
-        requests.set(newRequests);
-      });
-    }, []);
-  }
+  // function fetchFriendRequestsData() {
+  //   useEffect(() => {
+  //     SOCKET.emit("getFriendRequests", (newRequests) => {
+  //       requests.set(newRequests);
+  //     });
+  //   }, []);
+  // }
 
   function handleFriendRequestsUpdatedEvent() {
     SOCKET.off("friendRequestsUpdated");
     SOCKET.on("friendRequestsUpdated", (newRequests) => {
-      requests.set(newRequests);
+      friendRequests.set(newRequests);
     })
   }
 
   function getFriendRequests() {
-    if (requests.value.length === 0) {
+    if (friendRequests.value.length === 0) {
       return <Box sx={{ padding: `20px` }}>
         {'There are no new requests'}
       </Box>;
     }
 
-    console.log('hello', requests.value);
+    console.log('hello', friendRequests.value);
 
     return <Box sx={{
       display: `flex`,
       flexDirection: `column`,
     }}>
-      {requests.value.map((request, i) =>
+      {friendRequests.value.map((request, i) =>
         <FriendRequest
           request={request}
           onResponse={(isApproved) => {
             latest.current = { friendName: request.name, isApproved: isApproved };
 
-            requests.set(v => { const a = [...v]; a.splice(i, 1); return a; });
+            friendRequests.set(v => { const a = [...v]; a.splice(i, 1); return a; });
             isSnackbarOpen.set(true);
           }}
         />

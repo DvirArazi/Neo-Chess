@@ -5,13 +5,17 @@ import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import { Player } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 
-export default function OngoingGamesThumbnail(props: { ongoingGamesTd: GameTd[] }) {
+export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] }) {
   const { ongoingGamesTd } = props;
 
   return <>
     <ModalTitle title={'Ongoing Games'} />
     {ongoingGamesTd.map(td => <OngoingGameThumbnail data={td} />)}
   </>
+
+  function getOngoingGames() {
+    
+  }
 }
 
 function OngoingGameThumbnail(props: { data: GameTd }) {

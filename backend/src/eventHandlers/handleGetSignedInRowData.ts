@@ -36,10 +36,16 @@ export default function handleGetSignedInRowData(p: HandlerParams) {
       });
     }
 
-    callback({
-      ongoingGamesTd: gamesTd,
-      invitationsTd: [], //update that!!!
-      requestTd: null, //update that!!!
-    });
+    callback(
+      {
+        ongoingGamesTd: gamesTd,
+        invitationsTd: [], //update that!!!
+        requestTd: null, //update that!!!
+      },
+      {
+        friends: user.friends,
+        friendRequests: user.friendRequests
+      }
+    );
   });
 }

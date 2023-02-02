@@ -6,14 +6,17 @@ import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
 import { Friend } from "shared/types/general";
 
-export default function FriendsSection() {
+export default function FriendsSection(props: {
+  friends: Friend[],
+}) {
+  const { friends: initFriends } = props;
 
-  const friends = new Stateful<Friend[]>([]);
+  const friends = new Stateful<Friend[]>(initFriends);
   const isSnackbarOpen = new Stateful(false);
 
   const latest = useRef('');
 
-  fetchFriends();
+  // fetchFriends();
   handleFriendsUpdatedEvent();
 
   return <>
@@ -22,11 +25,11 @@ export default function FriendsSection() {
     {getSnackbar()}
   </>;
 
-  function fetchFriends() {
-    SOCKET.emit("getFriends", (newFriends) => {
-      friends.set(newFriends);
-    });
-  }
+  // function fetchFriends() {
+  //   SOCKET.emit("getFriends", (newFriends) => {
+  //     friends.set(newFriends);
+  //   });
+  // }
 
   function handleFriendsUpdatedEvent() {
     SOCKET.off("friendsUpdated");
