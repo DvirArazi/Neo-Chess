@@ -1,5 +1,5 @@
 import { Box, Button } from "@mui/material";
-import OngoingGameThumbnail from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/OngoingGameThumbnail";
+import OngoingGamesThumbnail from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/OngoingGameThumbnail";
 import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
@@ -27,10 +27,7 @@ export default function GamesModal(props: {
   function getOngoingGames() {
     if (data.ongoingGamesTd.length === 0) return <></>;
 
-    return <>
-      <ModalTitle title={'Ongoing Games'}/>
-      {data.ongoingGamesTd.map(td => <OngoingGameThumbnail data={td}/>)}
-    </>
+    return <OngoingGamesThumbnail ongoingGamesTd={data.ongoingGamesTd} />
   }
 
   function getInvitations() {
@@ -38,8 +35,8 @@ export default function GamesModal(props: {
   }
 }
 
-function InvitationThumbnail(props: {data: InvitationTd}) {
-  const {id, name, isRated, timeframe} = props.data;
+function InvitationThumbnail(props: { data: InvitationTd }) {
+  const { id, name, isRated, timeframe } = props.data;
 
 
 }

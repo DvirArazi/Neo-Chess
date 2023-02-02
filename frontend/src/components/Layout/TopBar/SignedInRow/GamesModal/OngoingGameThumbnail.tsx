@@ -1,10 +1,20 @@
 import { Box, Button } from "@mui/material";
+import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import { Player } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 
-export default function OngoingGameThumbnail(props: { data: GameTd }) {
+export default function OngoingGamesThumbnail(props: { ongoingGamesTd: GameTd[] }) {
+  const { ongoingGamesTd } = props;
+
+  return <>
+    <ModalTitle title={'Ongoing Games'} />
+    {ongoingGamesTd.map(td => <OngoingGameThumbnail data={td} />)}
+  </>
+}
+
+function OngoingGameThumbnail(props: { data: GameTd }) {
   const { data } = props;
 
   const isUserTurn = data.userColor === data.turnColor;

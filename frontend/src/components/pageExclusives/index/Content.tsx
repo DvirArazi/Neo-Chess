@@ -99,27 +99,27 @@ export default function Content() {
     };
 
     const buttons = [
-      <CatagoryButton
+      <CatagoryButton key={0}
         catagory={{ title: "Untimed" }}
         rating={getRating(0)}
         onClick={()=>start("untimed")}
       />,
-      <CatagoryButton
+      <CatagoryButton key={1}
         catagory={{ title: "Bullet", time: 60, increment: 2 }}
         rating={getRating(1)}
         onClick={()=>start({overallSec: 60, incSec: 2})}
       />,
-      <CatagoryButton
+      <CatagoryButton key={2}
         catagory={{ title: "Blitz", time: 5*60, increment: 3 }}
         rating={getRating(2)}
         onClick={()=>start({overallSec: 5*60, incSec: 3})}
       />,
-      <CatagoryButton
+      <CatagoryButton key={3}
         catagory={{ title: "Rapid", time: 10*60, increment: 5 }}
         rating={getRating(3)}
         onClick={()=>start({overallSec: 10*60, incSec: 5})}
       />,
-      <CatagoryButton
+      <CatagoryButton key={4}
         catagory={{ title: "Classical", time: 30*60, increment: 20 }}
         rating={getRating(4)}
         onClick={()=>start({overallSec: 30*60, incSec: 20})}

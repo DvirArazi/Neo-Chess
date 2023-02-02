@@ -12,4 +12,5 @@ export const LIGHT_THEME: Theme = {
   boardDark: "lightblue",
   signOutButton: "invert(31%) sepia(50%) saturate(2338%) hue-rotate(192deg) brightness(101%) contrast(86%)",
   infinity: "invert(36%) sepia(96%) saturate(897%) hue-rotate(183deg) brightness(87%) contrast(97%)",
+  negativeIcon: "invert(100%) sepia(100%) saturate(0%) hue-rotate(111deg) brightness(103%) contrast(101%)",
 }

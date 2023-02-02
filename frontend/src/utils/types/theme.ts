@@ -13,4 +13,5 @@ export type Theme = {
   boardDark: string,
   signOutButton: string,
   infinity: string,
+  negativeIcon: string,
 }

@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
-import RequestArea from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/RequestArea";
-import WaitingRequests from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/WaitingRequests";
+import { Box, Divider } from "@mui/material";
+import FriendsSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/FriendsSection";
+import SearchSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/SearchSection";
+import RequestsSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/RequestsSection";
 import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -10,16 +11,26 @@ export default function FriendsModal(props: {
 }) {
   const { isOpen } = props;
 
-  return <ModalFrame isOpen={isOpen}>
+  return <ModalFrame isOpen={isOpen} width={500}>
     <Box sx={{
       padding: `10px`,
 
       display: `flex`,
       flexDirection: `column`,
     }}>
-      <ModalTitle title={'Send a friend request'}/>
-      <RequestArea/>
-      <WaitingRequests/>
+      <SearchSection />
+      {getSpacer()}
+      <RequestsSection />
+      {getSpacer()}
+      <FriendsSection />
     </Box>
   </ModalFrame>;
+
+  function getSpacer() {
+    return <>
+      <Box sx={{ height: `20px` }} />
+      <Divider variant="middle" />
+      <Box sx={{ height: `20px` }} />
+    </>;
+  }
 }

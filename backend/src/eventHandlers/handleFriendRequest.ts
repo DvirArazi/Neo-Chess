@@ -34,7 +34,8 @@ export default function handleFriendRequest(p: HandlerParams) {
 
       const friendUserResult = await p.usersCollection.findOneAndUpdate(
         { _id: toValidId(friendId) },
-        { $push: { friendRequests: request } }
+        { $push: { friendRequests: request } },
+        { returnDocument: "after" }
       );
       if (friendUserResult.value === null) {
         Terminal.warning('Friend ID to send a request to was not found in DB');
@@ -42,7 +43,7 @@ export default function handleFriendRequest(p: HandlerParams) {
       }
       const friendUser = friendUserResult.value;
 
-      emitToUser(p.webSocketServer, friendUser, "recievedFriendRequest", friendUser.friendRequests);
+      emitToUser(p.webSocketServer, friendUser, "friendRequestsUpdated", friendUser.friendRequests);
 
       return true;
     })());

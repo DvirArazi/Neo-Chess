@@ -1,12 +1,12 @@
 import { Alert, Box, Button, Portal, Snackbar, TextField, Tooltip } from "@mui/material";
-import FriendStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendStrip";
+import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendStrip";
 import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
-export default function RequestArea() {
+export default function SearchSection() {
   const name = new Stateful("");
   const friends = new Stateful<FriendRequest[]>([]);
   const isSnackbarOpen = new Stateful(false);
@@ -14,15 +14,18 @@ export default function RequestArea() {
   const latest = useRef({ friendName: '', success: false });
 
   return <>
-    <ModalTitle title={'Send a friend request'}/>
+    <ModalTitle title={'Send a friend request'} />
     <Box sx={{ height: `10px` }} />
-    <TextField
-      variant={"outlined"}
-      label={'Enter friend\'s name'}
-      value={name.value}
-      onChange={handleNameChange}
-    />
-    {getSearchResults()}
+      <Box sx={{ padding: `0 30px` }}>
+        <TextField
+          fullWidth
+          variant={"outlined"}
+          label={'Enter friend\'s name'}
+          value={name.value}
+          onChange={handleNameChange}
+        />
+        {getSearchResults()}
+      </Box>
     {getSnackbar()}
   </>;
 
@@ -42,7 +45,7 @@ export default function RequestArea() {
 
   function getSearchResults() {
     return friends.value.map(friend =>
-      <SearchResult
+      <SearchResult key={friend.id.toString()}
         friend={friend}
         onClick={handleClick}
       />
@@ -58,6 +61,8 @@ export default function RequestArea() {
   }
 
   function getSnackbar() {
+    console.log('rerender');
+
     return <Box sx={{ position: `relative` }}>
       <Portal>
         <Snackbar
@@ -68,7 +73,6 @@ export default function RequestArea() {
           <Alert
             onClose={handleClose}
             severity={latest.current.success ? "success" : "error"}
-            sx={{ width: '100%' }}
           >
             {
               latest.current.success ?
@@ -88,18 +92,18 @@ export default function RequestArea() {
 
 function SearchResult(props: {
   friend: FriendRequest,
-  onClick: (friend: FriendRequest)=>void,
+  onClick: (friend: FriendRequest) => void,
 }) {
-  const {friend, onClick} = props;
+  const { friend, onClick } = props;
 
   const isEnabled = new Stateful(true);
 
-  return <Tooltip key={friend.id.toString()}
+  return <Tooltip
     title={'send request'}
     placement={"top"}
     arrow
   >
-    <Box><Button
+    <Button
       disabled={!isEnabled.value}
       onClick={() => {
         onClick(friend);
@@ -111,7 +115,7 @@ function SearchResult(props: {
         padding: `10px`,
       }}
     >
-      <FriendStrip friend={friend}/>
-    </Button></Box>
-  </Tooltip>
+      <FriendRequestStrip friend={friend} />
+    </Button>
+  </Tooltip>;
 }

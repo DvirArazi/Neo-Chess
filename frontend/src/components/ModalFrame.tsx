@@ -26,6 +26,7 @@ export default function ModalFrame(props: {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: `100%`,
+          maxHeight: `100%`,
           outline: 0,
           display: `flex`,
           justifyContent: `center`,
@@ -40,7 +41,7 @@ export default function ModalFrame(props: {
             borderRadius: '15px',
             boxShadow: 24,
             textAlign: `center`,
-            overflow: `hidden`,
+            overflow: `scroll`,
           }}
         >
           {children}

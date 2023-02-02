@@ -12,6 +12,8 @@ export interface ClientToServerEvents {
   getFriendsSearchData: (name: string, callback: (friendsSearchData: FriendRequest[]) => void) => void;
   getFriendRequests: (callback: (requests: FriendRequest[]) => void) => void;
   friendRequest: (friendId: ObjectId, callback: (success: boolean) => void) => void;
+  getFriends: (callback: (friends: Friend[]) => void) => void;
+  responseToFriendRequest: (friendId: ObjectId, isAccepted: boolean) => void;
   getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
@@ -21,7 +23,8 @@ export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: UserViewData) => void;
   autoSignedIn: (data: UserViewData) => void;
   signedOut: () => void;
-  recievedFriendRequest: (requests: FriendRequest[]) => void;
+  friendRequestsUpdated: (requests: FriendRequest[]) => void;
+  friendsUpdated: (friends: Friend[]) => void;
   createdGame: (path: string) => void;
   playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;
   timeout: (gameId: ObjectId, winColor: PieceColor) => void;
