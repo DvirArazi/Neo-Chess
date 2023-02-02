@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { Friend, FriendRequest, FriendsModalData, GamesModalData, UserViewData } from "shared/types/general";
+import { Friend, FriendRequest, FriendsModalData, GameRequestTd, GamesModalData, UserViewData } from "shared/types/general";
 import { PieceColor, PieceType } from "shared/types/piece";
 import { GameStatus, GameTurn, GameViewData, Point, Timeframe } from "./game";
 
@@ -24,6 +24,7 @@ export interface ServerToClientEvents {
   signedOut: () => void;
   friendRequestsUpdated: (requests: FriendRequest[]) => void;
   friendsUpdated: (friends: Friend[]) => void;
+  gameRequestUpdated: (gameRequestTd: GameRequestTd) => void;
   createdGame: (path: string) => void;
   playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;
   timeout: (gameId: ObjectId, winColor: PieceColor) => void;

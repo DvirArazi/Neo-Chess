@@ -16,9 +16,9 @@ export default function Toggle(props: {
 
   const isOnDisabled = props.isOnDisabled ?? false;
 
-  if (isOn.value && isOnDisabled) {
-    isOn.set(false);
-  }
+  // if (isOn.value && isOnDisabled) {
+  //   isOn.set(false);
+  // }
 
   return (<ToggleButtonGroup
     exclusive={true}

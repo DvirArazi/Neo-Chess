@@ -8,7 +8,7 @@ import { IconName } from "frontend/src/utils/types/iconName";
 import { useEffect, useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
-export default function RequestsSection(props: {
+export default function FriendRequestsSection(props: {
   friendRequests: FriendRequest[]
 }) {
   const { friendRequests: initFriendRequests } = props;
@@ -18,22 +18,13 @@ export default function RequestsSection(props: {
 
   const latest = useRef({ friendName: '', isApproved: false });
 
-  // fetchFriendRequestsData();
   handleFriendRequestsUpdatedEvent();
 
   return <Box>
-    <ModalTitle title={'Waiting friend requests'} />
+    <ModalTitle title={'Friend requests'} />
     {getFriendRequests()}
     {getSnackbar()}
   </Box>;
-
-  // function fetchFriendRequestsData() {
-  //   useEffect(() => {
-  //     SOCKET.emit("getFriendRequests", (newRequests) => {
-  //       requests.set(newRequests);
-  //     });
-  //   }, []);
-  // }
 
   function handleFriendRequestsUpdatedEvent() {
     SOCKET.off("friendRequestsUpdated");

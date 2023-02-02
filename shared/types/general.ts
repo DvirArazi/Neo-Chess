@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb"
 import { BoardLayout } from "shared/types/boardLayout"
-import { GameRequest, Player, Timeframe } from "shared/types/game"
+import { Player, Timeframe } from "shared/types/game"
 import { PieceColor } from "shared/types/piece"
 
 export type UserViewData = {
@@ -23,22 +23,33 @@ export type GameTd = {
   turnColor: PieceColor,
 }
 
-export type InvitationTd = {
+export type GameInvitation = {
   id: ObjectId,
   name: string,
   timeframe: Timeframe,
   isRated: boolean,
 }
 
-export type RequestTd = {
+export type GameRequestTd = {
   timeframe: Timeframe,
   isRated: boolean,
-}
+
+} & (
+    {
+      isByRating: true,
+      ratingAbsMin: number,
+      ratingAbsMax: number,
+    } |
+    {
+      isByRating: false,
+      opponentName: string,
+    }
+  )
 
 export type GamesModalData = {
   ongoingGamesTd: GameTd[],
-  invitationsTd: InvitationTd[],
-  requestTd: RequestTd | null,
+  invitations: GameInvitation[],
+  requestTd: GameRequestTd | null,
 }
 
 export type FriendRequest = {

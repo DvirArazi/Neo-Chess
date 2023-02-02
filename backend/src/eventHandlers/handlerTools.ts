@@ -54,10 +54,12 @@ export default async function leave(p: HandlerParams, isSigningOut: boolean): Pr
   //(meaning the user is disconnected everywhere)
   //===============================================================================
   if (user.socketsIds.length === 0) {
-    p.gameRequestsCollection.deleteOne({ _id: user.gameRequestId });
+    if (user.gameRequestId !== null) {
+      p.gameRequestsCollection.deleteOne({ _id: user.gameRequestId });
+    }
     p.usersCollection.updateOne(
       { _id: user._id },
-      { $set: { gameRequestId: undefined } },
+      { $set: { gameRequestId: null } },
     );
   }
 

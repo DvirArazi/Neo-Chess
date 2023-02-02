@@ -1,6 +1,7 @@
 export type IconName = 
   "approve" |
   "board" |
+  "cancel" |
   "chessBishopBlack" |
   "chessBishopWhite" |
   "chessKingBlack" |
@@ -43,6 +44,7 @@ export function iconNameToPath(name: IconName) {
   switch(name) {
     case "approve": return "approve";
     case "board": return "board";
+    case "cancel": return "cancel";
     case "chessBishopBlack": return "chess/bishop_black";
     case "chessBishopWhite": return "chess/bishop_white";
     case "chessKingBlack": return "chess/king_black";

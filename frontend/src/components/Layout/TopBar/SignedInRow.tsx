@@ -12,7 +12,7 @@ export default function SignedInRow() {
 
   const gamesModalData = new Stateful<GamesModalData>({
     ongoingGamesTd: [],
-    invitationsTd: [],
+    invitations: [],
     requestTd: null
   });
   const friendsModalData = new Stateful<FriendsModalData>({
@@ -20,7 +20,7 @@ export default function SignedInRow() {
     friendRequests: [],
   });
   const isGamesModalOpen = new Stateful(false);
-  const isFriendsModalOpen = new Stateful(true);
+  const isFriendsModalOpen = new Stateful(false);
 
   getData();
 

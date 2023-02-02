@@ -6,7 +6,7 @@ import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
-export default function SearchSection() {
+export default function FriendsSearchSection() {
   const friendName = new Stateful("");
   const friends = new Stateful<FriendRequest[]>([]);
   const isSnackbarOpen = new Stateful(false);
@@ -16,16 +16,16 @@ export default function SearchSection() {
   return <>
     <ModalTitle title={'Send a friend request'} />
     <Box sx={{ height: `10px` }} />
-      <Box sx={{ padding: `0 30px` }}>
-        <TextField
-          fullWidth
-          variant={"outlined"}
-          label={'Enter friend\'s name'}
-          value={friendName.value}
-          onChange={handleFriendNameChange}
-        />
-        {getSearchResults()}
-      </Box>
+    <Box sx={{ padding: `0 30px` }}>
+      <TextField
+        fullWidth
+        variant={"outlined"}
+        label={'Enter friend\'s name'}
+        value={friendName.value}
+        onChange={handleFriendNameChange}
+      />
+      {getSearchResults()}
+    </Box>
     {getSnackbar()}
   </>;
 
@@ -61,8 +61,6 @@ export default function SearchSection() {
   }
 
   function getSnackbar() {
-    console.log('rerender');
-
     return <Box sx={{ position: `relative` }}>
       <Portal>
         <Snackbar

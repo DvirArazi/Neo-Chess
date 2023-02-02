@@ -20,7 +20,8 @@ export default function handleDeleteFriend(p: HandlerParams) {
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(friendId) },
-      { $pull: { friends: { id: toValidId(p.userId) } } }
+      { $pull: { friends: { id: toValidId(p.userId) } } },
+      { returnDocument: "after" }
     );
     if (friendUserResult.value === null) {
       Terminal.log('Friend ID was not found in DB');

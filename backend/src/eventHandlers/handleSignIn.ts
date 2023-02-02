@@ -27,11 +27,13 @@ export function handleSignIn(p: HandlerParams) {
           googleId: googleId,
           data: data,
           name: data.name,
-          gameRequestId: undefined,
+          gameRequestId: null,
+          outInvitation: null,
           ongoingGamesIds: [],
           ratings: [1200, 1000, 1000, 1200, 1200],
           friends: [],
           friendRequests: [],
+          invitations: [],
         }
       },
       {

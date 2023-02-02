@@ -8,7 +8,6 @@ import { handleSignOut } from './eventHandlers/handleSignOut';
 import { handleDisconnect } from './eventHandlers/handleDisconnect';
 import { Game, ServerSocket, User, WebSocketServer } from './utils/types';
 import handleGetGameViewData from './eventHandlers/handleGetGameViewData';
-import { GameRequest } from 'shared/types/game';
 import handlePlayerMoved from 'backend/src/eventHandlers/handlePlayerMove';
 import handleGetHomeData from 'backend/src/eventHandlers/handleGetHomeData';
 import handleGetSignedInRowData from 'backend/src/eventHandlers/handleGetSignedInRowData';
@@ -16,6 +15,7 @@ import handleGetFriendsSearchData from 'backend/src/eventHandlers/handleGetFrien
 import handleFriendRequest from 'backend/src/eventHandlers/handleFriendRequest';
 import handleResponseToFriendRequest from 'backend/src/eventHandlers/handleResponseToFriendRequest';
 import handleDeleteFriend from 'backend/src/eventHandlers/handleDeleteFriend';
+import { GameRequest } from 'shared/types/game';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(

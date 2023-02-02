@@ -15,6 +15,7 @@ export default function ModalFrame(props: {
 
   return (
     <Modal
+      keepMounted
       open={isOpen.value}
       onClose={() => { isOpen.set(false) }}
     >

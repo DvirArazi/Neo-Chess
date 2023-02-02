@@ -32,8 +32,6 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       ratingAbsMax: { $gte: ratingAbsMax },
     });
 
-    Terminal.log(`found a request? ${deletedGameRequest.value !== null}`);
-
     //if a request with matching settings was not found
     //====================================*******====== 
     if (deletedGameRequest.value === null) {
@@ -56,10 +54,19 @@ export default function handleCreateGameRequest(p: HandlerParams) {
         return;
       }
 
-      p.usersCollection.findOneAndUpdate(
+      p.usersCollection.updateOne(
         { _id: toValidId(p.userId) },
         { $set: { gameRequestId: newGameRequest.value._id } }
       );
+
+      emitToUser(p.webSocketServer, user0, "gameRequestUpdated", {
+        timeframe: newGameRequest.value.timeframe,
+        isRated: newGameRequest.value.isRated,
+        isByRating: true,
+        ratingAbsMin: ratingAbsMin,
+        ratingAbsMax: ratingAbsMax
+      });
+
       return;
     }
 

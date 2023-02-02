@@ -16,7 +16,6 @@ export default function FriendsSection(props: {
 
   const latest = useRef('');
 
-  // fetchFriends();
   handleFriendsUpdatedEvent();
 
   return <>
@@ -24,12 +23,6 @@ export default function FriendsSection(props: {
     {getFriends()}
     {getSnackbar()}
   </>;
-
-  // function fetchFriends() {
-  //   SOCKET.emit("getFriends", (newFriends) => {
-  //     friends.set(newFriends);
-  //   });
-  // }
 
   function handleFriendsUpdatedEvent() {
     SOCKET.off("friendsUpdated");
@@ -41,7 +34,7 @@ export default function FriendsSection(props: {
   function getFriends() {
     if (friends.value.length === 0) {
       return <Box sx={{ padding: `20px` }}>
-        {'You don\'t yet have any friends'}
+        {'You don\' have any friends yet'}
       </Box>
     }
 
