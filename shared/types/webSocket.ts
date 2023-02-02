@@ -14,6 +14,7 @@ export interface ClientToServerEvents {
   friendRequest: (friendId: ObjectId, callback: (success: boolean) => void) => void;
   getFriends: (callback: (friends: Friend[]) => void) => void;
   responseToFriendRequest: (friendId: ObjectId, isAccepted: boolean) => void;
+  deleteFriend: (friendId: ObjectId) => void;
   getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;

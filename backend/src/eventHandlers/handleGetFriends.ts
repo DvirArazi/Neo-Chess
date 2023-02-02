@@ -11,7 +11,7 @@ export default function handleGetFriends(p: HandlerParams) {
 
     const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
     if (user === null) {
-      console.log('Saved user ID was not found in DB');
+      Terminal.log('Saved user ID was not found in DB');
       return;
     }
 

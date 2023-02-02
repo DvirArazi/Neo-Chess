@@ -9,15 +9,23 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
-    if (user === null) {
+    const userResult = await p.usersCollection.findOneAndUpdate(
+      { _id: toValidId(p.userId) },
+      { $pull: { friendRequests: { id: toValidId(friendId) } } }
+    );
+    if (userResult.value === null) {
       Terminal.error('Saved user ID was not found in DB');
       return;
     }
+    const user = userResult.value;
+
+
+    if (!isAccepted) return;
+
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(friendId) },
-      isAccepted ? {
+      {
         $push: {
           friends: {
             id: user._id,
@@ -25,17 +33,18 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
             picture: user.data.picture
           }
         },
-      } : {}
+      },
+      { returnDocument: "after" }
     );
     if (friendUserResult.value === null) {
-      Terminal.warning('Friend ID to apprpve/deny was not found in DB');
+      Terminal.warning('Friend ID to approve/deny was not found in DB');
       return;
     }
     const friendUser = friendUserResult.value;
 
-    p.usersCollection.updateOne(
+    const updatedUserResult = await p.usersCollection.findOneAndUpdate(
       { _id: user._id },
-      isAccepted ? {
+      {
         $push: {
           friends: {
             id: friendUser._id,
@@ -43,13 +52,16 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
             picture: friendUser.data.picture
           }
         },
-        $pull: { friendRequests: { id: friendUser._id } }
-      } : {
-        $pull: { friendRequests: { id: friendUser._id } }
-      }
+      },
+      { returnDocument: "after" }
     );
+    if (updatedUserResult.value === null) {
+      Terminal.error('This really should never happen');
+      return;
+    }
+    const updatedUser = updatedUserResult.value;
 
-    emitToUser(p.webSocketServer, user, "friendsUpdated", user.friends);
+    emitToUser(p.webSocketServer, updatedUser, "friendsUpdated", updatedUser.friends);
     emitToUser(p.webSocketServer, friendUser, "friendsUpdated", friendUser.friends);
   });
 }

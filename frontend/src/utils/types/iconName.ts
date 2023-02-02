@@ -13,6 +13,7 @@ export type IconName =
   "chessQueenWhite" |
   "chessRookBlack" |
   "chessRookWhite" |
+  "delete" |
   "deny" |
   "draw" |
   "fight" |
@@ -54,6 +55,7 @@ export function iconNameToPath(name: IconName) {
     case "chessQueenWhite": return "chess/queen_white";
     case "chessRookBlack": return "chess/rook_black";
     case "chessRookWhite": return "chess/rook_white";
+    case "delete": return "delete";
     case "deny": return "deny";
     case "draw": return "draw";
     case "fight": return "fight";
