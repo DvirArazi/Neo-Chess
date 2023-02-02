@@ -8,17 +8,28 @@ body {
   margin: 0;
 }
 
-:root::-webkit-scrollbar {
-  display: none;
+/* width */
+::-webkit-scrollbar {
+  width: 5px;
 }
 
-*::-webkit-scrollbar {
-  display: none;
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(241, 241, 241, 0.0);
+  border-radius: 9999px;
 }
 
-.MuiMenuItem-root {
-  justify-content: center !important;
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(136, 136, 136, 0.3); 
+  border-radius: 9999px;
 }
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(85, 85, 85, 0.3);
+}
+
 
 @font-face {
   font-family: 'roboto-regular';

@@ -21,7 +21,13 @@ export default function ModalFrame(props: {
       <Box
         onClick={() => { isOpen.set(false) }}
         sx={{
-          position: 'absolute',
+          // overflow: `hidden`,
+          position: `fixed`,
+          // top: `0`,
+          // left: `0`,
+          // bottom: `0`,
+          // right: `0`,
+          // position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
@@ -30,18 +36,20 @@ export default function ModalFrame(props: {
           outline: 0,
           display: `flex`,
           justifyContent: `center`,
+          // margin: `10px`
         }}
       >
         <Box
           onClick={(e) => { e.stopPropagation() }}
           sx={{
-            margin: `30px`,
+            margin: `20px 30px`,
             width: widthStr,
             bgcolor: 'background.paper',
             borderRadius: '15px',
             boxShadow: 24,
             textAlign: `center`,
-            overflow: `scroll`,
+            // overflow: `scroll`,
+            overflow: `auto`
           }}
         >
           {children}
