@@ -14,9 +14,7 @@ import handleGetHomeData from 'backend/src/eventHandlers/handleGetHomeData';
 import handleGetSignedInRowData from 'backend/src/eventHandlers/handleGetSignedInRowData';
 import handleGetFriendsSearchData from 'backend/src/eventHandlers/handleGetFriendsSearchData';
 import handleFriendRequest from 'backend/src/eventHandlers/handleFriendRequest';
-import handleGetFriendRequests from 'backend/src/eventHandlers/handleGetFriendRequests';
 import handleResponseToFriendRequest from 'backend/src/eventHandlers/handleResponseToFriendRequest';
-import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleDeleteFriend from 'backend/src/eventHandlers/handleDeleteFriend';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
@@ -59,9 +57,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleGetHomeData(handlerParams);
     handleGetFriendsSearchData(handlerParams);
     handleFriendRequest(handlerParams);
-    handleGetFriendRequests(handlerParams);
     handleResponseToFriendRequest(handlerParams);
-    handleGetFriends(handlerParams);
     handleDeleteFriend(handlerParams);
     handleCreateGameRequest(handlerParams);
     handleGetGameViewData(handlerParams);

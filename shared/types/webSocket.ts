@@ -10,9 +10,7 @@ export interface ClientToServerEvents {
   removeKey: (aad: AutoAuthData) => void;
   getSignedInRowData: (callback: (gamesModalData: GamesModalData, friendsModalData: FriendsModalData) => void) => void;
   getFriendsSearchData: (name: string, callback: (friendsSearchData: FriendRequest[]) => void) => void;
-  getFriendRequests: (callback: (requests: FriendRequest[]) => void) => void;
   friendRequest: (friendId: ObjectId, callback: (success: boolean) => void) => void;
-  getFriends: (callback: (friends: Friend[]) => void) => void;
   responseToFriendRequest: (friendId: ObjectId, isAccepted: boolean) => void;
   deleteFriend: (friendId: ObjectId) => void;
   getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
