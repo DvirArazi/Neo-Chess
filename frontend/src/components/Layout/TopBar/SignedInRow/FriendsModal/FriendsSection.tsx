@@ -1,6 +1,6 @@
 import { Alert, Box, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
-import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
+import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRef } from "react";
@@ -33,9 +33,7 @@ export default function FriendsSection(props: {
 
   function getFriends() {
     if (friends.value.length === 0) {
-      return <Box sx={{ padding: `20px` }}>
-        {'You don\' have any friends yet'}
-      </Box>
+      return <ModalEmpty text={'You don\'t have any friends yet'} />
     }
 
     return friends.value.map((friend, i) =>

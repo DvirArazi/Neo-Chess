@@ -1,7 +1,6 @@
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Alert, Box, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
-import ModalSpacer from "frontend/src/components/Layout/TopBar/SignedInRow/ModalSpacer";
-import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
+import { ModalSpacer, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET } from "frontend/src/pages/_app";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -12,36 +11,34 @@ export default function YourRequestSection(props: {
 }) {
   const { request: initRequest } = props;
 
-  const shitFuck = new Stateful(false);
-  const puffRequest = new Stateful(initRequest);
+  const request = new Stateful(initRequest);
+  const isSnackbarOpen = new Stateful(false);
 
   handleGameRequestUpdated();
 
   return <Box>
-    {shitFuck.value}
     {getRequest()}
+    {getToolbar()}
   </Box>
 
   function handleGameRequestUpdated() {
     SOCKET.off("gameRequestUpdated");
     SOCKET.on("gameRequestUpdated", (gameRequestTd) => {
       console.log('updated to', gameRequestTd);
-      puffRequest.set(gameRequestTd);
-      shitFuck.set(v => !v);
+      request.set(gameRequestTd);
     });
   }
 
   function getRequest() {
-    if (puffRequest.value === null) return <Box></Box>;
+    if (request.value === null) return <Box></Box>;
 
-    const r = puffRequest.value;
+    const r = request.value;
 
     return <>
       <ModalSpacer />
       <ModalTitle title={'Your request'} />
       <Box sx={{
         display: `flex`,
-        // flexDirection: `row`,
         justifyContent: `center`,
         alignItems: `center`,
       }}>
@@ -58,11 +55,37 @@ export default function YourRequestSection(props: {
           placement={"top"}
           arrow
         >
-          <IconButton>
+          <IconButton onClick={()=>SOCKET.emit("deleteGameRequest", ()=>{
+            request.set(null);
+            isSnackbarOpen.set(true);
+          })}>
             <Icon name="cancel" side={25} />
           </IconButton>
         </Tooltip>
       </Box>
     </>
+  }
+
+  function getToolbar() {
+    return <Box sx={{ position: `relative` }}>
+      <Portal>
+        <Snackbar
+          open={isSnackbarOpen.value}
+          autoHideDuration={3000}
+          onClose={handleClose}
+        >
+          <Alert
+            onClose={handleClose}
+            severity={"info"}
+          >
+            {"Your game request was canceled"}
+          </Alert>
+        </Snackbar>
+      </Portal>
+    </Box>;
+
+    function handleClose() {
+      isSnackbarOpen.set(false);
+    }
   }
 }

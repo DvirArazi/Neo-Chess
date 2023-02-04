@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendStrip";
-import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
+import { ModalEmpty, ModalTitle, VXButtons } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { IconName } from "frontend/src/utils/types/iconName";
@@ -35,9 +35,7 @@ export default function FriendRequestsSection(props: {
 
   function getFriendRequests() {
     if (friendRequests.value.length === 0) {
-      return <Box sx={{ padding: `20px` }}>
-        {'There are no new requests'}
-      </Box>;
+      return <ModalEmpty text={'You have no new requests'}/>;
     }
 
     console.log('hello', friendRequests.value);
@@ -105,41 +103,10 @@ function FriendRequest(props: {
         <Box sx={{ width: `8px` }} />
         <FriendRequestStrip friend={request} />
       </Box>
-      <Box sx={{ display: `flex` }}>
-        {getButton(true)}
-        {getButton(false)}
-      </Box>
+      <VXButtons onClick={(isAccepted) => {
+        SOCKET.emit("responseToFriendRequest", request.id, isAccepted);
+        onResponse(isAccepted);
+      }} />
     </Box>
   </>;
-
-  function getButton(isAccepted: boolean) {
-    const [iconName, color0, color1, hint, radii]:
-      [IconName, string, string, string, string] = isAccepted ?
-        ["approve", `#00e600`, `#00cc00`, 'Approve', `5px 0 0 5px`] :
-        ["deny", `#ff3333`, `#e60000`, 'Deny', `0 5px 5px 0`];
-
-    return <>
-      <Tooltip
-        title={hint}
-        placement={"top"}
-        arrow
-      >
-        <IconButton
-          onClick={() => {
-            SOCKET.emit("responseToFriendRequest", request.id, isAccepted);
-            onResponse(isAccepted);
-          }}
-          sx={{
-            borderRadius: radii,
-
-            background: color0,
-            ":hover": { background: color1 },
-            // ":disabled": {background: `#a6a6a6`},
-          }}
-        >
-          <Icon name={iconName} side={30} filter={THEME.negativeIcon} />
-        </IconButton>
-      </Tooltip>
-    </>
-  }
 }

@@ -1,20 +1,27 @@
 import { Box, Button } from "@mui/material";
-import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
+import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
+import Stateful from "frontend/src/utils/tools/stateful";
 import { Player } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 
 export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] }) {
-  const { ongoingGamesTd } = props;
+  const { ongoingGamesTd: initOngoingGamesTd } = props;
+
+  const ongoingGamesTd = new Stateful(initOngoingGamesTd);
 
   return <>
     <ModalTitle title={'Ongoing Games'} />
-    {ongoingGamesTd.map(td => <OngoingGameThumbnail data={td} />)}
+    {getOngoingGames()}
   </>
 
   function getOngoingGames() {
-    
+    if (ongoingGamesTd.value.length === 0) {
+      return <ModalEmpty text={'You don\'t have any ongoing games at the moment'} />;
+    }
+
+    return ongoingGamesTd.value.map(td => <OngoingGameThumbnail data={td} />);
   }
 }
 

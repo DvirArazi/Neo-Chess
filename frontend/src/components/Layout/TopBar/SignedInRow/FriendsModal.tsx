@@ -2,11 +2,10 @@ import { Box, Divider } from "@mui/material";
 import FriendsSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/FriendsSection";
 import FriendsSearchSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/FriendsSearchSection";
 import FriendRequestsSection from "frontend/src/components/Layout/TopBar/SignedInRow/FriendsModal/FriendRequestsSection";
-import ModalTitle from "frontend/src/components/Layout/TopBar/SignedInRow/ModalTitle";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { FriendsModalData } from "shared/types/general";
-import ModalSpacer from "frontend/src/components/Layout/TopBar/SignedInRow/ModalSpacer";
+import { ModalSpacer } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 
 export default function FriendsModal(props: {
   isOpen: Stateful<boolean>,
