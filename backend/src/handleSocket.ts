@@ -18,6 +18,7 @@ import handleDeleteFriend from 'backend/src/eventHandlers/handleDeleteFriend';
 import { GameRequest } from 'shared/types/game';
 import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameRequest';
 import handleGetFriendsOnline from 'backend/src/eventHandlers/handleGetFriendsOnline';
+import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -64,6 +65,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleDeleteFriend(handlerParams);
     handleCreateGameRequest(handlerParams);
     handleDeleteGameRequest(handlerParams);
+    handleSendGameInvitation(handlerParams);
     handleGetGameViewData(handlerParams);
     handlePlayerMoved(handlerParams);
     handleDisconnect(handlerParams);

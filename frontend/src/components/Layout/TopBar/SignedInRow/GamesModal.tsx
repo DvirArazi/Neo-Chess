@@ -27,7 +27,7 @@ export default function GamesModal(props: {
     }}>
       <OngoingGamesSection ongoingGamesTd={data.ongoingGamesTd} />
       <ModalSpacer />
-      <GameInvitationsSection invitationsTd={data.invitations} />
+      <GameInvitationsSection invitations={data.invitations} />
       <YourRequestSection request={data.requestTd} />
     </Box>
   </ModalFrame>;

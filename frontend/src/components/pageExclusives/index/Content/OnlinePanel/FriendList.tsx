@@ -1,8 +1,6 @@
 import { Box, ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
-import { toValidId } from "backend/src/utils/tools/general";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { ObjectId } from "mongodb";
 import { useEffect, useRef } from "react";
 import { Friend } from "shared/types/general";
 
@@ -13,23 +11,14 @@ export default function FriendList(props: {
   const { isRanged, friendChosen } = props;
 
   const friends = new Stateful<Friend[]>([]);
-  const friendIndex = useRef(0);
+  const friendIndex = new Stateful(0);
 
   fetchFriendsOnline();
+  handlefriendIndexChange();
 
-  return (
-    <ToggleButtonGroup
-      orientation="vertical"
-      value={friendChosen.value}
-      exclusive
-      onChange={(_: any, newChosen: Friend) => {
-        friendChosen.set(newChosen);
-      }}
-      sx={{ width: `100%`, borderRadius: `10px`, }}
-    >
-      {getFriends()}
-    </ToggleButtonGroup>
-  );
+  return <>
+    {getFriends()}
+  </>;
 
   function fetchFriendsOnline() {
     useEffect(() => {
@@ -39,7 +28,6 @@ export default function FriendList(props: {
       };
 
       SOCKET.emit("getFriendsOnline", (newFriends) => {
-        console.log(newFriends);
         friends.set(newFriends);
       });
 
@@ -51,24 +39,21 @@ export default function FriendList(props: {
       return <Box>{'Loading...'}</Box>
     }
 
-    //maxHeight: `20px`,
-    //overflow: `scroll`,
-
     return <Box sx={{
       maxHeight: `215px`,
       overflow: `auto`,
     }}>
       <ToggleButtonGroup
-      value={friendIndex.current}
+        exclusive
+        value={friendIndex.value}
         onChange={(_, i: number)=>{
-          friendChosen.set(friends.value[i]);
+          friendIndex.set(i);
         }}
         orientation="vertical"
         sx={{
           width: `100%`,
           borderRadius: `10px`,
           background: `white`,
-          
         }}
       > {
         friends.value.map((friend, i) => {
@@ -87,6 +72,12 @@ export default function FriendList(props: {
         })
       }</ToggleButtonGroup>
     </Box>
+  }
+
+  function handlefriendIndexChange() {
+    useEffect(()=>{
+      friendChosen.set(friends.value[friendIndex.value]);
+    }, [friendIndex.value]);
   }
 }
 

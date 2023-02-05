@@ -32,7 +32,11 @@ export function ModalEmpty(props: { text: string }) {
 export function VXButtons(props: { onClick: (isAccepted: boolean) => void }) {
   const {onClick} = props;
 
-  return <Box sx={{ display: `flex` }}>
+  return <Box sx={{
+    display: `flex`,
+    borderRadius: `5px`,
+    boxShadow: `0px 2px 5px 0px rgba(0,0,0,0.2)`,
+  }}>
     {getButton(true)}
     {getButton(false)}
   </Box>;

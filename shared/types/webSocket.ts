@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { Friend, FriendRequest, FriendsModalData, GameRequestTd, GamesModalData, UserViewData } from "shared/types/general";
+import { Friend, FriendRequest, FriendsModalData, GameInvitation, GameRequestTd, GamesModalData, UserViewData } from "shared/types/general";
 import { PieceColor, PieceType } from "shared/types/piece";
 import { GameStatus, GameTurn, GameViewData, Point, Timeframe } from "./game";
 
@@ -14,9 +14,10 @@ export interface ClientToServerEvents {
   responseToFriendRequest: (friendId: ObjectId, isAccepted: boolean) => void;
   deleteFriend: (friendId: ObjectId) => void;
   deleteGameRequest: (callback: () => void) => void;
-  getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
+  getHomeData: (callback: (ratings: number[]) => void) => void;
   getFriendsOnline: (callback: (friends: Friend[]) => void) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
+  sendGameInvitation: (timeframe: Timeframe, isRated: boolean, friendId: ObjectId, callback: (sent: boolean)=>void)=>void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
   playerMove: (gameId: ObjectId, from: Point, to: Point, promotionType: PieceType | null) => void;
 }
@@ -28,6 +29,7 @@ export interface ServerToClientEvents {
   friendsUpdated: (friends: Friend[]) => void;
   connectedFriendsUpdated: (friends: Friend[]) => void;
   gameRequestUpdated: (gameRequestTd: GameRequestTd) => void;
+  gameInvitationsUpdated: (invitations: GameInvitation[]) => void;
   createdGame: (path: string) => void;
   playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;
   timeout: (gameId: ObjectId, winColor: PieceColor) => void;

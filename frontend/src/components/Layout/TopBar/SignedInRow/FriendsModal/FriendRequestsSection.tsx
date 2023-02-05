@@ -1,10 +1,8 @@
 import { Alert, Box, Button, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
-import Icon from "frontend/src/components/Icon";
 import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendRequestStrip";
 import { ModalEmpty, ModalTitle, VXButtons } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
-import { SOCKET, THEME } from "frontend/src/pages/_app";
+import { SOCKET} from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { IconName } from "frontend/src/utils/types/iconName";
 import { useEffect, useRef } from "react";
 import { FriendRequest } from "shared/types/general";
 
@@ -18,6 +16,7 @@ export default function FriendRequestsSection(props: {
 
   const latest = useRef({ friendName: '', isApproved: false });
 
+  initFriendRequestsValue();
   handleFriendRequestsUpdatedEvent();
 
   return <Box>
@@ -33,12 +32,16 @@ export default function FriendRequestsSection(props: {
     })
   }
 
+  function initFriendRequestsValue() {
+    useEffect(()=>{
+      friendRequests.set(initFriendRequests);
+    },[initFriendRequests]);
+  }
+
   function getFriendRequests() {
     if (friendRequests.value.length === 0) {
       return <ModalEmpty text={'You have no new requests'} />;
     }
-
-    console.log('hello', friendRequests.value);
 
     return <Box sx={{
       display: `flex`,

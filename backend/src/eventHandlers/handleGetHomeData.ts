@@ -16,6 +16,6 @@ export default function handleGetHomeData(p: HandlerParams) {
       return;
     }
 
-    callback(user.friends, user.ratings);
+    callback(user.ratings);
   });
 }

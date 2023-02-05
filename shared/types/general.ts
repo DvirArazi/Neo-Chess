@@ -24,7 +24,7 @@ export type GameTd = {
 }
 
 export type GameInvitation = {
-  id: ObjectId,
+  friendId: ObjectId,
   name: string,
   timeframe: Timeframe,
   isRated: boolean,

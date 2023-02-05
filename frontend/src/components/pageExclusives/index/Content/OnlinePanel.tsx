@@ -7,13 +7,14 @@ import FriendList from "./OnlinePanel/FriendList";
 
 export default function OnlinePanel(
   props: {
+    isOnline: boolean,
     isRated: Stateful<boolean>,
     isRanged: Stateful<boolean>,
     range: Stateful<number[]>
     chosenFriend: Stateful<Friend | null>
   }
 ) {
-  const { isRated, isRanged, range, chosenFriend } = props;
+  const { isOnline, isRated, isRanged, range, chosenFriend } = props;
 
   const handleRangeChange = (newRange: number[]) => {
     if (newRange[0] != newRange[1]) {
@@ -29,7 +30,7 @@ export default function OnlinePanel(
       justifyContent: `center`,
     }}>
       <Accordion
-        expanded={true}
+        expanded={isOnline}
         sx={{
           background: `transparent`,
           boxShadow: `none`,

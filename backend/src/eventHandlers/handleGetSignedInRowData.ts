@@ -1,7 +1,6 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
-import { Game } from "backend/src/utils/types";
+import { toValidId } from "backend/src/utils/tools/general";
 import { turnsToColor } from "shared/tools/board";
 import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameRequestTd, GameTd } from "shared/types/general";

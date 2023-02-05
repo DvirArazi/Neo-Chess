@@ -1,9 +1,10 @@
 import { Alert, Box, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
+import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import Icon from "frontend/src/components/Icon";
 import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Friend } from "shared/types/general";
 
 export default function FriendsSection(props: {
@@ -16,6 +17,7 @@ export default function FriendsSection(props: {
 
   const latest = useRef('');
 
+  initFriendsValue();
   handleFriendsUpdatedEvent();
 
   return <>
@@ -29,6 +31,12 @@ export default function FriendsSection(props: {
     SOCKET.on("friendsUpdated", (newFriends) => {
       friends.set(newFriends);
     });
+  }
+
+  function initFriendsValue() {
+    useEffect(()=>{
+      friends.set(initFriends);
+    }, [initFriends]);
   }
 
   function getFriends() {
@@ -50,27 +58,11 @@ export default function FriendsSection(props: {
   }
 
   function getSnackbar() {
-    return <Box sx={{ position: `relative` }}>
-      <Portal>
-        <Snackbar
-          open={isSnackbarOpen.value}
-          autoHideDuration={3000}
-          onClose={handleClose}
-        >
-          <Alert
-            onClose={handleClose}
-            severity={"info"}
-          // sx={{ width: '100%' }}
-          >
-            {`${latest.current} was removed from your friend list`}
-          </Alert>
-        </Snackbar>
-      </Portal>
-    </Box>;
-
-    function handleClose() {
-      isSnackbarOpen.set(false);
-    }
+    return <AlertSnackbar
+      isOpen={isSnackbarOpen}
+      message={`${latest.current} was removed from your friend list`}
+      severity={"info"}
+    />
   }
 }
 

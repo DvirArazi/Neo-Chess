@@ -36,6 +36,7 @@ export default function SignedInRow() {
     useEffect(() => {
       SOCKET.emit("getSignedInRowData", (newGamesModalData, newFriendsModalData) => {
         gamesModalData.set(newGamesModalData);
+        friendsModalData.set(newFriendsModalData);
       });
     }, []);
   }

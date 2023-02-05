@@ -1,4 +1,5 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Snackbar, SxProps } from "@mui/material";
+import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import Collapsible from "frontend/src/components/Collapsible";
 import Icon from "frontend/src/components/Icon";
 import Layout from "frontend/src/components/Layout";
@@ -9,9 +10,9 @@ import Toggle from "frontend/src/components/Toggle";
 import { SOCKET, THEME, USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Timeframe } from "shared/types/game";
-import { Friend } from "shared/types/general";
+import { Friend, GameInvitation } from "shared/types/general";
 
 export default function Content() {
   const router = useRouter();
@@ -21,8 +22,9 @@ export default function Content() {
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
   const chosenFriend = new Stateful<Friend | null>(null);
-  const isSnackbarOpen = new Stateful(false);
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const isRequestSnackbarOpen = new Stateful(false);
+  const isInvitationSnackbarOpen = new Stateful(false);
+  const invitationSnackbarData = useRef({ friendName: '', success: false })
   const [ratings, setRatings] = useState<number[]>([]);
 
   const isAuthed = USER_DATA != undefined;
@@ -38,28 +40,22 @@ export default function Content() {
         />
         <Icon name="wifiOff" side={25} filter={THEME.icon} />
       </Toggle>
-      {/* <Box sx={{ textAlign: `center`, paddingTop: `10px` }}> */}
-        <OnlinePanel
-          isRated={isRated}
-          isRanged={isRanged}
-          range={range}
-          chosenFriend={chosenFriend}
-        />
-      {/* </Box> */}
+      <OnlinePanel
+        isOnline={isOnline.value}
+        isRated={isRated}
+        isRanged={isRanged}
+        range={range}
+        chosenFriend={chosenFriend}
+      />
       {getCatagoryButtons()}
       <CustomeFormatPanel
         onPlay={start}
         ratings={ratings.length !== 0 ? ratings : undefined}
       />
+      {getRequestSnackbar()}
+      {getInvitationSnackbar()}
     </Layout>
-    <Snackbar
-      open={isSnackbarOpen.value}
-      autoHideDuration={3000}
-      message="Waiting for opponent"
-      onClose={() => {
-        isSnackbarOpen.set(false);
-      }}
-    />
+    
   </>;
 
   function handleIsAuthedChange() {
@@ -67,8 +63,7 @@ export default function Content() {
       isOnline.set(isAuthed);
 
       if (isAuthed) {
-        SOCKET.emit("getHomeData", (newFriends, newRatrings) => {
-          setFriends(newFriends);
+        SOCKET.emit("getHomeData", (newRatrings) => {
           setRatings(newRatrings);
         });
       }
@@ -78,8 +73,17 @@ export default function Content() {
 
   function start(timeframe: Timeframe) {
     if (isOnline.value) {
-      isSnackbarOpen.set(true);
-      SOCKET.emit("createGameRequest", timeframe, isRated.value, range.value[0], range.value[1]);
+      if (isRanged.value) {
+        SOCKET.emit("createGameRequest", timeframe, isRated.value, range.value[0], range.value[1]);
+        isRequestSnackbarOpen.set(true);
+      } else {
+        if (chosenFriend.value === null) return;
+        const friend = chosenFriend.value;
+        SOCKET.emit("sendGameInvitation", timeframe, isRated.value, friend.id, (sent) => {
+          invitationSnackbarData.current = { friendName: friend.name, success: sent };
+          isInvitationSnackbarOpen.set(true);
+        });
+      }
     } else {
       router.push(`/game/offline/${timeframeToPath(timeframe)}`);
     }
@@ -142,6 +146,27 @@ export default function Content() {
 
       return ratings[index];
     }
+  }
+
+  function getRequestSnackbar() {
+    return <AlertSnackbar
+      isOpen={isRequestSnackbarOpen}
+      message="Game request sent"
+      severity="info"
+    />;
+  }
+
+  function getInvitationSnackbar() {
+    const { friendName, success } = invitationSnackbarData.current;
+
+    return <AlertSnackbar
+      isOpen={isInvitationSnackbarOpen}
+      message={
+        `Invitation to ${friendName} ${success ?
+          'was sent successfully' : 'could not be sent'}`
+      }
+      severity={success ? "success" : "error"}
+    />;
   }
 }
 
