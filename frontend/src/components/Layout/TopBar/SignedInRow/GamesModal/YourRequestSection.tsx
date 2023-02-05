@@ -1,7 +1,7 @@
 import { Alert, Box, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
 import { ModalSpacer, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
-import { SOCKET } from "frontend/src/pages/_app";
+import { SOCKET, THEME } from "frontend/src/pages/_app";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef } from "react";
@@ -70,7 +70,7 @@ export default function YourRequestSection(props: {
             isSnackbarOpen.set(true);
             request.set(null);
           })}>
-            <Icon name="cancel" side={25} />
+            <Icon name="cancel" side={25} filter={THEME.icon}/>
           </IconButton>
         </Tooltip>
       </Box>

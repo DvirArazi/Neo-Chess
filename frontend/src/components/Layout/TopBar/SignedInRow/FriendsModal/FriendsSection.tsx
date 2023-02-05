@@ -2,7 +2,7 @@ import { Alert, Box, IconButton, Portal, Snackbar, Tooltip } from "@mui/material
 import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import Icon from "frontend/src/components/Icon";
 import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
-import { SOCKET } from "frontend/src/pages/_app";
+import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef } from "react";
 import { Friend } from "shared/types/general";
@@ -27,7 +27,7 @@ export default function FriendsSection(props: {
   </>;
 
   function handleFriendsUpdatedEvent() {
-    useEffect(()=>{
+    useEffect(() => {
       SOCKET.on("friendsUpdated", (newFriends) => {
         friends.set(newFriends);
       });
@@ -35,7 +35,7 @@ export default function FriendsSection(props: {
   }
 
   function initFriendsValue() {
-    useEffect(()=>{
+    useEffect(() => {
       friends.set(initFriends);
     }, [initFriends]);
   }
@@ -102,7 +102,7 @@ function FriendStrip(props: { friend: Friend, onDelete: () => void }) {
         SOCKET.emit("deleteFriend", friend.id);
         onDelete();
       }}>
-        <Icon name="delete" side={25} />
+        <Icon name="delete" side={25} filter={THEME.icon} />
       </IconButton>
     </Tooltip>
   </Box>
