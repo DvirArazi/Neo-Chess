@@ -1,6 +1,6 @@
 import { Alert, Box, Button, IconButton, Portal, Snackbar, Tooltip } from "@mui/material";
 import Icon from "frontend/src/components/Icon";
-import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendStrip";
+import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendRequestStrip";
 import { ModalEmpty, ModalTitle, VXButtons } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -35,7 +35,7 @@ export default function FriendRequestsSection(props: {
 
   function getFriendRequests() {
     if (friendRequests.value.length === 0) {
-      return <ModalEmpty text={'You have no new requests'}/>;
+      return <ModalEmpty text={'You have no new requests'} />;
     }
 
     console.log('hello', friendRequests.value);

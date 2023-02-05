@@ -1,10 +1,10 @@
-import { Box, Snackbar, SxProps } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Snackbar, SxProps } from "@mui/material";
 import Collapsible from "frontend/src/components/Collapsible";
 import Icon from "frontend/src/components/Icon";
 import Layout from "frontend/src/components/Layout";
-import CatagoryButton from "frontend/src/components/pageExclusives/index/CatagoryButton";
-import CustomeFormatPanel from "frontend/src/components/pageExclusives/index/CustomeFormatSelect";
-import OnlinePanel from "frontend/src/components/pageExclusives/index/OnlinePanel";
+import CatagoryButton from "frontend/src/components/pageExclusives/index/Content/CatagoryButton";
+import CustomeFormatPanel from "frontend/src/components/pageExclusives/index/Content/CustomeFormatSelect";
+import OnlinePanel from "frontend/src/components/pageExclusives/index/Content/OnlinePanel";
 import Toggle from "frontend/src/components/Toggle";
 import { SOCKET, THEME, USER_DATA, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -20,7 +20,7 @@ export default function Content() {
   const isRated = new Stateful(true);
   const isRanged = new Stateful(true);
   const range = new Stateful([-200, 200]);
-  const chosen = new Stateful("");
+  const chosenFriend = new Stateful<Friend | null>(null);
   const isSnackbarOpen = new Stateful(false);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [ratings, setRatings] = useState<number[]>([]);
@@ -36,18 +36,16 @@ export default function Content() {
         <Icon name="wifi" side={25} filter={isAuthed ?
           THEME.icon : THEME.iconDisabled}
         />
-        <Icon name="wifiOff" side={25} filter={THEME.icon}/>
+        <Icon name="wifiOff" side={25} filter={THEME.icon} />
       </Toggle>
-      <Box sx={{ textAlign: `center`, paddingTop: `10px` }}>
-        <Collapsible isOpen={isOnline.value}>
-          <OnlinePanel
-            isRated={isRated}
-            isRanged={isRanged}
-            range={range}
-            chosen={chosen}
-          />
-        </Collapsible>
-      </Box>
+      {/* <Box sx={{ textAlign: `center`, paddingTop: `10px` }}> */}
+        <OnlinePanel
+          isRated={isRated}
+          isRanged={isRanged}
+          range={range}
+          chosenFriend={chosenFriend}
+        />
+      {/* </Box> */}
       {getCatagoryButtons()}
       <CustomeFormatPanel
         onPlay={start}
@@ -65,11 +63,11 @@ export default function Content() {
   </>;
 
   function handleIsAuthedChange() {
-    useEffect(()=>{
+    useEffect(() => {
       isOnline.set(isAuthed);
 
       if (isAuthed) {
-        SOCKET.emit("getHomeData", (newFriends, newRatrings)=>{
+        SOCKET.emit("getHomeData", (newFriends, newRatrings) => {
           setFriends(newFriends);
           setRatings(newRatrings);
         });
@@ -102,27 +100,27 @@ export default function Content() {
       <CatagoryButton key={0}
         catagory={{ title: "Untimed" }}
         rating={getRating(0)}
-        onClick={()=>start("untimed")}
+        onClick={() => start("untimed")}
       />,
       <CatagoryButton key={1}
         catagory={{ title: "Bullet", time: 60, increment: 2 }}
         rating={getRating(1)}
-        onClick={()=>start({overallSec: 60, incSec: 2})}
+        onClick={() => start({ overallSec: 60, incSec: 2 })}
       />,
       <CatagoryButton key={2}
-        catagory={{ title: "Blitz", time: 5*60, increment: 3 }}
+        catagory={{ title: "Blitz", time: 5 * 60, increment: 3 }}
         rating={getRating(2)}
-        onClick={()=>start({overallSec: 5*60, incSec: 3})}
+        onClick={() => start({ overallSec: 5 * 60, incSec: 3 })}
       />,
       <CatagoryButton key={3}
-        catagory={{ title: "Rapid", time: 10*60, increment: 5 }}
+        catagory={{ title: "Rapid", time: 10 * 60, increment: 5 }}
         rating={getRating(3)}
-        onClick={()=>start({overallSec: 10*60, incSec: 5})}
+        onClick={() => start({ overallSec: 10 * 60, incSec: 5 })}
       />,
       <CatagoryButton key={4}
-        catagory={{ title: "Classical", time: 30*60, increment: 20 }}
+        catagory={{ title: "Classical", time: 30 * 60, increment: 20 }}
         rating={getRating(4)}
-        onClick={()=>start({overallSec: 30*60, incSec: 20})}
+        onClick={() => start({ overallSec: 30 * 60, incSec: 20 })}
       />,
     ];
 
@@ -131,13 +129,13 @@ export default function Content() {
       flexDirection: `column`,
       justifyContent: `center`,
     }}>{
-      isWide ? 
-        <Box sx={sx}>{buttons}</Box> :
-        <> 
-          <Box sx={sx}>{buttons.slice(0, 3)}</Box>
-          <Box sx={sx}>{buttons.slice(3, 5)}</Box>
-        </>  
-    }</Box>
+        isWide ?
+          <Box sx={sx}>{buttons}</Box> :
+          <>
+            <Box sx={sx}>{buttons.slice(0, 3)}</Box>
+            <Box sx={sx}>{buttons.slice(3, 5)}</Box>
+          </>
+      }</Box>
 
     function getRating(index: number) {
       if (ratings.length === 0) return undefined;

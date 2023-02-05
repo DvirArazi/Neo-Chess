@@ -1,6 +1,4 @@
-import { ObjectId } from "mongodb";
-import { BoardLayout } from "shared/types/boardLayout";
-import { PieceType } from "shared/types/piece";
+import { Collection, ObjectId } from "mongodb";
 import { ServerToClientEvents } from "shared/types/webSocket";
 import { EventNames, EventParams, EventsMap } from "socket.io/dist/typed-events";
 import { Terminal } from "../terminal";

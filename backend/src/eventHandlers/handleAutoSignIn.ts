@@ -5,8 +5,6 @@ import { emitToUser, toValidId } from "../utils/tools/general";
 
 export function handleAutoSignIn(p: HandlerParams) {
   p.socket.on("autoSignIn", async (aad) => {
-    Terminal.log(`aad: ${aad.id}, ${aad.key}`);
-    Terminal.log(`current socket.id: ${p.socket.id}`);
     const userBeforeResult = await p.usersCollection.findOneAndUpdate(
       {
         _id: toValidId(aad.id),

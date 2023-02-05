@@ -41,12 +41,12 @@ export default function SignedInRow() {
   }
 
   function getButton(name: IconName, side: number, onClick: () => void) {
-    const padding = 25 - side;
+    const padding = 33 - side;
 
     return <IconButton
       onClick={onClick}
     >
-      <Box sx={{ padding: `${padding / 2}px` }}>
+      <Box sx={{ padding: `${padding/2}px` }}>
         <Icon
           name={name}
           side={side}

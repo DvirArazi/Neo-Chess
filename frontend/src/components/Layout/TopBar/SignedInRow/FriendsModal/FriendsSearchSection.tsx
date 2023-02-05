@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Portal, Snackbar, TextField, Tooltip } from "@mui/material";
-import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendStrip";
+import FriendRequestStrip from "frontend/src/components/Layout/TopBar/SignedInRow/FriendRequestStrip";
 import { ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { SOCKET } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";

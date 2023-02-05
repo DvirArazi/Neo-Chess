@@ -15,6 +15,7 @@ export interface ClientToServerEvents {
   deleteFriend: (friendId: ObjectId) => void;
   deleteGameRequest: (callback: () => void) => void;
   getHomeData: (callback: (friends: Friend[], ratings: number[]) => void) => void;
+  getFriendsOnline: (callback: (friends: Friend[]) => void) => void;
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
   playerMove: (gameId: ObjectId, from: Point, to: Point, promotionType: PieceType | null) => void;
@@ -25,6 +26,7 @@ export interface ServerToClientEvents {
   signedOut: () => void;
   friendRequestsUpdated: (requests: FriendRequest[]) => void;
   friendsUpdated: (friends: Friend[]) => void;
+  connectedFriendsUpdated: (friends: Friend[]) => void;
   gameRequestUpdated: (gameRequestTd: GameRequestTd) => void;
   createdGame: (path: string) => void;
   playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;

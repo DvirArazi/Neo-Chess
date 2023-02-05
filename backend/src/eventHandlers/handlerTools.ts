@@ -19,7 +19,7 @@ export default async function leave(p: HandlerParams, isSigningOut: boolean): Pr
     {
       _id: toValidId(p.userId),
     },
-    { $pull: { "socketsIds": { values: [p.socket.id] } } },
+    { $pull: { socketsIds: { values: [p.socket.id] } } },
     { returnDocument: "before" },
   );
   if (userResult.value === null) {
@@ -34,26 +34,31 @@ export default async function leave(p: HandlerParams, isSigningOut: boolean): Pr
     Terminal.warning('Couldn\'t find an entry matching the key sent by the user');
     return undefined;
   }
+  const valuesCopy = entry.values.slice();
 
-  if (!remove(entry.values, p.socket.id)) {
+  if (!remove(valuesCopy, p.socket.id)) {
     Terminal.warning('Could\'t find a value matching the current socket ID');
     return undefined;
   }
 
   //pushes the entry back to the socketsIds list only if it's not empty
+  //or user is not signing out
   //(meaning every socket on that specific device closed) 
   //-------------------------------------------------------------------
   if (entry.values.length !== 0 || !isSigningOut) {
     await p.usersCollection.updateOne(
       { _id: user._id }, //supposed to be valid, but make sure if something goes wrong
-      { $push: { socketsIds: entry } }
+      { $push: { socketsIds: {key: entry.key, values: valuesCopy} } }
     );
   }
 
   //removes the user's game request, if one exists, but only if socketsIds is empty
   //(meaning the user is disconnected everywhere)
   //===============================================================================
-  if (user.socketsIds.length === 0) {
+  if (
+    user.socketsIds.length === 0 &&
+    user.socketsIds.find(socketIds => socketIds.values.length > 0) === undefined
+  ) {
     if (user.gameRequestId !== null) {
       p.gameRequestsCollection.deleteOne({ _id: user.gameRequestId });
     }

@@ -2,7 +2,7 @@ import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { User } from "../utils/types";
 import { v4 as uuidv4 } from 'uuid';
-import { emitToUser } from "../utils/tools/general";
+import { emitToUser, toValidId } from "../utils/tools/general";
 
 export function handleSignIn(p: HandlerParams) {
   p.socket.on("signIn", async (idToken) => {
@@ -48,6 +48,7 @@ export function handleSignIn(p: HandlerParams) {
     const user = userResult.value;
 
     p.userId = userResult.value._id;
+
     emitToUser(p.webSocketServer, userResult.value, "signedIn",
       { id: p.userId, key: newKey },
       { name: user.name, picture: user.data.picture }
