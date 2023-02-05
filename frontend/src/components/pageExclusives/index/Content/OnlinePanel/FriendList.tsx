@@ -11,7 +11,7 @@ export default function FriendList(props: {
   const { isRanged, friendChosen } = props;
 
   const friends = new Stateful<Friend[]>([]);
-  const friendIndex = new Stateful(0);
+  const friendIndex = new Stateful<number | null>(0);
 
   fetchFriendsOnline();
   handlefriendIndexChange();
@@ -46,7 +46,8 @@ export default function FriendList(props: {
       <ToggleButtonGroup
         exclusive
         value={friendIndex.value}
-        onChange={(_, i: number)=>{
+        onChange={(_, i: number | null)=>{
+          console.log('i', i)
           friendIndex.set(i);
         }}
         orientation="vertical"
@@ -76,8 +77,12 @@ export default function FriendList(props: {
 
   function handlefriendIndexChange() {
     useEffect(()=>{
-      friendChosen.set(friends.value[friendIndex.value]);
-    }, [friendIndex.value]);
+      if (friends.value.length === 0) return;
+
+      const i = friendIndex.value;
+
+      friendChosen.set(i === null ? null : friends.value[i]);
+    }, [friendIndex.value, friends.value]);
   }
 }
 

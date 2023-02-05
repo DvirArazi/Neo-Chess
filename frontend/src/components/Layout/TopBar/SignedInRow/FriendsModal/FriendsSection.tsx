@@ -45,7 +45,7 @@ export default function FriendsSection(props: {
     }
 
     return friends.value.map((friend, i) =>
-      <FriendStrip
+      <FriendStrip key={friend.id.toString()}
         friend={friend}
         onDelete={() => {
           friends.set(v => { const a = [...v]; a.splice(i, 1); return a; });

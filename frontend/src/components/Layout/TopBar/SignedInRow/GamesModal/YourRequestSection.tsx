@@ -4,6 +4,7 @@ import { ModalSpacer, ModalTitle } from "frontend/src/components/Layout/TopBar/S
 import { SOCKET } from "frontend/src/pages/_app";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { useEffect } from "react";
 import { GameRequestTd } from "shared/types/general";
 
 export default function YourRequestSection(props: {
@@ -14,6 +15,7 @@ export default function YourRequestSection(props: {
   const request = new Stateful(initRequest);
   const isSnackbarOpen = new Stateful(false);
 
+  initRequestValue();
   handleGameRequestUpdated();
 
   return <Box>
@@ -29,6 +31,12 @@ export default function YourRequestSection(props: {
     });
   }
 
+  function initRequestValue() {
+    useEffect(()=>{
+      request.set(initRequest);
+    }, [initRequest]);
+  }
+
   function getRequest() {
     if (request.value === null) return <Box></Box>;
 
@@ -36,7 +44,7 @@ export default function YourRequestSection(props: {
 
     return <>
       <ModalSpacer />
-      <ModalTitle title={'Your request'} />
+      <ModalTitle title={`Your ${request.value.isByRating ? 'request' : 'invitation'}`} />
       <Box sx={{
         display: `flex`,
         justifyContent: `center`,

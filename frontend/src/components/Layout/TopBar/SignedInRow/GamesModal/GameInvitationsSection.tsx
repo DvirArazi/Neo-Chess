@@ -12,9 +12,7 @@ export default function GameInvitationsSection(props: {
   const { invitations: initInvitations } = props;
 
   const invitations = new Stateful(initInvitations);
-  console.log('init invitations: ', initInvitations);
-  console.log('invitations: ', invitations.value);
-
+  
   initInvitationsValue();
   handleInvitationsUpdated();
 

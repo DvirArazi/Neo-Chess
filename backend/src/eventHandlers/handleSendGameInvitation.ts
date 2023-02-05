@@ -16,6 +16,10 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         return false;
       }
 
+      await p.usersCollection.updateOne(
+        { _id: toValidId(friendId) },
+        { $pull: { invitations: { friendId: user._id } } },
+      );
       const friendUserResult = await p.usersCollection.findOneAndUpdate(
         { _id: toValidId(friendId) },
         {
