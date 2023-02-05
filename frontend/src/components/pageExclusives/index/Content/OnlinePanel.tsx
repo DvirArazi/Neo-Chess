@@ -26,7 +26,6 @@ export default function OnlinePanel(
   }
 
   const isVsFriendDisabled = friends.value.length === 0;
-  console.log(isVsFriendDisabled);
 
   fetchFriends();
   handleFriendsUpdatedEvent();
@@ -108,6 +107,7 @@ export default function OnlinePanel(
 
   function fetchFriends() {
     useEffect(()=>{
+      console.log('fetching friends');
       SOCKET.emit("getFriends", (newFriends)=>{
         console.log(newFriends);
         friends.set(newFriends);
@@ -116,11 +116,11 @@ export default function OnlinePanel(
   }
 
   function handleFriendsUpdatedEvent() {
-    SOCKET.off("friendsUpdated");
-    SOCKET.on("friendsUpdated", (newFriends) => {
-      console.log('woopwooopwoopwoopwoop')
-      friends.set(newFriends);
-    });
+    useEffect(()=>{
+      SOCKET.on("friendsUpdated", (newFriends) => {
+        friends.set(newFriends);
+      });
+    }, []);
   }
 }
 

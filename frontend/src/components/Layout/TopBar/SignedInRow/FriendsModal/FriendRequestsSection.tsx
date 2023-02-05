@@ -48,7 +48,7 @@ export default function FriendRequestsSection(props: {
       flexDirection: `column`,
     }}>
       {friendRequests.value.map((request, i) =>
-        <FriendRequest
+        <FriendRequest key={i}
           request={request}
           onResponse={(isApproved) => {
             latest.current = { friendName: request.name, isApproved: isApproved };

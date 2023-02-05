@@ -27,7 +27,7 @@ export interface ServerToClientEvents {
   signedOut: () => void;
   friendRequestsUpdated: (requests: FriendRequest[]) => void;
   friendsUpdated: (friends: Friend[]) => void;
-  connectedFriendsUpdated: (friends: Friend[]) => void;
+  // connectedFriendsUpdated: (friends: Friend[]) => void;
   gameRequestUpdated: (gameRequestTd: GameRequestTd) => void;
   gameInvitationsUpdated: (invitations: GameInvitation[]) => void;
   createdGame: (path: string) => void;

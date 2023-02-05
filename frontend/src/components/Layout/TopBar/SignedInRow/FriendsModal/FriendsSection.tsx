@@ -27,11 +27,11 @@ export default function FriendsSection(props: {
   </>;
 
   function handleFriendsUpdatedEvent() {
-    SOCKET.off("friendsUpdated");
-    SOCKET.on("friendsUpdated", (newFriends) => {
-      console.log('woopwooopwoopwoopwoop')
-      friends.set(newFriends);
-    });
+    useEffect(()=>{
+      SOCKET.on("friendsUpdated", (newFriends) => {
+        friends.set(newFriends);
+      });
+    }, []);
   }
 
   function initFriendsValue() {

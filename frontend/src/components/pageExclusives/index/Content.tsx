@@ -45,13 +45,15 @@ export default function Content() {
           isOnline.value ? THEME.iconNotSelected : THEME.icon
         } />
       </Toggle>
-      <OnlinePanel
-        isOnline={isOnline.value}
-        isRated={isRated}
-        isRanged={isRanged}
-        range={range}
-        chosenFriend={chosenFriend}
-      />
+      {!isAuthed ? <></> :
+        <OnlinePanel
+          isOnline={isOnline.value}
+          isRated={isRated}
+          isRanged={isRanged}
+          range={range}
+          chosenFriend={chosenFriend}
+        />
+      }
       {getCatagoryButtons()}
       <CustomeFormatPanel
         onPlay={start}
@@ -60,7 +62,7 @@ export default function Content() {
       {getRequestSnackbar()}
       {getInvitationSnackbar()}
     </Layout>
-    
+
   </>;
 
   function handleIsAuthedChange() {
