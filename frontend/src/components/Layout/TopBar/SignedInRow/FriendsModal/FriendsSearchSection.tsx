@@ -53,7 +53,6 @@ export default function FriendsSearchSection() {
 
     function handleClick(friend: FriendRequest) {
       SOCKET.emit("friendRequest", friend.id, (success) => {
-        console.log('back');
         latest.current = { friendName: friend.name, success: success };
         isSnackbarOpen.set(true);
       });

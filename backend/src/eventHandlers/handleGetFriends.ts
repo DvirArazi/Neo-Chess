@@ -3,10 +3,10 @@ import { Terminal } from "backend/src/utils/terminal";
 import { toValidId } from "backend/src/utils/tools/general";
 import { Friend } from "shared/types/general";
 
-export default function handleGetFriendsOnline(p: HandlerParams) {
-  p.socket.on("getFriendsOnline", async (callback) => {
+export default function handleGetFriends(p: HandlerParams) {
+  p.socket.on("getFriends", async (callback) => {
     if (p.userId === undefined) {
-      Terminal.warning('User tried to get online friends but was not signed in');
+      Terminal.warning('User tried to get friends but was not signed in');
       return;
     }
 
@@ -19,7 +19,7 @@ export default function handleGetFriendsOnline(p: HandlerParams) {
     const friendUsers: Friend[] = (await p.usersCollection.find({
       _id: { $in: user.friends.map(friend => toValidId(friend.id)) }
     }).toArray())
-      .filter(friendUser => friendUser.socketsIds.length !== 0)
+      // .filter(friendUser => friendUser.socketsIds.length !== 0)
       .map(friendUser => ({
         id: friendUser._id,
         name: friendUser.name,

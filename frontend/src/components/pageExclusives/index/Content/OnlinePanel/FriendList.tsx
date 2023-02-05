@@ -6,33 +6,19 @@ import { Friend } from "shared/types/general";
 
 export default function FriendList(props: {
   isRanged: boolean,
-  friendChosen: Stateful<Friend | null>
+  friends: Stateful<Friend[]>,
+  friendChosen: Stateful<Friend | null>,
 }) {
-  const { isRanged, friendChosen } = props;
+  const { isRanged, friends, friendChosen } = props;
 
-  const friends = new Stateful<Friend[]>([]);
+  // const friends = new Stateful<Friend[]>([]);
   const friendIndex = new Stateful<number | null>(0);
 
-  fetchFriendsOnline();
   handlefriendIndexChange();
 
   return <>
     {getFriends()}
   </>;
-
-  function fetchFriendsOnline() {
-    useEffect(() => {
-      if (isRanged) {
-        friends.set([]);
-        return
-      };
-
-      SOCKET.emit("getFriendsOnline", (newFriends) => {
-        friends.set(newFriends);
-      });
-
-    }, [isRanged]);
-  }
 
   function getFriends() {
     if (friends.value.length === 0) {
@@ -46,8 +32,7 @@ export default function FriendList(props: {
       <ToggleButtonGroup
         exclusive
         value={friendIndex.value}
-        onChange={(_, i: number | null)=>{
-          console.log('i', i)
+        onChange={(_, i: number | null) => {
           friendIndex.set(i);
         }}
         orientation="vertical"
@@ -57,31 +42,34 @@ export default function FriendList(props: {
           background: `white`,
         }}
       > {
-        friends.value.map((friend, i) => {
-          return (
-            <ToggleButton key={friend.id.toString()}
-              value={i}
-              sx={{
-                borderRadius: `10px`,
-                fontFamily: `unset !important`,
-                textTransform: `unset !important`,
-              }}
-            >
-              <FriendStrip friend={ friend } />
-            </ToggleButton>
-          );
-        })
-      }</ToggleButtonGroup>
+          friends.value.map((friend, i) => {
+            return (
+              <ToggleButton key={friend.id.toString()}
+                value={i}
+                sx={{
+                  borderRadius: `10px`,
+                  fontFamily: `unset !important`,
+                  textTransform: `unset !important`,
+                }}
+              >
+                <FriendStrip friend={friend} />
+              </ToggleButton>
+            );
+          })
+        }</ToggleButtonGroup>
     </Box>
   }
 
   function handlefriendIndexChange() {
-    useEffect(()=>{
-      if (friends.value.length === 0) return;
+    useEffect(() => {
+      // if (friends.value.length === 0) {
+      //   friendChosen.set(null);
+      //   return;
+      // }
 
-      const i = friendIndex.value;
+      // const i = friendIndex.value;
 
-      friendChosen.set(i === null ? null : friends.value[i]);
+      // friendChosen.set(i === null ? null : friends.value[i]);
     }, [friendIndex.value, friends.value]);
   }
 }

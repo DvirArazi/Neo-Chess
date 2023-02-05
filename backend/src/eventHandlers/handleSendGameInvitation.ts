@@ -10,7 +10,9 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         return false;
       }
 
-      const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
+      const user = await p.usersCollection.findOne(
+        { _id: toValidId(p.userId) }
+      );
       if (user === null) {
         Terminal.error('User with saved ID was not found in the DB');
         return false;
@@ -39,6 +41,21 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         return false;
       }
       const friendUser = friendUserResult.value;
+
+      await p.usersCollection.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            outInvitation: {
+              friendId: friendUser._id,
+              name: friendUser.name,
+              timeframe: timeframe,
+              isRated: isRated,
+            },
+            gameRequestId: null,
+          }
+        }
+      );
 
       emitToUser(p.webSocketServer, friendUser, "gameInvitationsUpdated",
         friendUser.invitations

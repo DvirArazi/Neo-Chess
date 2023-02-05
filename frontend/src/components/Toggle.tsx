@@ -6,6 +6,7 @@ export default function Toggle(props: {
   isOn: Stateful<boolean>,
   children: React.ReactNode,
   isOnDisabled?: boolean,
+  isOffDisabled?: boolean,
   background?: string,
 }) {
   const { isOn, children, background } = props;
@@ -15,10 +16,7 @@ export default function Toggle(props: {
   const childrenArray = React.Children.toArray(children);
 
   const isOnDisabled = props.isOnDisabled ?? false;
-
-  // if (isOn.value && isOnDisabled) {
-  //   isOn.set(false);
-  // }
+  const isOffDisabled = props.isOffDisabled ?? false;
 
   return (<ToggleButtonGroup
     exclusive={true}
@@ -36,6 +34,6 @@ export default function Toggle(props: {
     sx={{background: background === undefined ? `white` : background}}
   >
     <ToggleButton disabled={isOnDisabled} value={true}>{childrenArray[0]}</ToggleButton>
-    <ToggleButton value={false}>{childrenArray[1]}</ToggleButton>
+    <ToggleButton disabled={isOffDisabled} value={false}>{childrenArray[1]}</ToggleButton>
   </ToggleButtonGroup>);
 }

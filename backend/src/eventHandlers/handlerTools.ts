@@ -1,11 +1,11 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools/general";
-import { User } from "backend/src/utils/types";
+import { emitToUser, toValidId } from "backend/src/utils/tools/general";
+import { User, WebSocketServer } from "backend/src/utils/types";
+import { WithId } from "mongodb";
 import { remove } from "shared/tools/general";
-import { AutoAuthData } from "shared/types/webSocket";
 
-export default async function leave(p: HandlerParams, isSigningOut: boolean): Promise<User | undefined> {
+export async function leave(p: HandlerParams, isSigningOut: boolean): Promise<User | undefined> {
   Terminal.log('----leaving----');
 
   if (p.userId === undefined) {
@@ -27,9 +27,9 @@ export default async function leave(p: HandlerParams, isSigningOut: boolean): Pr
     p.socket.emit("signedOut");
     return undefined;
   }
-  const user = userResult.value;
+  const userBefore = userResult.value;
 
-  const entry = user.socketsIds.find(entry => entry.values.includes(p.socket.id));
+  const entry = userBefore.socketsIds.find(entry => entry.values.includes(p.socket.id));
   if (entry === undefined) {
     Terminal.warning('Couldn\'t find an entry matching the key sent by the user');
     return undefined;
@@ -45,28 +45,48 @@ export default async function leave(p: HandlerParams, isSigningOut: boolean): Pr
   //or user is not signing out
   //(meaning every socket on that specific device closed) 
   //-------------------------------------------------------------------
-  if (entry.values.length !== 0 || !isSigningOut) {
+  if (!(entry.values.length === 0 && isSigningOut)) {
     await p.usersCollection.updateOne(
-      { _id: user._id }, //supposed to be valid, but make sure if something goes wrong
-      { $push: { socketsIds: {key: entry.key, values: valuesCopy} } }
+      { _id: userBefore._id }, //supposed to be valid, but make sure if something goes wrong
+      { $push: { socketsIds: { key: entry.key, values: valuesCopy } } }
     );
   }
 
   //removes the user's game request, if one exists, but only if socketsIds is empty
   //(meaning the user is disconnected everywhere)
   //===============================================================================
-  if (
-    user.socketsIds.length === 0 &&
-    user.socketsIds.find(socketIds => socketIds.values.length > 0) === undefined
-  ) {
-    if (user.gameRequestId !== null) {
-      p.gameRequestsCollection.deleteOne({ _id: user.gameRequestId });
+  const userAfter = await p.usersCollection.findOne({ _id: userBefore._id });
+  if (userAfter === null) return;
+
+  if (userAfter.socketsIds.find(socketIds => socketIds.values.length > 0) === undefined) {
+    if (userAfter.gameRequestId !== null) {
+      p.gameRequestsCollection.deleteOne({ _id: toValidId(userAfter.gameRequestId) });
     }
+    deleteOutInvitationForFriend(p, userAfter);
     p.usersCollection.updateOne(
-      { _id: user._id },
-      { $set: { gameRequestId: null } },
+      { _id: userAfter._id },
+      { $set: { gameRequestId: null, outInvitation: null } },
     );
   }
 
-  return user;
+  return userBefore;
+}
+
+export async function deleteOutInvitationForFriend(p: HandlerParams, user: WithId<User>) {
+  if (user.outInvitation === null) return;
+
+  const friendUserResult = await p.usersCollection.findOneAndUpdate(
+    { _id: toValidId(user.outInvitation.friendId) },
+    { $pull: { invitations: { friendId: user._id } } },
+    { returnDocument: "after" }
+  );
+  if (friendUserResult.value === null) {
+    Terminal.warning('Couldn\'t friend ID in DB');
+    return;
+  }
+  const friendUser = friendUserResult.value;
+
+  emitToUser(p.webSocketServer, friendUser, "gameInvitationsUpdated",
+    friendUser.invitations
+  );
 }

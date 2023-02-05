@@ -4,7 +4,7 @@ import { SOCKET } from "frontend/src/pages/_app";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect } from "react";
-import { GameInvitation } from "shared/types/general";
+import { Friend, GameInvitation } from "shared/types/general";
 
 export default function GameInvitationsSection(props: {
   invitations: GameInvitation[]
@@ -12,7 +12,7 @@ export default function GameInvitationsSection(props: {
   const { invitations: initInvitations } = props;
 
   const invitations = new Stateful(initInvitations);
-  
+
   initInvitationsValue();
   handleInvitationsUpdated();
 
@@ -22,7 +22,7 @@ export default function GameInvitationsSection(props: {
   </Box>;
 
   function initInvitationsValue() {
-    useEffect(()=>{
+    useEffect(() => {
       invitations.set(initInvitations);
     }, [initInvitations]);
   }
@@ -40,7 +40,7 @@ export default function GameInvitationsSection(props: {
     }
 
     return <Box>
-      {invitations.value.map(data => <Invitation data={data} />)}
+      {invitations.value.map((data, i) => <Invitation key={i} data={data} />)}
     </Box>
   }
 }
@@ -63,7 +63,7 @@ function Invitation(props: { data: GameInvitation }) {
         fontSize: `18px`,
         padding: `0 8px 0 10px`,
       }}>{data.name}</Box>
-      {`- ${getFormatBannerString(data.timeframe, data.isRated)}`}
+      {`• ${getFormatBannerString(data.timeframe, data.isRated)}`}
     </Box>
     <VXButtons onClick={() => { }} />
   </Box>

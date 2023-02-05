@@ -17,7 +17,7 @@ import handleResponseToFriendRequest from 'backend/src/eventHandlers/handleRespo
 import handleDeleteFriend from 'backend/src/eventHandlers/handleDeleteFriend';
 import { GameRequest } from 'shared/types/game';
 import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameRequest';
-import handleGetFriendsOnline from 'backend/src/eventHandlers/handleGetFriendsOnline';
+import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
@@ -58,7 +58,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleSignOut(handlerParams);
     handleGetSignedInRowData(handlerParams);
     handleGetHomeData(handlerParams);
-    handleGetFriendsOnline(handlerParams);
+    handleGetFriends(handlerParams);
     handleGetFriendsSearchData(handlerParams);
     handleFriendRequest(handlerParams);
     handleResponseToFriendRequest(handlerParams);

@@ -4,7 +4,7 @@ import { ModalSpacer, ModalTitle } from "frontend/src/components/Layout/TopBar/S
 import { SOCKET } from "frontend/src/pages/_app";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { GameRequestTd } from "shared/types/general";
 
 export default function YourRequestSection(props: {
@@ -14,19 +14,19 @@ export default function YourRequestSection(props: {
 
   const request = new Stateful(initRequest);
   const isSnackbarOpen = new Stateful(false);
+  const isByRating = useRef(false);
 
   initRequestValue();
   handleGameRequestUpdated();
 
   return <Box>
     {getRequest()}
-    {getToolbar()}
+    {getSnackbar()}
   </Box>
 
   function handleGameRequestUpdated() {
     SOCKET.off("gameRequestUpdated");
     SOCKET.on("gameRequestUpdated", (gameRequestTd) => {
-      console.log('updated to', gameRequestTd);
       request.set(gameRequestTd);
     });
   }
@@ -64,8 +64,11 @@ export default function YourRequestSection(props: {
           arrow
         >
           <IconButton onClick={()=>SOCKET.emit("deleteGameRequest", ()=>{
-            request.set(null);
+            if (request.value === null) return;
+
+            isByRating.current = request.value?.isByRating;
             isSnackbarOpen.set(true);
+            request.set(null);
           })}>
             <Icon name="cancel" side={25} />
           </IconButton>
@@ -74,7 +77,7 @@ export default function YourRequestSection(props: {
     </>
   }
 
-  function getToolbar() {
+  function getSnackbar() {
     return <Box sx={{ position: `relative` }}>
       <Portal>
         <Snackbar
@@ -86,7 +89,7 @@ export default function YourRequestSection(props: {
             onClose={handleClose}
             severity={"info"}
           >
-            {"Your game request was canceled"}
+            {`Your game ${isByRating.current ? 'request' : 'invitation'} was canceled`}
           </Alert>
         </Snackbar>
       </Portal>

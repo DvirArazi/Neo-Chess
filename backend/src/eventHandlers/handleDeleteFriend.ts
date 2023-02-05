@@ -11,12 +11,14 @@ export default function handleDeleteFriend(p: HandlerParams) {
 
     const userResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(p.userId) },
-      { $pull: { friends: { id: toValidId(friendId) } } }
+      { $pull: { friends: { id: toValidId(friendId) } } },
+      { returnDocument: "after" }
     );
     if (userResult.value === null) {
       Terminal.log('Saved user ID was not found in DB');
       return;
     }
+    const user = userResult.value;
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(friendId) },
@@ -29,6 +31,7 @@ export default function handleDeleteFriend(p: HandlerParams) {
     }
     const friendUser = friendUserResult.value;
 
+    emitToUser(p.webSocketServer, user, "friendsUpdated", user.friends);
     emitToUser(p.webSocketServer, friendUser, "friendsUpdated", friendUser.friends);
   });
 }

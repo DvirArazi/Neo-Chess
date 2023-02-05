@@ -1,6 +1,7 @@
+import { deleteOutInvitationForFriend } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools/general";
+import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 
 export default function handleDeleteGameRequest(p: HandlerParams) {
   p.socket.on("deleteGameRequest", async (callback) => {
@@ -11,9 +12,7 @@ export default function handleDeleteGameRequest(p: HandlerParams) {
 
     const userResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(p.userId) },
-      {
-        $set: { gameRequestId: null },
-      },
+      { $set: { gameRequestId: null, outInvitation: null } },
       { returnDocument: "before" }
     );
     if (userResult.value === null) {
@@ -22,14 +21,14 @@ export default function handleDeleteGameRequest(p: HandlerParams) {
     }
     const user = userResult.value;
 
-    if (user.gameRequestId === null) {
-      Terminal.warning('Couldn\'t find a gameRequestId to delete in user document');
-      return;
+    if (user.gameRequestId !== null) {
+      p.gameRequestsCollection.findOneAndDelete(
+        { _id: toValidId(user.gameRequestId) }
+      );
     }
+    deleteOutInvitationForFriend(p, user);
 
-    p.gameRequestsCollection.findOneAndDelete(
-      {_id: toValidId(user.gameRequestId)}
-    );
+
 
     callback();
   });

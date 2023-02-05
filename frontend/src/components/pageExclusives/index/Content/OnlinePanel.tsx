@@ -1,6 +1,7 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, List, ListItem, Paper, Slider } from "@mui/material";
-import { THEME } from "frontend/src/pages/_app";
+import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { useEffect } from "react";
 import { Friend } from "shared/types/general";
 import Toggle from "../../../Toggle";
 import FriendList from "./OnlinePanel/FriendList";
@@ -16,11 +17,19 @@ export default function OnlinePanel(
 ) {
   const { isOnline, isRated, isRanged, range, chosenFriend } = props;
 
+  const friends = new Stateful<Friend[]>([]);
+
   const handleRangeChange = (newRange: number[]) => {
     if (newRange[0] != newRange[1]) {
       range.set(newRange);
     }
   }
+
+  const isVsFriendDisabled = friends.value.length === 0;
+  console.log(isVsFriendDisabled);
+
+  fetchFriends();
+  handleFriendsUpdatedEvent();
 
   return (
     <Box sx={{
@@ -52,7 +61,10 @@ export default function OnlinePanel(
               <Box sx={{ fontSize: `12px`, width: `50px` }}>Casual</Box>
             </Toggle>
             <Box sx={{ marginBottom: `15px` }}></Box>
-            <Toggle isOn={isRanged}>
+            <Toggle
+              isOn={isRanged}
+              isOffDisabled={isVsFriendDisabled}
+            >
               <Box sx={{ fontSize: `12px`, width: `100px` }}>Rating Range</Box>
               <Box sx={{ fontSize: `12px`, width: `100px` }}>VS Friend</Box>
             </Toggle>
@@ -83,6 +95,7 @@ export default function OnlinePanel(
               display: isRanged.value ? `none` : `block`,
             }}>
               <FriendList
+                friends={friends}
                 isRanged={isRanged.value}
                 friendChosen={chosenFriend}
               />
@@ -92,6 +105,23 @@ export default function OnlinePanel(
       </Accordion>
     </Box>
   );
+
+  function fetchFriends() {
+    useEffect(()=>{
+      SOCKET.emit("getFriends", (newFriends)=>{
+        console.log(newFriends);
+        friends.set(newFriends);
+      })
+    }, []);
+  }
+
+  function handleFriendsUpdatedEvent() {
+    SOCKET.off("friendsUpdated");
+    SOCKET.on("friendsUpdated", (newFriends) => {
+      console.log('woopwooopwoopwoopwoop')
+      friends.set(newFriends);
+    });
+  }
 }
 
 const rangeToString = (range: number) => {

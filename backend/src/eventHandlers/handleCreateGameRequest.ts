@@ -8,6 +8,7 @@ import { PieceType } from "shared/types/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameStatusCatagory } from "shared/types/game";
+import { deleteOutInvitationForFriend } from "backend/src/eventHandlers/handlerTools";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -15,11 +16,18 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       Terminal.warning('Attempt to open a game request by an unauthenticated user');
       return;
     }
-    const user0 = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
-    if (user0 === null) {
+    const user0Result = await p.usersCollection.findOneAndUpdate(
+      { _id: toValidId(p.userId) },
+      { $set: { outInvitation: null } },
+      { returnDocument: "before" }
+    );
+    if (user0Result.value === null) {
       Terminal.error('Could not find document of the saved user ID');
       return;
     }
+    const user0 = user0Result.value;
+
+    deleteOutInvitationForFriend(p, user0);
 
     const timeFormat = timeframeToTimeFormat(timeframe);
     const user0Rating = user0.ratings[timeFormat];
@@ -56,7 +64,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
 
       p.usersCollection.updateOne(
         { _id: toValidId(p.userId) },
-        { $set: { gameRequestId: newGameRequest.value._id } }
+        { $set: { gameRequestId: newGameRequest.value._id, outInvitation: null } }
       );
 
       emitToUser(p.webSocketServer, user0, "gameRequestUpdated", {
