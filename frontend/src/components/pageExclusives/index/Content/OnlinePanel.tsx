@@ -107,9 +107,7 @@ export default function OnlinePanel(
 
   function fetchFriends() {
     useEffect(()=>{
-      console.log('fetching friends');
       SOCKET.emit("getFriends", (newFriends)=>{
-        console.log(newFriends);
         friends.set(newFriends);
       })
     }, []);

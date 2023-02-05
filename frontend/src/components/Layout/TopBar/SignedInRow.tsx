@@ -23,11 +23,19 @@ export default function SignedInRow() {
   const isFriendsModalOpen = new Stateful(false);
 
   getData();
+  handleInvitationsUpdatedEvent();
+  handleFriendRequestsUpdatedEvent();
 
   return <>
-    {getButton("fight", 28, () => isGamesModalOpen.set(true))}
+    <Box>
+      {getButton("fight", 28, () => isGamesModalOpen.set(true))}
+      {gamesModalData.value.invitations.length > 0 ? getAlert() : <></>}
+    </Box>
+    <Box>
+      {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
+      {friendsModalData.value.friendRequests.length > 0 ? getAlert() : <></>}
+    </Box>
     {getButton("history", 25, () => { })}
-    {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
     {getGamesModal()}
     {getFriendsModal()}
   </>;
@@ -47,7 +55,7 @@ export default function SignedInRow() {
     return <IconButton
       onClick={onClick}
     >
-      <Box sx={{ padding: `${padding/2}px` }}>
+      <Box sx={{ padding: `${padding / 2}px` }}>
         <Icon
           name={name}
           side={side}
@@ -55,6 +63,30 @@ export default function SignedInRow() {
         />
       </Box>
     </IconButton>
+  }
+
+  function handleInvitationsUpdatedEvent() {
+    useEffect(() => {
+      SOCKET.on("gameInvitationsUpdated", (newInvitations) => {
+        // console.log('new invitations', newInvitations)
+        gamesModalData.set(v => ({
+          ...v,
+          invitations: newInvitations
+        }));
+      });
+    }, []);
+  }
+
+  function handleFriendRequestsUpdatedEvent() {
+    useEffect(() => {
+      SOCKET.on("friendRequestsUpdated", (newRequests) => {
+        // console.log('new requests', newRequests);
+        friendsModalData.set(v => ({
+          ...v,
+          friendRequests: newRequests
+        }));
+      })
+    }, []);
   }
 
   function getGamesModal() {
@@ -69,5 +101,27 @@ export default function SignedInRow() {
       isOpen={isFriendsModalOpen}
       data={friendsModalData.value}
     />
+  }
+
+  function getAlert() {
+    return <Box sx={{
+      position: `absolute`,
+      width: `20px`,
+      height: `20px`,
+      borderRadius: `50%`,
+      background: `#ff4d4d`,
+      transform: `translate(30px, -20px)`,
+      boxShadow: `0px 2px 5px 0px rgba(0,0,0,0.3)`,
+    }}>
+      <Box sx={{
+        fontWeight: `bold`,
+        position: `absolute`,
+        top: `1px`,
+        left: `50%`,
+        transform: `translateX(-50%)`,
+        color: `white`,
+        fontFamily: `roboto`
+      }}>{'!'}</Box>
+    </Box>
   }
 }

@@ -62,14 +62,14 @@ export default function FriendList(props: {
 
   function handlefriendIndexChange() {
     useEffect(() => {
-      // if (friends.value.length === 0) {
-      //   friendChosen.set(null);
-      //   return;
-      // }
+      if (friends.value.length === 0) {
+        friendChosen.set(null);
+        return;
+      }
 
-      // const i = friendIndex.value;
+      const i = friendIndex.value;
 
-      // friendChosen.set(i === null ? null : friends.value[i]);
+      friendChosen.set(i === null ? null : friends.value[i]);
     }, [friendIndex.value, friends.value]);
   }
 }

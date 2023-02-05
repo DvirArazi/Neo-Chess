@@ -7,40 +7,22 @@ import { useEffect } from "react";
 import { Friend, GameInvitation } from "shared/types/general";
 
 export default function GameInvitationsSection(props: {
-  invitations: GameInvitation[]
+  invitations: GameInvitation[],
 }) {
-  const { invitations: initInvitations } = props;
-
-  const invitations = new Stateful(initInvitations);
-
-  initInvitationsValue();
-  handleInvitationsUpdated();
+  const { invitations } = props;
 
   return <Box>
     <ModalTitle title={'Invitations'} />
     {getInvitations()}
   </Box>;
 
-  function initInvitationsValue() {
-    useEffect(() => {
-      invitations.set(initInvitations);
-    }, [initInvitations]);
-  }
-
-  function handleInvitationsUpdated() {
-    SOCKET.off("gameInvitationsUpdated");
-    SOCKET.on("gameInvitationsUpdated", (newInvitations) => {
-      invitations.set(newInvitations);
-    });
-  }
-
   function getInvitations() {
-    if (invitations.value.length === 0) {
+    if (invitations.length === 0) {
       return <ModalEmpty text={'You don\'t have any invitations at the moment'} />
     }
 
     return <Box>
-      {invitations.value.map((data, i) => <Invitation key={i} data={data} />)}
+      {invitations.map((data, i) => <Invitation key={i} data={data} />)}
     </Box>
   }
 }

@@ -9,15 +9,11 @@ import { FriendRequest } from "shared/types/general";
 export default function FriendRequestsSection(props: {
   friendRequests: FriendRequest[]
 }) {
-  const { friendRequests: initFriendRequests } = props;
+  const { friendRequests } = props;
 
-  const friendRequests = new Stateful<FriendRequest[]>(initFriendRequests);
   const isSnackbarOpen = new Stateful(false);
 
   const latest = useRef({ friendName: '', isApproved: false });
-
-  initFriendRequestsValue();
-  handleFriendRequestsUpdatedEvent();
 
   return <Box>
     <ModalTitle title={'Friend requests'} />
@@ -25,21 +21,8 @@ export default function FriendRequestsSection(props: {
     {getSnackbar()}
   </Box>;
 
-  function handleFriendRequestsUpdatedEvent() {
-    SOCKET.off("friendRequestsUpdated");
-    SOCKET.on("friendRequestsUpdated", (newRequests) => {
-      friendRequests.set(newRequests);
-    })
-  }
-
-  function initFriendRequestsValue() {
-    useEffect(()=>{
-      friendRequests.set(initFriendRequests);
-    },[initFriendRequests]);
-  }
-
   function getFriendRequests() {
-    if (friendRequests.value.length === 0) {
+    if (friendRequests.length === 0) {
       return <ModalEmpty text={'You have no new requests'} />;
     }
 
@@ -47,13 +30,13 @@ export default function FriendRequestsSection(props: {
       display: `flex`,
       flexDirection: `column`,
     }}>
-      {friendRequests.value.map((request, i) =>
+      {friendRequests.map((request, i) =>
         <FriendRequest key={i}
           request={request}
           onResponse={(isApproved) => {
             latest.current = { friendName: request.name, isApproved: isApproved };
 
-            friendRequests.set(v => { const a = [...v]; a.splice(i, 1); return a; });
+            // friendRequests.set(v => { const a = [...v]; a.splice(i, 1); return a; });
             isSnackbarOpen.set(true);
           }}
         />

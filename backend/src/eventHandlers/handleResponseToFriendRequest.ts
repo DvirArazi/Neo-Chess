@@ -11,7 +11,8 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
 
     const userResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(p.userId) },
-      { $pull: { friendRequests: { id: toValidId(friendId) } } }
+      { $pull: { friendRequests: { id: toValidId(friendId) } } },
+      { returnDocument: "after" }
     );
     if (userResult.value === null) {
       Terminal.error('Saved user ID was not found in DB');
@@ -19,6 +20,7 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
     }
     const user = userResult.value;
 
+    emitToUser(p.webSocketServer, user, "friendRequestsUpdated", user.friendRequests);
 
     if (!isAccepted) return;
 

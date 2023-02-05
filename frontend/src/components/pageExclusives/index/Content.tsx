@@ -62,7 +62,6 @@ export default function Content() {
       {getRequestSnackbar()}
       {getInvitationSnackbar()}
     </Layout>
-
   </>;
 
   function handleIsAuthedChange() {

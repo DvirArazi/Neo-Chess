@@ -73,7 +73,7 @@ export default function FriendsSearchSection() {
           >
             {
               latest.current.success ?
-                `Friend request sent successfuly to ${latest.current.friendName}!` :
+                `Friend request was successfuly sent to ${latest.current.friendName}!` :
                 'User could not be found'
             }
           </Alert>

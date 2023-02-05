@@ -13,6 +13,8 @@ export default function FriendsModal(props: {
 }) {
   const { isOpen, data } = props;
 
+  console.log('data', data);
+
   return <ModalFrame isOpen={isOpen} width={500}>
     <Box sx={{
       padding: `10px`,
