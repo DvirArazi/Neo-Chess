@@ -1,8 +1,11 @@
 import { Box, Button } from "@mui/material";
+import Icon from "frontend/src/components/Icon";
 import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { BOARD_SIDE } from "shared/tools/boardLayout";
+import { pieceDataToIconName } from "shared/tools/piece";
 import { Player } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 
@@ -24,9 +27,17 @@ export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] })
 }
 
 function OngoingGameThumbnail(props: { data: GameTd }) {
-  const { data } = props;
+  const {
+    white,
+    black,
+    layout,
+    userColor,
+    turnColor,
+    timeframe,
+    isRated
+  } = props.data;
 
-  const isUserTurn = data.userColor === data.turnColor;
+  const isUserTurn = userColor === turnColor;
 
   return <Button sx={{
     fontFamily: `unset !important`,
@@ -56,6 +67,7 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
           overflow: `hidden`,
         }}>
           <BoardBackground />
+          {getPieces()}
         </Box>
       </Box>
 
@@ -69,20 +81,18 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
         justifyContent: `space-around`,
         alignItems: `center`,
       }}>
-        {getFormatBannerString(data.timeframe, data.isRated)}
+        {getFormatBannerString(timeframe, isRated)}
         <Box sx={{
           display: `flex`,
           flexDirection: `row`,
           justifyContent: `center`,
           alignItems: `center`,
         }}>
-          {getPlayer(data.white)}
+          {getPlayer(white)}
           <Box sx={{ width: `60px` }}>{'VS'}</Box>
-          {getPlayer(data.black)}
+          {getPlayer(black)}
         </Box>
         <Box sx={{
-          // width: `150px`,
-          // marginTop: `5px`,
           fontWeight: `bold`,
           fontSize: `15px`,
           color: isUserTurn ? `#00b300` : `#6666ff`,
@@ -104,5 +114,27 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
       }}>{player.name}</Box>
       <Box>{player.rating}</Box>
     </Box>;
+  }
+
+  function getPieces(): JSX.Element {
+    return <>{layout
+      // .filter(square => square !== undefined && square !== null)
+      .map((square, i) => {
+        // const square = squareO!;
+        if (square === null) return <></>;
+
+        return <Box key={i}
+          sx={{
+            position: `absolute`,
+            left: `${i % BOARD_SIDE * 100/BOARD_SIDE}%`,
+            top: `${Math.floor(i/BOARD_SIDE)*100/BOARD_SIDE}%`,
+            transform: `translateY(-3px)`,
+            width: `${100/BOARD_SIDE}%`
+          }}
+        >
+          <Icon name={pieceDataToIconName(square)} />
+        </Box>
+      })
+    }</>
   }
 }

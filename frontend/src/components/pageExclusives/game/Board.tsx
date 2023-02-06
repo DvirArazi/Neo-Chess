@@ -108,8 +108,8 @@ export default function Board(props: {
 
   function getPieces(): JSX.Element[] {
     return layout
-      .map((data, i) => data !== undefined ? { ...data, ...{ index: i } } : undefined)
-      .filter(data => data !== undefined)
+      .map((data, i) => data !== null ? { ...data, ...{ index: i } } : null)
+      .filter(data => data !== null)
       .sort((a, b) => a!.key > b!.key ? 1 : -1)
       .map(dataO => {
         const data = dataO!;
@@ -183,7 +183,7 @@ export default function Board(props: {
     const toI = pointToIndex(newTo);
     const newLayout = [...layout]; //if works, remove wrap and try again
     newLayout[toI] = newLayout[fromI];
-    newLayout[fromI] = undefined;
+    newLayout[fromI] = null;
 
     onMove(from.value, newTo, newLayout);
 

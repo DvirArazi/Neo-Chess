@@ -6,7 +6,7 @@ import { GameTurn } from "shared/types/game";
 export function boardLayoutToRep(layout: BoardLayout) {
   let rep = '';
   for (const square of layout) {
-    if (square === undefined) {
+    if (square === null) {
       rep += '*';
       continue;
     }

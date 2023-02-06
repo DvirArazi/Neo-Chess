@@ -1,16 +1,12 @@
-import { Box, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, SxProps, Theme, Typography } from "@mui/material";
-import Icon from "frontend/src/components/Icon";
+import { Box, Modal } from "@mui/material";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { getOppositeColor } from "shared/tools/piece";
-import { DrawReason, GameStatus, GameStatusCatagory, WinReason } from "shared/types/game";
-import { PieceColor } from "shared/types/piece";
 
 export default function ModalFrame(props: {
   isOpen: Stateful<boolean>,
   width?: number,
   children: React.ReactNode,
 }) {
-  const { isOpen, children, width } = props;
+  const { isOpen, children } = props;
   const widthStr = props.width !== undefined ? `${props.width}px` : `350px`; 
 
   return (
@@ -39,14 +35,23 @@ export default function ModalFrame(props: {
           sx={{
             margin: `20px 30px`,
             width: widthStr,
-            bgcolor: 'background.paper',
+            // background: `rgba(0, 0, 0)`,
             borderRadius: '15px',
             boxShadow: 24,
             textAlign: `center`,
-            overflow: `auto`
+            overflow: `auto`,
+            scrollbarWidth: `none`,
+            "::-webkit-scrollbar": {
+              display: `none`,
+            }
           }}
         >
-          {children}
+          <Box sx={{
+            background: `white`,
+            overflow: `auto`,
+          }}>
+            {children}
+          </Box>
         </Box>
       </Box>
     </Modal>

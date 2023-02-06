@@ -10,7 +10,7 @@ export const BOARD_SIDE = 8;
 export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
-  const layout: BoardLayout = new Array(BOARD_SIDE * BOARD_SIDE).fill(undefined);
+  const layout: BoardLayout = new Array<PieceDataWithKey | null>(BOARD_SIDE * BOARD_SIDE).fill(null);
 
   const pieceCrntIs = new Map<PieceType, number>(
     Object.values(PieceType).map(pieceType => [pieceType as PieceType, 0])
@@ -32,10 +32,10 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
     const fromI = action % BOARD_SIDE ** 2;
     const toI = Math.floor(action / BOARD_SIDE ** 2);
     layout[toI] = layout[fromI];
-    layout[fromI] = undefined;
+    layout[fromI] = null;
 
     if (
-      turn.promotionType !== null && layout[toI] !== undefined) {
+      turn.promotionType !== null && layout[toI] !== null) {
       layout[toI]!.type = turn.promotionType;
     }
   }
@@ -78,7 +78,7 @@ export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square
         const squareI = { x: square0.x + i * dirs[j].x, y: square0.y + i * dirs[j].y };
         if (!isOnBoard(squareI)) break;
         var valueI = getValue(squareI);
-        if (valueI !== undefined && valueI.color === value0.color) break;
+        if (valueI !== null && valueI.color === value0.color) break;
         moves.push(squareI);
         if (valueI != undefined) break;
       }
@@ -135,17 +135,17 @@ export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square
     case PieceType.Pawn:
       const isWhite = value0.color == PieceColor.White;
       const yDir = isWhite ? 1 : -1;
-      var opCons: { op: Point, con: (value1: PieceData | undefined) => boolean }[] = [
+      var opCons: { op: Point, con: (value1: PieceData | null) => boolean }[] = [
         {
           op: { x: 0, y: 2 },
           con: value1 =>
             square0.y == (isWhite ? 1 : (BOARD_SIDE - 2)) &&
-            getValue({ x: square0.x, y: (isWhite ? 2 : (BOARD_SIDE - 3)) }) === undefined &&
-            value1 === undefined,
+            getValue({ x: square0.x, y: (isWhite ? 2 : (BOARD_SIDE - 3)) }) === null &&
+            value1 === null,
         },
-        { op: { x: 0, y: 1 }, con: value1 => value1 === undefined },
-        { op: { x: -1, y: 1 }, con: value1 => value1 !== undefined && value1.color !== value0.color },
-        { op: { x: 1, y: 1 }, con: value1 => value1 !== undefined && value1.color != value0.color },
+        { op: { x: 0, y: 1 }, con: value1 => value1 === null },
+        { op: { x: -1, y: 1 }, con: value1 => value1 !== null && value1.color !== value0.color },
+        { op: { x: 1, y: 1 }, con: value1 => value1 !== null && value1.color != value0.color },
       ];
       for (var opCon of opCons) {
         var square1: Point = { x: square0.x + opCon.op.x, y: square0.y + opCon.op.y * yDir };
@@ -178,7 +178,7 @@ function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
 
   for (let i = 0; i < BOARD_SIDE ** 2; i++) {
     const value = layout[i];
-    if (value !== undefined && value.color === oppositeColor) {
+    if (value !== null && value.color === oppositeColor) {
 
       const movesResult = getLegalMoves(layout, oppositeColor, indexToPoint(i));
       if (!movesResult.ok) continue;
@@ -187,7 +187,7 @@ function isInCheck(layout: BoardLayout, turnColor: PieceColor): boolean {
       for (const move of moves) {
 
         const moveValue = layout[pointToIndex(move)];
-        if (moveValue === undefined) continue;
+        if (moveValue === null) continue;
 
         if (comparePieces(moveValue, { type: PieceType.King, color: turnColor })) {
           return true;
@@ -204,7 +204,7 @@ export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boole
 
   for (let i = 0; i < BOARD_SIDE ** 2; i++) {
     const value = layout[i];
-    if (value === undefined || value.color !== turnColor) continue;
+    if (value === null || value.color !== turnColor) continue;
 
     const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
     if (!movesResult.ok) continue;
@@ -228,7 +228,7 @@ function isInStalemate(layout: BoardLayout, turnColor: PieceColor): boolean {
 
   for (let i = 0; i < layout.length; i++) {
     const crntValue = layout[i];
-    if (crntValue === undefined || crntValue.color !== turnColor) continue;
+    if (crntValue === null || crntValue.color !== turnColor) continue;
 
     const movesResult = getLegalMoves(layout, turnColor, indexToPoint(i));
     if (movesResult.ok) {
@@ -292,7 +292,7 @@ export function step(
   const toI = to.x + BOARD_SIDE * to.y;
 
   newLayout[toI] = newLayout[fromI];
-  newLayout[fromI] = undefined;
+  newLayout[fromI] = null;
 
   if (promotionType !== null && newLayout[toI] !== undefined) {
     newLayout[toI]!.type = promotionType;
