@@ -112,6 +112,7 @@ export default function SignedInRow() {
       background: `#ff4d4d`,
       transform: `translate(30px, -20px)`,
       boxShadow: `0px 2px 5px 0px rgba(0,0,0,0.3)`,
+      pointerEvents: `none`,
     }}>
       <Box sx={{
         fontWeight: `bold`,

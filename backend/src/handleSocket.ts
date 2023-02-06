@@ -19,6 +19,7 @@ import { GameRequest } from 'shared/types/game';
 import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameRequest';
 import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
+import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponseToInvitation';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -62,6 +63,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleGetFriendsSearchData(handlerParams);
     handleFriendRequest(handlerParams);
     handleResponseToFriendRequest(handlerParams);
+    handleResponseToInvitation(handlerParams);
     handleDeleteFriend(handlerParams);
     handleCreateGameRequest(handlerParams);
     handleDeleteGameRequest(handlerParams);

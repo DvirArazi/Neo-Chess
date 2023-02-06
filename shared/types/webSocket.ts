@@ -12,6 +12,7 @@ export interface ClientToServerEvents {
   getFriendsSearchData: (name: string, callback: (friendsSearchData: FriendRequest[]) => void) => void;
   friendRequest: (friendId: ObjectId, callback: (success: boolean) => void) => void;
   responseToFriendRequest: (friendId: ObjectId, isAccepted: boolean) => void;
+  responseToInvitation: (friendId: ObjectId, isAccepted: boolean) => void;
   deleteFriend: (friendId: ObjectId) => void;
   deleteGameRequest: (callback: () => void) => void;
   getHomeData: (callback: (ratings: number[]) => void) => void;
@@ -28,7 +29,7 @@ export interface ServerToClientEvents {
   friendRequestsUpdated: (requests: FriendRequest[]) => void;
   friendsUpdated: (friends: Friend[]) => void;
   // connectedFriendsUpdated: (friends: Friend[]) => void;
-  gameRequestUpdated: (gameRequestTd: GameRequestTd) => void;
+  gameRequestUpdated: (gameRequestTd: GameRequestTd | null) => void;
   gameInvitationsUpdated: (invitations: GameInvitation[]) => void;
   createdGame: (path: string) => void;
   playerMoved: (gameId: ObjectId, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;

@@ -15,6 +15,7 @@ export function handleAutoSignIn(p: HandlerParams) {
     );
     if (userBeforeResult.value === null) {
       Terminal.warning('User tried to auto sign in with an invalid AAD');
+      p.socket.emit("signedOut");
       return;
     }
     const userBefore = userBeforeResult.value;

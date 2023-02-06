@@ -47,6 +47,8 @@ function Invitation(props: { data: GameInvitation }) {
       }}>{data.name}</Box>
       {`• ${getFormatBannerString(data.timeframe, data.isRated)}`}
     </Box>
-    <VXButtons onClick={() => { }} />
+    <VXButtons onClick={(isAccepted) => {
+      SOCKET.emit("responseToInvitation", data.friendId, isAccepted);
+    }} />
   </Box>
 }

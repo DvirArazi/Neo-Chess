@@ -52,7 +52,6 @@ export default function App({ Component, pageProps }: AppProps) {
     });
 
     SOCKET.on("createdGame", (path) => {
-      console.log("game created!");
       router.push(`game/${path}`,);
     });
 
