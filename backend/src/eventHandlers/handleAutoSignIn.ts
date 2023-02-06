@@ -8,7 +8,7 @@ export function handleAutoSignIn(p: HandlerParams) {
     const userBeforeResult = await p.usersCollection.findOneAndUpdate(
       {
         _id: toValidId(aad.id),
-        socketIds: { $elemMatch: { key: aad.key } },
+        aadKeys: aad.key,
       },
       { $pull: { socketIds: { key: aad.key } } },
       { returnDocument: "before" }
@@ -24,7 +24,7 @@ export function handleAutoSignIn(p: HandlerParams) {
 
     const userAfterResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(aad.id), },
-      { $push: { socketsIds: { key: aad.key, values: [p.socket.id] } } },
+      { $push: { socketIds: p.socket.id } },
       { returnDocument: "after" }
     );
     if (userAfterResult.value === null) {
@@ -35,6 +35,6 @@ export function handleAutoSignIn(p: HandlerParams) {
 
     p.userId = aad.id;
 
-    emitToUser(p, userAfterResult.value, "autoSignedIn", { name: userAfter.name, picture: userAfter.data.picture });
+    emitToUser(p, userAfter, "autoSignedIn", { name: userAfter.name, picture: userAfter.data.picture });
   });
 }

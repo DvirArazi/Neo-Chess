@@ -9,16 +9,17 @@ import { SOCKET } from "../_app";
 export default function Game() {
   const router = useRouter();
 
-  const path = router.query.path as string;
-  if (path === undefined) return;
+  const path = router.query.path as string | undefined;
 
   const gameViewData = new Stateful<GameViewData | "loading" | "404">("loading");
 
   useEffect(() => {
+    if (path === undefined) return;
+
     SOCKET.emit("getGameViewData", path, (data) => {
       gameViewData.set(data);
     });
-  }, []);
+  }, [path]);
 
   if (gameViewData.value === "loading") {
     return (
@@ -36,5 +37,7 @@ export default function Game() {
     );
   }
 
-  return <GameOnline data={gameViewData.value} />;
+  return <GameOnline data={gameViewData.value} />
 }
+
+//<GameOnline data={gameViewData.value} />;
