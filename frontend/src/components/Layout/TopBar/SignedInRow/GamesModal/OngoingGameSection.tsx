@@ -7,9 +7,7 @@ import { Player } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 
 export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] }) {
-  const { ongoingGamesTd: initOngoingGamesTd } = props;
-
-  const ongoingGamesTd = new Stateful(initOngoingGamesTd);
+  const { ongoingGamesTd } = props;
 
   return <>
     <ModalTitle title={'Ongoing Games'} />
@@ -17,11 +15,11 @@ export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] })
   </>
 
   function getOngoingGames() {
-    if (ongoingGamesTd.value.length === 0) {
+    if (ongoingGamesTd.length === 0) {
       return <ModalEmpty text={'You don\'t have any ongoing games at the moment'} />;
     }
 
-    return ongoingGamesTd.value.map(td => <OngoingGameThumbnail data={td} />);
+    return ongoingGamesTd.map(td => <OngoingGameThumbnail key={td.id.toString()} data={td} />);
   }
 }
 
