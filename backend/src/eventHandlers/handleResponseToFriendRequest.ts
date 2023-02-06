@@ -1,6 +1,6 @@
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 
 export default function handleResponseToFriendRequest(p: HandlerParams) {
   p.socket.on("responseToFriendRequest", async (friendId, isAccepted) => {
@@ -20,7 +20,7 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
     }
     const user = userResult.value;
 
-    emitToUser(p.webSocketServer, user, "friendRequestsUpdated", user.friendRequests);
+    emitToUser(p, user, "friendRequestsUpdated", user.friendRequests);
 
     if (!isAccepted) return;
 
@@ -63,7 +63,7 @@ export default function handleResponseToFriendRequest(p: HandlerParams) {
     }
     const updatedUser = updatedUserResult.value;
 
-    emitToUser(p.webSocketServer, updatedUser, "friendsUpdated", updatedUser.friends);
-    emitToUser(p.webSocketServer, friendUser, "friendsUpdated", friendUser.friends);
+    emitToUser(p, updatedUser, "friendsUpdated", updatedUser.friends);
+    emitToUser(p, friendUser, "friendsUpdated", friendUser.friends);
   });
 }

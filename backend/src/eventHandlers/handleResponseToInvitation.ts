@@ -1,6 +1,6 @@
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 import { PlayerWithId } from "backend/src/utils/types";
 import { generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { timeframeToTimeFormat } from "shared/tools/general";
@@ -26,7 +26,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     }
     const user = userResult.value;
 
-    emitToUser(p.webSocketServer, user, "gameInvitationsUpdated", user.invitations);
+    emitToUser(p, user, "gameInvitationsUpdated", user.invitations);
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(friendId) },
@@ -41,7 +41,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
 
     if (friendUser.outInvitation === null) return;
 
-    emitToUser(p.webSocketServer, friendUser, "gameRequestUpdated", null);
+    emitToUser(p, friendUser, "gameRequestUpdated", null);
 
     if (!isAccepted) return;
 
@@ -78,7 +78,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     p.usersCollection.updateOne({ _id: user._id }, { $push: { ongoingGamesIds: game.insertedId } });
     p.usersCollection.updateOne({ _id: friendUser._id }, { $push: { ongoingGamesIds: game.insertedId } });
 
-    emitToUser(p.webSocketServer, user, "createdGame", path);
-    emitToUser(p.webSocketServer, friendUser, "createdGame", path);
+    emitToUser(p, user, "createdGame", path);
+    emitToUser(p, friendUser, "createdGame", path);
   });
 }

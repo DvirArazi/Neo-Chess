@@ -1,6 +1,5 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 import { BOARD_SIDE, getGameStatus, getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
 import Lodash from "lodash";
 import { DrawReason, GameStatusCatagory, GameStatus, Point, WinReason, GameTurn } from "shared/types/game";
@@ -9,6 +8,7 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotionType) => {
@@ -91,19 +91,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
     const newTimeoutId = Number(setTimeout(()=>{
       const winColor = turnsToColor(game.turns);
 
-      // p.ongoingGamesCollection.findOneAndUpdate(
-      //   {_id: game._id },
-      //   {
-      //     $set: { status: {
-      //       catagory: GameStatusCatagory.Win,
-      //       winColor: winColor,
-      //       reason: WinReason.Timeout,
-      //     }}
-      //   }
-      // );
-
-      emitToUser(p.webSocketServer, user, "timeout", game._id, winColor);
-      emitToUser(p.webSocketServer, otherUser, "timeout", game._id, winColor);
+      emitToUser(p, user, "timeout", game._id, winColor);
+      emitToUser(p, otherUser, "timeout", game._id, winColor);
     }, newTimeLeftMs));
 
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
@@ -129,8 +118,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
       layoutAfter, turnsToColor(gameAfter.turns), gameAfter.turns, game.startRep
     );
 
-    emitToUser(p.webSocketServer, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
-    emitToUser(p.webSocketServer, otherUser, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
+    emitToUser(p, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
+    emitToUser(p, otherUser, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
   });
 }
 

@@ -1,14 +1,13 @@
 import { timeframeToTimeFormat } from "shared/tools/general";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { emitToUser, toValidId } from "../utils/tools/general";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
 import { PieceType } from "shared/types/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameStatusCatagory } from "shared/types/game";
-import { deleteOutInvitationForFriend } from "backend/src/eventHandlers/handlerTools";
+import { deleteOutInvitationForFriend, emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -67,7 +66,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
         { $set: { gameRequestId: newGameRequest.value._id, outInvitation: null } }
       );
 
-      emitToUser(p.webSocketServer, user0, "gameRequestUpdated", {
+      emitToUser(p, user0, "gameRequestUpdated", {
         timeframe: newGameRequest.value.timeframe,
         isRated: newGameRequest.value.isRated,
         isByRating: true,
@@ -117,7 +116,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     p.usersCollection.updateOne({ _id: user0._id }, { $push: { ongoingGamesIds: game.insertedId } });
     p.usersCollection.updateOne({ _id: user1._id }, { $push: { ongoingGamesIds: game.insertedId } });
 
-    emitToUser(p.webSocketServer, user0, "createdGame", path);
-    emitToUser(p.webSocketServer, user1, "createdGame", path);
+    emitToUser(p, user0, "createdGame", path);
+    emitToUser(p, user1, "createdGame", path);
   });
 }

@@ -6,7 +6,7 @@ import { GameStatus, GameTurn, GameViewData, Point, Timeframe } from "./game";
 export interface ClientToServerEvents {
   signIn: (idToken: string) => void;
   autoSignIn: (aad: AutoAuthData) => void;
-  signOut: () => void;
+  signOut: (aad: AutoAuthData) => void;
   removeKey: (aad: AutoAuthData) => void;
   getSignedInRowData: (callback: (gamesModalData: GamesModalData, friendsModalData: FriendsModalData) => void) => void;
   getFriendsSearchData: (name: string, callback: (friendsSearchData: FriendRequest[]) => void) => void;
@@ -28,7 +28,6 @@ export interface ServerToClientEvents {
   signedOut: () => void;
   friendRequestsUpdated: (requests: FriendRequest[]) => void;
   friendsUpdated: (friends: Friend[]) => void;
-  // connectedFriendsUpdated: (friends: Friend[]) => void;
   gameRequestUpdated: (gameRequestTd: GameRequestTd | null) => void;
   gameInvitationsUpdated: (invitations: GameInvitation[]) => void;
   createdGame: (path: string) => void;

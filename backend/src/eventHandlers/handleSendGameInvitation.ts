@@ -1,6 +1,6 @@
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 
 export default function handleSendGameInvitation(p: HandlerParams) {
   p.socket.on("sendGameInvitation", async (timeframe, isRated, friendId, callback) => {
@@ -57,11 +57,11 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         }
       );
 
-      emitToUser(p.webSocketServer, friendUser, "gameInvitationsUpdated",
+      emitToUser(p, friendUser, "gameInvitationsUpdated",
         friendUser.invitations
       );
 
-      emitToUser(p.webSocketServer, user, "gameRequestUpdated", {
+      emitToUser(p, user, "gameRequestUpdated", {
         timeframe: timeframe,
         isRated: isRated,
         isByRating: false,

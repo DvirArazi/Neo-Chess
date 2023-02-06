@@ -1,6 +1,6 @@
+import { toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools/general";
 
 export default function handleGetHomeData(p: HandlerParams) {
   p.socket.on("getHomeData", async (callback) => {

@@ -1,6 +1,6 @@
+import { toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { toValidId } from "backend/src/utils/tools/general";
 import { Friend } from "shared/types/general";
 
 export default function handleGetFriends(p: HandlerParams) {

@@ -2,7 +2,7 @@ import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { User } from "../utils/types";
 import { v4 as uuidv4 } from 'uuid';
-import { emitToUser, toValidId } from "../utils/tools/general";
+import { emitToUser } from "backend/src/eventHandlers/handlerTools";
 
 export function handleSignIn(p: HandlerParams) {
   p.socket.on("signIn", async (idToken) => {
@@ -16,14 +16,20 @@ export function handleSignIn(p: HandlerParams) {
       Terminal.warning('"payload" is undefined. Invalid idToken.');
       return;
     }
+    if (data.name === undefined) return;
 
     const googleId = data.sub;
     const newKey = uuidv4();
     const userResult = await p.usersCollection.findOneAndUpdate(
       { googleId: googleId },
       {
-        $push: { socketsIds: { key: newKey, values: [p.socket.id] } },
-        $setOnInsert: <Omit<User, "socketsIds">>{
+        $push: {
+          socketIds: p.socket.id,
+          aadKeys: newKey,
+        },
+        $setOnInsert: (<Omit<User, "socketIds" | "aadKeys">>{//
+          // socketIds: [p.socket.id],
+          // aadKeys: [newKey],
           googleId: googleId,
           data: data,
           name: data.name,
@@ -34,7 +40,7 @@ export function handleSignIn(p: HandlerParams) {
           friends: [],
           friendRequests: [],
           invitations: [],
-        }
+        })
       },
       {
         upsert: true,
@@ -49,7 +55,7 @@ export function handleSignIn(p: HandlerParams) {
 
     p.userId = userResult.value._id;
 
-    emitToUser(p.webSocketServer, userResult.value, "signedIn",
+    emitToUser(p, userResult.value, "signedIn",
       { id: p.userId, key: newKey },
       { name: user.name, picture: user.data.picture }
     );

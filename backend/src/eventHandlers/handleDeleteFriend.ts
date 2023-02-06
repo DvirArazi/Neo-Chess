@@ -1,6 +1,6 @@
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 
 export default function handleDeleteFriend(p: HandlerParams) {
   p.socket.on("deleteFriend", async (friendId) => {
@@ -31,7 +31,7 @@ export default function handleDeleteFriend(p: HandlerParams) {
     }
     const friendUser = friendUserResult.value;
 
-    emitToUser(p.webSocketServer, user, "friendsUpdated", user.friends);
-    emitToUser(p.webSocketServer, friendUser, "friendsUpdated", friendUser.friends);
+    emitToUser(p, user, "friendsUpdated", user.friends);
+    emitToUser(p, friendUser, "friendsUpdated", friendUser.friends);
   });
 }

@@ -2,6 +2,7 @@ import { Box, Button, IconButton } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import Icon from "frontend/src/components/Icon";
 import { SOCKET, THEME, USER_DATA } from "frontend/src/pages/_app";
+import { AAD_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export function AuthButton() {
   return USER_DATA === undefined ?
@@ -25,10 +26,13 @@ export function SignInButton() {
 }
 
 export function SignOutButton() {
-  const data = USER_DATA!;
+  const data = USER_DATA;
+  const aad = AAD_COOKIE.get();
+
+  if (data === undefined || aad === undefined) return <></>;
 
   return <Button
-    onClick={() => SOCKET.emit("signOut")}
+    onClick={() => SOCKET.emit("signOut", aad)}
     sx={{
       display: `flex`,
       flexDirection: `row`,
@@ -47,7 +51,7 @@ export function SignOutButton() {
     {
       data.picture !== undefined ? 
         <img
-          src={USER_DATA!.picture}
+          src={data.picture}
           style={{
             borderRadius: `50%`,
             width: `30px`,

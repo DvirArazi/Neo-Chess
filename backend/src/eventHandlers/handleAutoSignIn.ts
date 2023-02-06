@@ -1,16 +1,16 @@
+import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { ObjectId } from "mongodb";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
-import { emitToUser, toValidId } from "../utils/tools/general";
 
 export function handleAutoSignIn(p: HandlerParams) {
   p.socket.on("autoSignIn", async (aad) => {
     const userBeforeResult = await p.usersCollection.findOneAndUpdate(
       {
         _id: toValidId(aad.id),
-        socketsIds: { $elemMatch: { key: aad.key } },
+        socketIds: { $elemMatch: { key: aad.key } },
       },
-      { $pull: { socketsIds: { key: aad.key } } },
+      { $pull: { socketIds: { key: aad.key } } },
       { returnDocument: "before" }
     );
     if (userBeforeResult.value === null) {
@@ -20,7 +20,7 @@ export function handleAutoSignIn(p: HandlerParams) {
     }
     const userBefore = userBeforeResult.value;
 
-    const valuesOld = userBefore.socketsIds.find((entry) => { entry.key === aad.key });
+    const valuesOld = userBefore.aadKeys.find(key => key === aad.key);
 
     const userAfterResult = await p.usersCollection.findOneAndUpdate(
       { _id: toValidId(aad.id), },
@@ -35,6 +35,6 @@ export function handleAutoSignIn(p: HandlerParams) {
 
     p.userId = aad.id;
 
-    emitToUser(p.webSocketServer, userAfterResult.value, "autoSignedIn", { name: userAfter.name, picture: userAfter.data.picture });
+    emitToUser(p, userAfterResult.value, "autoSignedIn", { name: userAfter.name, picture: userAfter.data.picture });
   });
 }

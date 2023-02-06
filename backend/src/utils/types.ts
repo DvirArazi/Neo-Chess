@@ -2,7 +2,7 @@ import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
 import { GameData, GameTurn, Player, Timeframe } from "shared/types/game";
 import { Friend, FriendRequest, GameInvitation } from "shared/types/general";
-import { ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocket";
+import { AutoAuthData, ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocket";
 import { Server, Socket } from "socket.io";
 
 export type WebSocketServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -10,7 +10,8 @@ export type ServerSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export type User = {
   googleId: string,
-  socketsIds: { key: string, values: string[] }[],
+  socketIds: string[],
+  aadKeys: string[],
   data: TokenPayload,
   gameRequestId: ObjectId | null,
   outInvitation: GameInvitation | null,
