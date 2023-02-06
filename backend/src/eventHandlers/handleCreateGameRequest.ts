@@ -4,8 +4,9 @@ import { Terminal } from "../utils/terminal";
 import { emitToUser, toValidId } from "../utils/tools/general";
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerWithId } from "../utils/types";
+import { PieceType } from "shared/types/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
-import { generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameStatusCatagory } from "shared/types/game";
 import { deleteOutInvitationForFriend } from "backend/src/eventHandlers/handlerTools";
 
