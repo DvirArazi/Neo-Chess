@@ -1,4 +1,4 @@
-import { toValidId } from "backend/src/eventHandlers/handlerTools";
+import { getOngoingGamesTd, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { turnsToColor } from "shared/tools/board";
@@ -22,21 +22,7 @@ export default function handleGetSignedInRowData(p: HandlerParams) {
     const gameRequest = user.gameRequestId === null ? null :
       await p.gameRequestsCollection.findOne({ _id: toValidId(user.gameRequestId) });
 
-    let gamesTd: GameTd[] = [];
-    for (const gameId of user.ongoingGamesIds) {
-      const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
-      if (game === null) {
-        Terminal.error('Game ID from the user\'s ongoingGamesIds was not found on DB');
-        continue;
-      }
-      gamesTd.push({
-        ...game,
-        id: game._id,
-        layout: startAndTurnsToBoardLayout(game.start, game.turns),
-        turnColor: turnsToColor(game.turns),
-        userColor: p.userId.toString() === game.white.id.toString() ? PieceColor.White : PieceColor.Black
-      });
-    }
+    const gamesTd = await getOngoingGamesTd(p, user);
 
     const requestTd: GameRequestTd | null = (() => {
       if (gameRequest !== null) {

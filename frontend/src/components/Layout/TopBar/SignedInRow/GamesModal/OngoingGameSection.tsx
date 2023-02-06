@@ -4,6 +4,7 @@ import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/Si
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
+import { useRouter } from "next/dist/client/router";
 import { BOARD_SIDE } from "shared/tools/boardLayout";
 import { pieceDataToIconName } from "shared/tools/piece";
 import { Player } from "shared/types/game";
@@ -22,28 +23,34 @@ export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] })
       return <ModalEmpty text={'You don\'t have any ongoing games at the moment'} />;
     }
 
-    return ongoingGamesTd.map(td => <OngoingGameThumbnail key={td.id.toString()} data={td} />);
+    return ongoingGamesTd.map(td => <OngoingGameThumbnail key={td.path} data={td} />);
   }
 }
 
 function OngoingGameThumbnail(props: { data: GameTd }) {
   const {
+    path,
     white,
     black,
     layout,
     userColor,
     turnColor,
     timeframe,
-    isRated
+    isRated,
   } = props.data;
+
+  const router = useRouter();
 
   const isUserTurn = userColor === turnColor;
 
-  return <Button sx={{
-    fontFamily: `unset !important`,
-    textTransform: `unset !important`,
-    color: `unset !important`,
-  }}>
+  return <Button
+    onClick={()=>{router.push(`game/${path}`);}}
+    sx={{
+      fontFamily: `unset !important`,
+      textTransform: `unset !important`,
+      color: `unset !important`,
+    }}
+  >
     <Box sx={{
       margin: `10px`,
       width: `100%`,
@@ -118,9 +125,7 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
 
   function getPieces(): JSX.Element {
     return <>{layout
-      // .filter(square => square !== undefined && square !== null)
       .map((square, i) => {
-        // const square = squareO!;
         if (square === null) return <></>;
 
         return <Box key={i}

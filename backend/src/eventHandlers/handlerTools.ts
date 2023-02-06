@@ -3,6 +3,10 @@ import { Terminal } from "backend/src/utils/terminal";
 import { User } from "backend/src/utils/types";
 import { WithId } from "mongodb";
 import { ObjectId } from "mongodb";
+import { turnsToColor } from "shared/tools/board";
+import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { GameTd } from "shared/types/general";
+import { PieceColor } from "shared/types/piece";
 import { ServerToClientEvents } from "shared/types/webSocket";
 import { EventNames, EventParams, EventsMap } from "socket.io/dist/typed-events";
 
@@ -64,4 +68,24 @@ export function deleteGameRequestOnDB(p: HandlerParams, user: WithId<User>) {
   if (user.gameRequestId !== null) {
     p.gameRequestsCollection.deleteOne({ _id: toValidId(user.gameRequestId) });
   }
+}
+
+export async function getOngoingGamesTd(p: HandlerParams, user: WithId<User>) {
+  let gamesTd: GameTd[] = [];
+  for (const gameId of user.ongoingGamesIds) {
+    const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
+    if (game === null) {
+      Terminal.error('Game ID from the user\'s ongoingGamesIds was not found on DB');
+      continue;
+    }
+    gamesTd.push({
+      ...game,
+      path: game.path,
+      layout: startAndTurnsToBoardLayout(game.start, game.turns),
+      turnColor: turnsToColor(game.turns),
+      userColor: user._id.toString() === game.white.id.toString() ? PieceColor.White : PieceColor.Black
+    });
+  }
+
+  return gamesTd;
 }

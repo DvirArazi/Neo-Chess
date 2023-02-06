@@ -8,7 +8,8 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { emitToUser, getOngoingGamesTd, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { GameTd } from "shared/types/general";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotionType) => {
@@ -120,6 +121,9 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
     emitToUser(p, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
     emitToUser(p, otherUser, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
+  
+    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
+    emitToUser(p, otherUser, "ongoingGamesUpdated", await getOngoingGamesTd(p, otherUser));
   });
 }
 

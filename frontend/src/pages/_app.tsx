@@ -52,7 +52,7 @@ export default function App({ Component, pageProps }: AppProps) {
     });
 
     SOCKET.on("createdGame", (path) => {
-      router.push(`game/${path}`,);
+      router.push(`game/${path}`);
     });
 
     const aad = AAD_COOKIE.get();

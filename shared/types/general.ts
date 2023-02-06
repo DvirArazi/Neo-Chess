@@ -13,7 +13,7 @@ export type Friend = {
 } & UserViewData
 
 export type GameTd = {
-  id: ObjectId,
+  path: string,
   layout: BoardLayout,
   timeframe: Timeframe,
   isRated: boolean,

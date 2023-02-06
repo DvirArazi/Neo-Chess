@@ -25,6 +25,7 @@ export default function SignedInRow() {
   getData();
   handleInvitationsUpdatedEvent();
   handleFriendRequestsUpdatedEvent();
+  handleOngoingGamesUpdatedEvent();
 
   return <>
     <Box>
@@ -84,6 +85,17 @@ export default function SignedInRow() {
         friendsModalData.set(v => ({
           ...v,
           friendRequests: newRequests
+        }));
+      })
+    }, []);
+  }
+
+  function handleOngoingGamesUpdatedEvent() {
+    useEffect(() => {
+      SOCKET.on("ongoingGamesUpdated", (gamesTd) => {
+        gamesModalData.set(v => ({
+          ...v,
+          ongoingGamesTd: gamesTd
         }));
       })
     }, []);
