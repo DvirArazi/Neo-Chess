@@ -45,7 +45,7 @@ export async function leave(p: HandlerParams, isSigningOut: boolean): Promise<Us
   //or user is not signing out
   //(meaning every socket on that specific device closed) 
   //-------------------------------------------------------------------
-  if (!(entry.values.length === 0 && isSigningOut)) {
+  if (!(valuesCopy.length === 0 && isSigningOut)) {
     await p.usersCollection.updateOne(
       { _id: userBefore._id }, //supposed to be valid, but make sure if something goes wrong
       { $push: { socketsIds: { key: entry.key, values: valuesCopy } } }
@@ -68,6 +68,8 @@ export async function leave(p: HandlerParams, isSigningOut: boolean): Promise<Us
       { $set: { gameRequestId: null, outInvitation: null } },
     );
   }
+
+  console.log((await p.usersCollection.findOne({_id: userAfter._id}))?.socketsIds)
 
   return userBefore;
 }
