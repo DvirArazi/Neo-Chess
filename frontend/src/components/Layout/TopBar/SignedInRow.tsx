@@ -139,8 +139,6 @@ export default function SignedInRow() {
   }
 
   function alertGameTd(): boolean {
-    console.log(window.location.pathname);
-
     return (gamesModalData.value.ongoingGamesTd.some(td => 
       td.userColor === td.turnColor && window.location.pathname !== `/game/${td.path}`
     )

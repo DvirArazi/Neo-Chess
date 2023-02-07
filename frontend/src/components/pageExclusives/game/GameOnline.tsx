@@ -3,7 +3,7 @@ import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
 import ButtonsBannerOnline from "frontend/src/components/pageExclusives/game/GameOnline/ButtonsBannerOnline";
-import { MenuOnlineOngoing, MenuOnlineEnd } from "frontend/src/components/pageExclusives/game/GameOnline/OnlineMenus";
+import { MenuOnline } from "frontend/src/components/pageExclusives/game/GameOnline/MenuOnline";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
@@ -41,6 +41,8 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
+
+  console.log('is menu open', isMenuOpen);
 
   handlePlayerMovedEvent();
   handleTimeoutEvent();
@@ -215,20 +217,16 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getMenu() {
-    return game.status.catagory === GameStatusCatagory.Ongoing ?
-      <MenuOnlineOngoing
-        isOpen={isMenuOpen}
-        onTakebackClick={() => { }}
-        onDrawClick={() => { }}
-        onResignClick={() => { }}
-      /> :
-      <MenuOnlineEnd
-        isOpen={isMenuOpen}
-        status={game.status}
-        onRematchClick={() => { }}
-        onNewOpponentClick={() => { }}
-        onShareClick={() => { }}
-      />
+    return <MenuOnline
+      isOpen={isMenuOpen}
+      status={game.status}
+      onTakebackClick={() => { }}
+      onDrawClick={() => { }}
+      onResignClick={() => { }}
+      onRematchClick={() => { }}
+      onNewOpponentClick={() => { }}
+      onShareClick={() => { }}
+    />
   }
 
   function handlePlayerMovedEvent() {
@@ -245,7 +243,6 @@ export default function GameOnline(props: { data: GameViewData }) {
         timeLastTurnMs: timeCrntTurnMs,
       });
 
-      console.log(newTurn.timeLeftMs);
       if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
         isMenuOpen.set(true);
       }

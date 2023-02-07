@@ -89,12 +89,13 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
 
     if (game.timeoutId !== null) { clearTimeout(game.timeoutId); }
-    const newTimeoutId = Number(setTimeout(()=>{
-      const winColor = turnsToColor(game.turns);
+    const newTimeoutId = game.turns.length <= 2 ? null :
+      Number(setTimeout(()=>{
+        const winColor = turnsToColor(game.turns);
 
-      emitToUser(p, user, "timeout", game._id, winColor);
-      emitToUser(p, otherUser, "timeout", game._id, winColor);
-    }, newTimeLeftMs));
+        emitToUser(p, user, "timeout", game._id, winColor);
+        emitToUser(p, otherUser, "timeout", game._id, winColor);
+      }, newTimeLeftMs));
 
     const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
       { _id: game._id },/*This id has to be valid, right?*/

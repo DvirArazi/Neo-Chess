@@ -4,14 +4,16 @@ import Stateful from "frontend/src/utils/tools/stateful";
 export default function ModalFrame(props: {
   isOpen: Stateful<boolean>,
   width?: number,
+  keepMounted?: boolean,
   children: React.ReactNode,
 }) {
-  const { isOpen, children } = props;
-  const widthStr = props.width !== undefined ? `${props.width}px` : `350px`; 
+  const { isOpen, children, width, keepMounted: keepMountedO } = props;
+  const widthStr = width !== undefined ? `${width}px` : `350px`;
+  const keepMounted = keepMountedO === undefined ? true : keepMountedO; 
 
   return (
     <Modal
-      keepMounted
+      keepMounted={keepMounted}
       open={isOpen.value}
       onClose={() => { isOpen.set(false) }}
     >

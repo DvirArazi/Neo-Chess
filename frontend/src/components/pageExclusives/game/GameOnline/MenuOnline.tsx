@@ -7,16 +7,34 @@ import { getOppositeColor } from "shared/tools/piece";
 import { DrawReason, GameStatus, GameStatusCatagory, WinReason } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
-export function MenuOnlineOngoing(props: {
+export function MenuOnline(props: {
   isOpen: Stateful<boolean>,
+  status: GameStatus,
   onTakebackClick: () => void,
   onDrawClick: () => void,
   onResignClick: () => void,
+  onRematchClick: () => void,
+  onNewOpponentClick: () => void,
+  onShareClick: () => void,
 }) {
-  const { isOpen, onTakebackClick, onDrawClick, onResignClick } = props;
+  const {
+    isOpen,
+    status,
+    onTakebackClick,
+    onDrawClick,
+    onResignClick,
+    onRematchClick,
+    onNewOpponentClick,
+    onShareClick,
+  } = props;
 
-  return <ModalFrame isOpen={isOpen}>
-    <List sx={{ padding: 0 }}>
+  return <ModalFrame isOpen={isOpen} keepMounted={false}>{
+    status.catagory === GameStatusCatagory.Ongoing ?
+      getOngoingMenu() : getEndMenu()
+  }</ModalFrame>;
+
+  function getOngoingMenu() {
+    return <List sx={{ padding: 0 }}>
       <MenuOption
         text='Propose a takeback'
         iconPath='takeback'
@@ -35,21 +53,10 @@ export function MenuOnlineOngoing(props: {
         action={onResignClick}
       />
     </List>
-  </ModalFrame>
-}
+  }
 
-export function MenuOnlineEnd(props: {
-  isOpen: Stateful<boolean>,
-  status: GameStatus,
-  onRematchClick: () => void,
-  onNewOpponentClick: () => void,
-  onShareClick: () => void,
-}) {
-  const { isOpen, status, onRematchClick, onNewOpponentClick, onShareClick } = props;
-
-  return <ModalFrame isOpen={isOpen}>
-    <MenuTitle status={status} />
-    <List sx={{ padding: 0 }}>
+  function getEndMenu() {
+    return <List sx={{ padding: 0 }}>
       <MenuOption
         text='Offer a rematch'
         iconPath='rematch'
@@ -68,5 +75,5 @@ export function MenuOnlineEnd(props: {
         action={onShareClick}
       />
     </List>
-  </ModalFrame>;
+  }
 }

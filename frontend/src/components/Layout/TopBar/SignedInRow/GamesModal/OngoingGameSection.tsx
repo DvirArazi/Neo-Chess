@@ -39,8 +39,6 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
     isRated,
   } = props.data;
 
-  const router = useRouter();
-
   const isUserTurn = userColor === turnColor;
 
   return <Button
@@ -126,7 +124,7 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
   function getPieces(): JSX.Element {
     return <>{layout
       .map((square, i) => {
-        if (square === null) return <></>;
+        if (square === null) return null;
 
         return <Box key={i}
           sx={{

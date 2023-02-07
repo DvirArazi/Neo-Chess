@@ -15,7 +15,7 @@ export function MenuOffline(props: {
 }) {
   const { isOpen, status, isFlipped, onStartANewGame } = props;
 
-  return <ModalFrame isOpen={isOpen}>
+  return <ModalFrame isOpen={isOpen} keepMounted={false}>
     <MenuTitle status={status} />
     <List sx={{ padding: 0 }}>
       <MenuOption
