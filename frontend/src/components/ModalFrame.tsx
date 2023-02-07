@@ -40,10 +40,10 @@ export default function ModalFrame(props: {
             boxShadow: 24,
             textAlign: `center`,
             overflow: `auto`,
-            scrollbarWidth: `none`,
-            "::-webkit-scrollbar": {
-              display: `none`,
-            }
+            // scrollbarWidth: `none`,
+            // "::-webkit-scrollbar": {
+            //   display: `none`,
+            // }
           }}
         >
           <Box sx={{

@@ -91,7 +91,7 @@ export default function Content() {
         });
       }
     } else {
-      router.push(`/game/offline/${timeframeToPath(timeframe)}`);
+      window.location.pathname = `/game/offline/${timeframeToPath(timeframe)}`;
     }
   }
 

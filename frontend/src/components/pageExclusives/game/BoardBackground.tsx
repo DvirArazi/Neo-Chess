@@ -35,7 +35,7 @@ export default function BoardBackground() {
     for (let i = 0; i < BOARD_SIDE ** 2; i += 2) {
       const y = Math.floor(i / BOARD_SIDE);
       squares.push(
-        <rect
+        <rect key={i}
           x={i % BOARD_SIDE + y % 2}
           y={y}
           width={1}

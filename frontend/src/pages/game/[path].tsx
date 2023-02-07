@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { GameViewData } from "shared/types/game";
 import { SOCKET } from "../_app";
+import Error from "next/error";
 
 export default function Game() {
   const router = useRouter();
@@ -21,23 +22,9 @@ export default function Game() {
     });
   }, [path]);
 
-  if (gameViewData.value === "loading") {
-    return (
-      <Box>
-        Loading
-      </Box>
-    );
-  }
+  if (gameViewData.value === "loading") return <Box>{'Loading...'}</Box>;
 
-  if (gameViewData.value === "404") {
-    return (
-      <Box>
-        404
-      </Box>
-    );
-  }
+  if (gameViewData.value === "404") return <Error statusCode={404}/>;
 
   return <GameOnline data={gameViewData.value} />
 }
-
-//<GameOnline data={gameViewData.value} />;

@@ -23,7 +23,7 @@ export default function TopBar() {
     }}>
       <Box
         onClick={() => {
-          router.push('/');
+          window.location.pathname = '/';
         }}
         sx={{
           ...barSx,
@@ -42,7 +42,7 @@ export default function TopBar() {
         ...barSx,
       }}>
         {USER_DATA === undefined ? <></> : <SignedInRow />}
-      <Box sx={{ padding: `0 10px 0 5px` }}><AuthButton /></Box>
+        <Box sx={{ padding: `0 10px 0 5px` }}><AuthButton /></Box>
       </Box>
     </Box>
     <Divider />

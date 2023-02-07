@@ -44,7 +44,7 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
   const isUserTurn = userColor === turnColor;
 
   return <Button
-    onClick={()=>{router.push(`game/${path}`);}}
+    onClick={() => { window.location.pathname = `game/${path}`; }}
     sx={{
       fontFamily: `unset !important`,
       textTransform: `unset !important`,
@@ -131,10 +131,10 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
         return <Box key={i}
           sx={{
             position: `absolute`,
-            left: `${i % BOARD_SIDE * 100/BOARD_SIDE}%`,
-            top: `${Math.floor(i/BOARD_SIDE)*100/BOARD_SIDE}%`,
+            left: `${i % BOARD_SIDE * 100 / BOARD_SIDE}%`,
+            top: `${Math.floor(i / BOARD_SIDE) * 100 / BOARD_SIDE}%`,
             transform: `translateY(-3px)`,
-            width: `${100/BOARD_SIDE}%`
+            width: `${100 / BOARD_SIDE}%`
           }}
         >
           <Icon name={pieceDataToIconName(square)} />

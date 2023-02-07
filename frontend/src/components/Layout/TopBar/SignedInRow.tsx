@@ -30,7 +30,7 @@ export default function SignedInRow() {
   return <>
     <Box>
       {getButton("fight", 28, () => isGamesModalOpen.set(true))}
-      {gamesModalData.value.invitations.length > 0 ? getAlert() : <></>}
+      {gamesModalData.value.invitations.length > 0 || alertGameTd() ? getAlert() : <></>}
     </Box>
     <Box>
       {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
@@ -136,5 +136,14 @@ export default function SignedInRow() {
         fontFamily: `roboto`
       }}>{'!'}</Box>
     </Box>
+  }
+
+  function alertGameTd(): boolean {
+    console.log(window.location.pathname);
+
+    return (gamesModalData.value.ongoingGamesTd.some(td => 
+      td.userColor === td.turnColor && window.location.pathname !== `/game/${td.path}`
+    )
+    )
   }
 }
