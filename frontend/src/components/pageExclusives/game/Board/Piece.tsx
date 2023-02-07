@@ -21,7 +21,6 @@ export default function Piece(props: {
 
   const mouseDownTime = new Stateful(0);
   const draggableRef = useRef<HTMLDivElement>(null);
-  // const boxRef = useRef<HTMLDivElement>(null);
   const flipTurns = new Stateful(0);
 
   useEffect(() => {
@@ -32,15 +31,6 @@ export default function Piece(props: {
       flipTurns.set((v) => v + 0.5)
     }
   }, [isFlipped]);
-  // useEffect(()=>{flipTurns.current += 1}, [isFlipped]);
-  // if (boxRef.current !== null) {
-  //   useEffect(()=>{
-  //     const ref = boxRef.current!;
-  //     ref.ontransition = () => {
-  //       if (isFlipped) console.log('small step');
-  //     }
-  //   }, []);
-  // // }
 
   const fracPosition: Point = {
     x: index % BOARD_SIDE * SQUARE_SIZE,
@@ -81,18 +71,14 @@ export default function Piece(props: {
           transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
       >
-        <Box //ref={boxRef}
+        <Box
           sx={{
             position: `absolute`,
             width: `100%`,
             height: `100%`,
-            // transform: isFlipped ? `rotate(0.5turn)` : `rotate(0turn)`,
             transform: `rotate(${flipTurns.value}turn)`,
             transition: `transform 0.3s`
           }}
-        // onTransitionEnd={(e)=>{
-        //   console.log('again');
-        // }}
         >
           <Icon name={pieceDataToIconName(data)} />
         </Box>

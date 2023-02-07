@@ -5,13 +5,9 @@ import Error from "next/error";
 
 export default function offline() {
   const router = useRouter();
-  
-  console.log('woopwoop');
 
   const path = router.query.timeframe as string | undefined;
   if (path === undefined) return;
-
-  console.log('woop')
 
   const timeframe = pathToTimeframe(path);
   if (timeframe === null) return <Error statusCode={404}/>;

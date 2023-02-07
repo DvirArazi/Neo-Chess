@@ -32,36 +32,34 @@ export default function Content() {
   handleIsAuthedChange();
 
   return <>
-    <Layout>
-      <Box sx={{ padding: `10px` }} />
-      <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
-        <Icon name="wifi" side={25} filter={
-          isAuthed ?
-            (isOnline.value ? THEME.icon : THEME.iconNotSelected) :
-            THEME.iconDisabled
-        }
-        />
-        <Icon name="wifiOff" side={25} filter={
-          isOnline.value ? THEME.iconNotSelected : THEME.icon
-        } />
-      </Toggle>
-      {!isAuthed ? <></> :
-        <OnlinePanel
-          isOnline={isOnline.value}
-          isRated={isRated}
-          isRanged={isRanged}
-          range={range}
-          chosenFriend={chosenFriend}
-        />
+    <Box sx={{ padding: `10px` }} />
+    <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
+      <Icon name="wifi" side={25} filter={
+        isAuthed ?
+          (isOnline.value ? THEME.icon : THEME.iconNotSelected) :
+          THEME.iconDisabled
       }
-      {getCatagoryButtons()}
-      <CustomeFormatPanel
-        onPlay={start}
-        ratings={ratings.length !== 0 ? ratings : undefined}
       />
-      {getRequestSnackbar()}
-      {getInvitationSnackbar()}
-    </Layout>
+      <Icon name="wifiOff" side={25} filter={
+        isOnline.value ? THEME.iconNotSelected : THEME.icon
+      } />
+    </Toggle>
+    {!isAuthed ? <></> :
+      <OnlinePanel
+        isOnline={isOnline.value}
+        isRated={isRated}
+        isRanged={isRanged}
+        range={range}
+        chosenFriend={chosenFriend}
+      />
+    }
+    {getCatagoryButtons()}
+    <CustomeFormatPanel
+      onPlay={start}
+      ratings={ratings.length !== 0 ? ratings : undefined}
+    />
+    {getRequestSnackbar()}
+    {getInvitationSnackbar()}
   </>;
 
   function handleIsAuthedChange() {
@@ -91,7 +89,7 @@ export default function Content() {
         });
       }
     } else {
-      window.location.pathname = `/game/offline/${timeframeToPath(timeframe)}`;
+      router.push(`/game/offline/${timeframeToPath(timeframe)}`);
     }
   }
 

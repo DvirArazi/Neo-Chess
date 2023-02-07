@@ -25,9 +25,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   const layout = new Stateful<BoardLayout>(startAndTurnsToBoardLayout(game.start, game.turns));
   const isMenuOpen = new Stateful<boolean>(false);
   const stepsBack = new Stateful<number>(0);
-  const isGameJustOverByTimeout = new Stateful<boolean>(false);
   const postTurn = new Stateful<boolean>(false);
-  const hasTimedOut = new Stateful<boolean>(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -38,20 +36,15 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isWhiteTurn = game.turns.length % 2 === 0;
   const turnColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
-  const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
-    && game.status.reason === WinReason.Timeout;
-  const isGameOver = !(isStatusOngoing || isStatusTimeout);
-
-  console.log('is menu open', isMenuOpen);
 
   handlePlayerMovedEvent();
   handleTimeoutEvent();
   handleStepsBackChange();
 
-  return <Layout>
+  return <>
     {isWide ? getWideLayout() : getNarrowLayout()}
     {getMenu()}
-  </Layout>;
+  </>;
 
   function getWideLayout() {
     return <Box sx={{
@@ -104,7 +97,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   function getNarrowLayout() {
     return <>
       {getFormatBanner()}
-      {getPlayerBanner(isFlipped, true)}
+      {getPlayerBanner(!isFlipped, true)}
       {getBoard()}
       {getPlayerBanner(isFlipped, false)}
       {getButtonsBanner()}
@@ -113,9 +106,11 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getBoard() {
+    // console.log(isStatusOngoing, game.role, turnColor, stepsBack.value);
+
     return <Board
       enabled={
-        !isGameOver &&
+        isStatusOngoing &&
         game.role === turnColor &&
         stepsBack.value === 0
       }
@@ -179,8 +174,9 @@ export default function GameOnline(props: { data: GameViewData }) {
     function getTimeLeft() {
       if (game.timeframe === "untimed") return 0;
 
-      if (isGameJustOverByTimeout.value &&
+      if (
         game.status.catagory === GameStatusCatagory.Win &&
+        game.status.reason === WinReason.Timeout &&
         game.status.winColor === PieceColor.White !== isWhite
       ) {
         return 0;
@@ -230,7 +226,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function handlePlayerMovedEvent() {
-    SOCKET.off("playerMoved");
+    SOCKET.off("playerMoved"); //change this 
     SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
       if (game.id.toString() !== gameId.toString()) return;
 
@@ -255,21 +251,23 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function handleTimeoutEvent() {
-    SOCKET.on("timeout", (gameId, winColor) => {
-      if (game.id.toString() !== gameId.toString()) return;
+    useEffect(() => {
+      SOCKET.on("timeout", (gameId, winColor) => {
+        if (game.id.toString() !== gameId.toString()) return;
 
-      setGame({
-        ...game,
-        status: {
-          catagory: GameStatusCatagory.Win,
-          winColor: winColor,
-          reason: WinReason.Timeout,
-        }
+        setGame({
+          ...game,
+          status: {
+            catagory: GameStatusCatagory.Win,
+            winColor: winColor,
+            reason: WinReason.Timeout,
+          }
+        });
+
+        stepsBack.set(0);
+        isMenuOpen.set(true);
       });
-
-      stepsBack.set(0);
-      isMenuOpen.set(true);
-    });
+    }, []);
   }
 
   function handleStepsBackChange() {
@@ -278,8 +276,6 @@ export default function GameOnline(props: { data: GameViewData }) {
         game.start,
         game.turns.slice(0, game.turns.length - stepsBack.value)
       ));
-
-      isGameJustOverByTimeout.set(false);
 
     }, [stepsBack.value]);
   }

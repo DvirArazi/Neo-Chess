@@ -69,7 +69,6 @@ export default function SignedInRow() {
   function handleInvitationsUpdatedEvent() {
     useEffect(() => {
       SOCKET.on("gameInvitationsUpdated", (newInvitations) => {
-        // console.log('new invitations', newInvitations)
         gamesModalData.set(v => ({
           ...v,
           invitations: newInvitations
@@ -81,7 +80,6 @@ export default function SignedInRow() {
   function handleFriendRequestsUpdatedEvent() {
     useEffect(() => {
       SOCKET.on("friendRequestsUpdated", (newRequests) => {
-        // console.log('new requests', newRequests);
         friendsModalData.set(v => ({
           ...v,
           friendRequests: newRequests

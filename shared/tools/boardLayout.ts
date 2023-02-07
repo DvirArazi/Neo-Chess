@@ -214,8 +214,6 @@ export function isInCheckmate(layout: BoardLayout, turnColor: PieceColor): boole
     for (const move of moves) {
       if (isInCheck(step(layout, indexToPoint(i), move, null), turnColor)) continue;
 
-      console.log(step(layout, indexToPoint(i), move, null));
-      console.log(indexToPoint(i), move);
       return false;
     }
   }

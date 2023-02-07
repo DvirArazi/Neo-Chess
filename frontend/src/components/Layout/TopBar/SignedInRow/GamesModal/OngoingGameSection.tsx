@@ -28,6 +28,8 @@ export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] })
 }
 
 function OngoingGameThumbnail(props: { data: GameTd }) {
+  const router = useRouter();
+  
   const {
     path,
     white,
@@ -42,7 +44,7 @@ function OngoingGameThumbnail(props: { data: GameTd }) {
   const isUserTurn = userColor === turnColor;
 
   return <Button
-    onClick={() => { window.location.pathname = `game/${path}`; }}
+    onClick={() => { router.push(`/game/${path}`); }}
     sx={{
       fontFamily: `unset !important`,
       textTransform: `unset !important`,

@@ -13,6 +13,11 @@ export default function handleGetGameViewData(p: HandlerParams) {
     }
 
     const role: GameRole = (() => {
+      Terminal.log(
+        `user ID: ${p.userId?.toString()}\n` +
+        `    white ID: ${game.white.id.toString()}\n` +
+        `    black ID: ${game.black.id.toString()}\n`
+      );
       switch (p.userId?.toString()) {
         case game.white.id.toString(): return PieceColor.White;
         case game.black.id.toString(): return PieceColor.Black;

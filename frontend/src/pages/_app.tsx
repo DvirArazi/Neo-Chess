@@ -14,6 +14,7 @@ import { Theme } from 'frontend/src/utils/types/theme';
 import React from 'react';
 import { UserViewData } from 'shared/types/general';
 import { ThemeProvider } from '@emotion/react';
+import Layout from 'frontend/src/components/Layout';
 
 export let SOCKET: WebSocketClient;
 export let WINDOW_WIDTH: number;
@@ -52,11 +53,11 @@ export default function App({ Component, pageProps }: AppProps) {
     });
 
     SOCKET.on("createdGame", (path) => {
-      window.location.pathname = `/game/${path}`;
+      router.push(`/game/${path}`);
     });
 
     const aad = AAD_COOKIE.get();
-    if (aad != undefined) {
+    if (aad !== undefined && USER_DATA === undefined) {
       console.log('auto sign in');
       SOCKET.emit("autoSignIn", aad);
     }
@@ -88,7 +89,9 @@ export default function App({ Component, pageProps }: AppProps) {
             <link rel="icon" href="/favicon.ico" />
           </Head>
           <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID!}>
-            <Component {...pageProps} />
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
           </GoogleOAuthProvider>
         </>
       }

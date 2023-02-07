@@ -53,9 +53,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   handleStepsBackOrTurnsOrIsPausedChange();
 
   return <>
-    <Layout>
-      {isWide ? getWideLayout() : getNarrowLayout()}
-    </Layout>
+    {isWide ? getWideLayout() : getNarrowLayout()}
     {getMenuOffline()}
   </>;
 

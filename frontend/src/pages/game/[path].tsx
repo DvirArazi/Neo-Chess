@@ -12,6 +12,8 @@ export default function Game() {
 
   const path = router.query.path as string | undefined;
 
+  console.log(`path`, path);
+
   const gameViewData = new Stateful<GameViewData | "loading" | "404">("loading");
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export default function Game() {
 
     SOCKET.emit("getGameViewData", path, (data) => {
       gameViewData.set(data);
+      console.log('data recieved');
     });
   }, [path]);
 
@@ -26,5 +29,5 @@ export default function Game() {
 
   if (gameViewData.value === "404") return <Error statusCode={404}/>;
 
-  return <GameOnline data={gameViewData.value} />
+  return <GameOnline key={path} data={gameViewData.value} />
 }

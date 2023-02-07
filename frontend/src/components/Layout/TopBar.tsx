@@ -23,7 +23,7 @@ export default function TopBar() {
     }}>
       <Box
         onClick={() => {
-          window.location.pathname = '/';
+          router.push('/');
         }}
         sx={{
           ...barSx,

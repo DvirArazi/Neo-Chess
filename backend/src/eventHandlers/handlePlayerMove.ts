@@ -89,8 +89,10 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
 
     if (game.timeoutId !== null) { clearTimeout(game.timeoutId); }
-    const newTimeoutId = game.turns.length <= 2 ? null :
+    const newTimeoutId = game.turns.length < 1 ? null :
       Number(setTimeout(()=>{
+        Terminal.warning('time is out');
+
         const winColor = turnsToColor(game.turns);
 
         emitToUser(p, user, "timeout", game._id, winColor);
@@ -117,7 +119,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
     const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
 
     const status: GameStatus = getGameStatus(
-      layoutAfter, turnsToColor(gameAfter.turns), gameAfter.turns, game.startRep
+      layoutAfter, getOppositeColor(turnsToColor(gameAfter.turns)), gameAfter.turns, gameAfter.startRep
     );
 
     emitToUser(p, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);

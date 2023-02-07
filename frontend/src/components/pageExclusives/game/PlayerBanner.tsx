@@ -81,7 +81,7 @@ export default function PlayerBanner(props: {
     for (const pieceCount of capturedCounts) {
       if (pieceCount.count === 0) continue;
       for (let i = 0; i < pieceCount.count; i++) {
-        pieces.push(<MiniPiece
+        pieces.push(<MiniPiece key={crntX}
           iconName={pieceDataToIconName({ type: pieceCount.type, color: oppositeColor })}
           x={crntX}
         />);

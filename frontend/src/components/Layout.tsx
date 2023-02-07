@@ -18,9 +18,7 @@ export default function Layout(props: { children: ReactNode }) {
       `}</style>
       <main>
         <TopBar />
-        {/* <Box> */}
           {children}
-        {/* </Box> */}
       </main>
     </>
   );

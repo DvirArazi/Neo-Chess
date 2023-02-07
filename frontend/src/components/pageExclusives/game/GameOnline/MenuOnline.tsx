@@ -56,24 +56,27 @@ export function MenuOnline(props: {
   }
 
   function getEndMenu() {
-    return <List sx={{ padding: 0 }}>
-      <MenuOption
-        text='Offer a rematch'
-        iconPath='rematch'
-        action={onRematchClick}
-      />
-      <Divider />
-      <MenuOption
-        text='New opponent'
-        iconPath='person'
-        action={onNewOpponentClick}
-      />
-      <Divider />
-      <MenuOption
-        text='Share'
-        iconPath='share'
-        action={onShareClick}
-      />
-    </List>
+    return <>
+      <MenuTitle status={status} />
+      <List sx={{ padding: 0 }}>
+        <MenuOption
+          text='Offer a rematch'
+          iconPath='rematch'
+          action={onRematchClick}
+        />
+        <Divider />
+        <MenuOption
+          text='New opponent'
+          iconPath='person'
+          action={onNewOpponentClick}
+        />
+        <Divider />
+        <MenuOption
+          text='Share'
+          iconPath='share'
+          action={onShareClick}
+        />
+      </List>
+    </>
   }
 }
