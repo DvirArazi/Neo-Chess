@@ -186,18 +186,25 @@ export default function GameOnline(props: { data: GameViewData }) {
         return game.timeframe.overallSec * 1000;
       }
 
+      const iMod = isWhiteTurn === isWhite ? -1 : 0;
+
+      if (!isStatusOngoing && isWhiteTurn == isWhite) {
+        return game.turns[game.turns.length - 1 + iMod].timeLeftMs
+          -(new Date().getTime() - game.timeLastTurnMs);
+      }
+
       const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
         -(new Date().getTime() - game.timeLastTurnMs)
         + game.timeframe.incSec * 1000;
 
-      const iMod = isWhiteTurn === isWhite ? -1 : 0;
       return game.turns[game.turns.length - 1 + iMod].timeLeftMs + timeMod;
     }
 
     function isTicking() {
       return game.turns.length >= 2 &&
         isWhite === isWhiteTurn &&
-        !postTurn.value;
+        !postTurn.value &&
+        isStatusOngoing;
     }
   }
 
