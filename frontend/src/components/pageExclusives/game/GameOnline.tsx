@@ -19,6 +19,8 @@ import { PieceColor, PieceType } from "shared/types/piece";
 export default function GameOnline(props: { data: GameViewData }) {
   const { data } = props;
 
+  console.log('data', data)
+
   const isWide = WINDOW_WIDTH > 600;
 
   const [game, setGame] = useState<GameViewData>(data);
@@ -36,6 +38,8 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isWhiteTurn = game.turns.length % 2 === 0;
   const turnColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
+
+  console.log(game.status);
 
   handlePlayerMovedEvent();
   handleTimeoutEvent();
@@ -96,12 +100,12 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getNarrowLayout() {
     return <>
+      <Box sx={{paddingTop: `5px`}}></Box>
       {getFormatBanner()}
       {getPlayerBanner(!isFlipped, true)}
       {getBoard()}
       {getPlayerBanner(isFlipped, false)}
       {getButtonsBanner()}
-      { }
     </>
   }
 

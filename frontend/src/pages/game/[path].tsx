@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { GameViewData } from "shared/types/game";
 import { SOCKET } from "../_app";
 import Error from "next/error";
+import Loading from "frontend/src/components/Loading";
 
 export default function Game() {
   const router = useRouter();
@@ -25,9 +26,9 @@ export default function Game() {
     });
   }, [path]);
 
-  if (gameViewData.value === "loading") return <Box>{'Loading...'}</Box>;
+  if (gameViewData.value === "loading") return <Loading />;
 
-  if (gameViewData.value === "404") return <Error statusCode={404}/>;
+  if (gameViewData.value === "404") return <Error statusCode={404} />;
 
   return <GameOnline key={path} data={gameViewData.value} />
 }

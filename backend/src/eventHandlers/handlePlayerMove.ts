@@ -74,12 +74,22 @@ export default function handlePlayerMoved(p: HandlerParams) {
           + game.timeframe.incSec * 1000
         );
 
-    const newTurn: GameTurn = {
-      action: pointsToAction(from, to),
-      timeLeftMs: newTimeLeftMs,
-      promotionType: promotionType,
-      rep: boardLayoutToRep(step(layout, from, to, promotionType)),
-    };
+    const newTurns: GameTurn[] = [
+      ...game.turns,
+      {
+        action: pointsToAction(from, to),
+        timeLeftMs: newTimeLeftMs,
+        promotionType: promotionType,
+        rep: boardLayoutToRep(step(layout, from, to, promotionType)),
+      }
+    ];
+
+    const newLayout = startAndTurnsToBoardLayout(game.start, newTurns);
+
+    const newStatus: GameStatus = getGameStatus(
+      newLayout, getOppositeColor(turnsToColor(newTurns)), newTurns, game.startRep
+    );
+
 
     const otherUserId = turnColor ? game.white.id : game.black.id;
     const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
@@ -89,42 +99,32 @@ export default function handlePlayerMoved(p: HandlerParams) {
     }
 
     if (game.timeoutId !== null) { clearTimeout(game.timeoutId); }
-    const newTimeoutId = game.turns.length < 1 ? null :
-      Number(setTimeout(()=>{
-        Terminal.warning('time is out');
+    const newTimeoutId =
+      game.turns.length < 1 || newStatus.catagory !== GameStatusCatagory.Ongoing ? null :
+        Number(setTimeout(() => {
+          Terminal.warning('time is out');
 
-        const winColor = turnsToColor(game.turns);
+          const winColor = turnsToColor(game.turns);
 
-        emitToUser(p, user, "timeout", game._id, winColor);
-        emitToUser(p, otherUser, "timeout", game._id, winColor);
-      }, newTimeLeftMs));
+          emitToUser(p, user, "timeout", game._id, winColor);
+          emitToUser(p, otherUser, "timeout", game._id, winColor);
+        }, newTimeLeftMs));
 
-    const gameAfterResult = await p.ongoingGamesCollection.findOneAndUpdate(
-      { _id: game._id },/*This id has to be valid, right?*/
+    p.ongoingGamesCollection.updateOne(
+      { _id: game._id },
       {
-        $push: { turns: newTurn },
         $set: {
+          turns: newTurns,
           timeLastTurnMs: timeCrntTurnMs,
-          timeoutId: newTimeoutId
+          timeoutId: newTimeoutId,
+          status: newStatus,
         }
-      },
-      { returnDocument: "after" },
-    );
-    if (gameAfterResult.value === null) {
-      Terminal.error('Could not find and update game');
-      return;
-    }
-    const gameAfter = gameAfterResult.value;
-
-    const layoutAfter = startAndTurnsToBoardLayout(gameAfter.start, gameAfter.turns);
-
-    const status: GameStatus = getGameStatus(
-      layoutAfter, getOppositeColor(turnsToColor(gameAfter.turns)), gameAfter.turns, gameAfter.startRep
+      }
     );
 
-    emitToUser(p, user, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
-    emitToUser(p, otherUser, "playerMoved", gameId, newTurn, status, timeCrntTurnMs);
-  
+    emitToUser(p, user, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
+    emitToUser(p, otherUser, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
+
     emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
     emitToUser(p, otherUser, "ongoingGamesUpdated", await getOngoingGamesTd(p, otherUser));
   });
