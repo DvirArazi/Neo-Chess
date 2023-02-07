@@ -1,4 +1,5 @@
 import { Box, Divider, Modal } from "@mui/material";
+import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import Layout from "frontend/src/components/Layout";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
@@ -28,6 +29,8 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isMenuOpen = new Stateful<boolean>(false);
   const stepsBack = new Stateful<number>(0);
   const postTurn = new Stateful<boolean>(false);
+  const isSnackbarOpen = new Stateful(false);
+  const snackbarData = useRef({ friendName: '', success: false });
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -48,6 +51,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   return <>
     {isWide ? getWideLayout() : getNarrowLayout()}
     {getMenu()}
+    {getSnackbar()}
   </>;
 
   function getWideLayout() {
@@ -100,7 +104,7 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getNarrowLayout() {
     return <>
-      <Box sx={{paddingTop: `5px`}}></Box>
+      <Box sx={{ paddingTop: `5px` }}></Box>
       {getFormatBanner()}
       {getPlayerBanner(!isFlipped, true)}
       {getBoard()}
@@ -194,7 +198,7 @@ export default function GameOnline(props: { data: GameViewData }) {
 
       if (!isStatusOngoing && isWhiteTurn == isWhite) {
         return game.turns[game.turns.length - 1 + iMod].timeLeftMs
-          -(new Date().getTime() - game.timeLastTurnMs);
+          - (new Date().getTime() - game.timeLastTurnMs);
       }
 
       const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
@@ -230,9 +234,36 @@ export default function GameOnline(props: { data: GameViewData }) {
       onTakebackClick={() => { }}
       onDrawClick={() => { }}
       onResignClick={() => { }}
-      onRematchClick={() => { }}
+      onRematchClick={sendInvitation}
       onNewOpponentClick={() => { }}
       onShareClick={() => { }}
+    />
+
+    function sendInvitation() {
+      const friend = game.role === PieceColor.Black ? game.white : game.black;
+
+      SOCKET.emit("sendGameInvitation",
+        game.timeframe,
+        game.isRated,
+        friend.id,
+        (sent) => {
+          snackbarData.current = { friendName: friend.name, success: sent };
+          isSnackbarOpen.set(true);
+        }
+      );
+    }
+  }
+
+  function getSnackbar() {
+    const { friendName, success } = snackbarData.current;
+
+    return <AlertSnackbar
+      isOpen={isSnackbarOpen}
+      severity={success ? "success" : "error"}
+      message={
+        `Invitation to ${friendName} ${success ?
+          'was sent successfully' : 'could not be sent'}`
+      }
     />
   }
 

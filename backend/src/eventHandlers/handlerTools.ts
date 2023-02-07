@@ -85,6 +85,7 @@ export async function getOngoingGamesTd(p: HandlerParams, user: WithId<User>) {
       turnColor: turnsToColor(game.turns),
       userColor: user._id.toString() === game.white.id.toString() ? PieceColor.White : PieceColor.Black
     });
+    Terminal.log(`\n${startAndTurnsToBoardLayout(game.start, game.turns)}\n`);
   }
 
   return gamesTd;

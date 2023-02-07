@@ -1,11 +1,10 @@
 import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { PlayerWithId } from "backend/src/utils/types";
 import { generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { timeframeToTimeFormat } from "shared/tools/general";
 import { boardLayoutToRep } from "shared/tools/rep";
-import { GameStatusCatagory } from "shared/types/game";
+import { GameStatusCatagory, Player } from "shared/types/game";
 import { v4 as uuidv4 } from 'uuid';
 
 export default function handleResponseToInvitation(p: HandlerParams) {
@@ -48,12 +47,12 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     const isRated = friendUser.outInvitation.isRated;
     const timeframe = friendUser.outInvitation.timeframe;
     const timeFormat = timeframeToTimeFormat(timeframe);
-    const player0: PlayerWithId = {
+    const player0: Player = {
       id: user._id,
       name: user.name,
       rating: user.ratings[timeFormat]
     }
-    const player1: PlayerWithId = {
+    const player1: Player = {
       id: friendUser._id,
       name: friendUser.name,
       rating: friendUser.ratings[timeFormat]

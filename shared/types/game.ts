@@ -46,6 +46,7 @@ export type GameTurn = {
 }
 
 export type Player = {
+  id: ObjectId,
   name: string,
   rating: number,
 }

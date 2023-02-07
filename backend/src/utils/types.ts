@@ -23,14 +23,9 @@ export type User = {
   invitations: GameInvitation[],
 }
 
-export type PlayerWithId = {
-  id: ObjectId
-} & Player
-
-
 export type Game = {
   path: string,
-  white: PlayerWithId,
-  black: PlayerWithId,
   timeoutId: number | null,
+  white: Player,
+  black: Player,
 } & GameData

@@ -4,11 +4,7 @@ import OngoingGamesSection from "frontend/src/components/Layout/TopBar/SignedInR
 import YourRequestSection from "frontend/src/components/Layout/TopBar/SignedInRow/GamesModal/YourRequestSection";
 import { ModalSpacer } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import ModalFrame from "frontend/src/components/ModalFrame";
-import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
-import { getFormatBannerString } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { ObjectId } from "mongodb";
-import { Player } from "shared/types/game";
 import { GamesModalData, GameTd, GameInvitation } from "shared/types/general";
 
 export default function GamesModal(props: {

@@ -2,12 +2,10 @@ import { timeframeToTimeFormat } from "shared/tools/general";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 import { v4 as uuidv4 } from 'uuid';
-import { PlayerWithId } from "../utils/types";
-import { PieceType } from "shared/types/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
-import { GameStatusCatagory } from "shared/types/game";
-import { deleteOutInvitationForFriend, emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { GameStatusCatagory, Player } from "shared/types/game";
+import { deleteOutInvitationForFriend, emitToUser, getOngoingGamesTd, toValidId } from "backend/src/eventHandlers/handlerTools";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -85,12 +83,12 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       Terminal.error('Could not find document of the matching user');
       return;
     }
-    const player0: PlayerWithId = {
+    const player0: Player = {
       id: user0._id,
       name: user0.name,
       rating: user0.ratings[timeFormat]//[timeFormat as number]
     }
-    const player1: PlayerWithId = {
+    const player1: Player = {
       id: user1._id,
       name: user1.name,
       rating: user1.ratings[timeFormat]//[timeFormat as number]
@@ -118,5 +116,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
 
     emitToUser(p, user0, "createdGame", path);
     emitToUser(p, user1, "createdGame", path);
+
+    emitToUser(p, user0, "ongoingGamesUpdated", await getOngoingGamesTd(p, user0));
+    emitToUser(p, user1, "ongoingGamesUpdated", await getOngoingGamesTd(p, user1));
   });
 }
