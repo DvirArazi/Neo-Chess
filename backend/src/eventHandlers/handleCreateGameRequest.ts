@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameStatusCatagory, Player } from "shared/types/game";
-import { deleteOutInvitationForFriend, emitToUser, getOngoingGamesTd, toValidId } from "backend/src/utils/tools/general";
+import { deleteOutInvitationForFriend, emitToUser } from "backend/src/utils/tools/general";
+import { ObjectId } from "mongodb";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -14,7 +15,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       return;
     }
     const user0Result = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
+      { _id: new ObjectId(p.userId) },
       { $set: { outInvitation: null } },
       { returnDocument: "before" }
     );
@@ -32,7 +33,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     const ratingAbsMax = user0Rating + ratingRelMax;
 
     const deletedGameRequest = await p.gameRequestsCollection.findOneAndDelete({
-      userId: { $ne: toValidId(p.userId) },
+      userId: { $ne: p.userId },
       ratingAbsMin: { $lte: ratingAbsMin },
       ratingAbsMax: { $gte: ratingAbsMax },
     });
@@ -41,9 +42,9 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     //====================================*******====== 
     if (deletedGameRequest.value === null) {
       const newGameRequest = await p.gameRequestsCollection.findOneAndReplace(
-        { userId: toValidId(p.userId) },
+        { userId: p.userId },
         {
-          userId: toValidId(p.userId),
+          userId: p.userId,
           isRated: isRated,
           timeframe: timeframe,
           ratingAbsMin: ratingAbsMin,
@@ -60,8 +61,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       }
 
       p.usersCollection.updateOne(
-        { _id: toValidId(p.userId) },
-        { $set: { gameRequestId: newGameRequest.value._id, outInvitation: null } }
+        { _id: new ObjectId(p.userId) },
+        { $set: { gameRequestId: newGameRequest.value._id.toString(), outInvitation: null } }
       );
 
       emitToUser(p, user0, "gameRequestUpdated", {
@@ -78,20 +79,20 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     //if a request with matching settings was found
     //====================================***======
     const otherUserId = deletedGameRequest.value.userId;
-    const user1 = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
+    const user1 = await p.usersCollection.findOne({ _id: new ObjectId(otherUserId) });
     if (user1 === null) {
       Terminal.error('Could not find document of the matching user');
       return;
     }
     const player0: Player = {
-      id: user0._id,
+      id: user0._id.toString(),
       name: user0.name,
-      rating: user0.ratings[timeFormat]//[timeFormat as number]
+      rating: user0.ratings[timeFormat]
     }
     const player1: Player = {
-      id: user1._id,
+      id: user1._id.toString(),
       name: user1.name,
-      rating: user1.ratings[timeFormat]//[timeFormat as number]
+      rating: user1.ratings[timeFormat]
     }
 
     const start = generateStart();

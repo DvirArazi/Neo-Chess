@@ -1,5 +1,6 @@
 // import { leave } from "backend/src/eventHandlers/handlerTools";
-import { deleteGameRequestOnDB, deleteOutInvitationForFriend, emitToUser, leave, toValidId } from "backend/src/utils/tools/general";
+import { leave } from "backend/src/utils/tools/general";
+import { ObjectId } from "mongodb";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 
@@ -11,7 +12,7 @@ export function handleSignOut(p: HandlerParams) {
     }
 
     const userBeforeResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
+      { _id: new ObjectId(p.userId) },
       {
         $pull: { socketIds: p.socket.id, aads: aad.key },
       },
@@ -23,7 +24,7 @@ export function handleSignOut(p: HandlerParams) {
     }
     const userBefore = userBeforeResult.value;
 
-    leave(p, userBefore._id);
+    leave(p, userBefore._id.toString());
 
     p.userId = undefined;
 

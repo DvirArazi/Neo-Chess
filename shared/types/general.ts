@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb"
 import { BoardLayout } from "shared/types/boardLayout"
 import { Player, Timeframe } from "shared/types/game"
 import { PieceColor } from "shared/types/piece"
@@ -9,7 +8,7 @@ export type UserViewData = {
 }
 
 export type Friend = {
-  id: ObjectId
+  id: string
 } & UserViewData
 
 export type GameTd = {
@@ -24,7 +23,7 @@ export type GameTd = {
 }
 
 export type GameInvitation = {
-  friendId: ObjectId,
+  friendId: string,
   name: string,
   timeframe: Timeframe,
   isRated: boolean,
@@ -53,7 +52,7 @@ export type GamesModalData = {
 }
 
 export type FriendRequest = {
-  id: ObjectId,
+  id: string,
   name: string,
   picture: string,
   email: string,

@@ -91,5 +91,5 @@ export type BackendParams = {
 
 export type HandlerParams = {
   socket: ServerSocket,
-  userId: ObjectId | undefined,
+  userId: string | undefined,
 } & BackendParams

@@ -1,6 +1,6 @@
-import { toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 import { FriendRequest } from "shared/types/general";
 
 export default function handleGetFriendsSearchData(p: HandlerParams) {
@@ -10,7 +10,7 @@ export default function handleGetFriendsSearchData(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
+    const user = await p.usersCollection.findOne({ _id: new ObjectId(p.userId) });
     if (user === null) {
       Terminal.error('Saved user ID couldn\'t be found in the DB');
       return;
@@ -18,8 +18,7 @@ export default function handleGetFriendsSearchData(p: HandlerParams) {
 
     const searchUsers = await p.usersCollection.find({
       name: { $regex: new RegExp(`^${name}`, "i") },
-      _id: { $ne: toValidId(user._id) },
-      // friends: { $not: { $elemMatch: { id: toValidId(user._id) } } } //still need to test this line
+      _id: { $ne: user._id },
     }).toArray();
 
     const friends: FriendRequest[] = [];
@@ -43,7 +42,7 @@ export default function handleGetFriendsSearchData(p: HandlerParams) {
       }
 
       friends.push({
-        id: searchUser._id,
+        id: searchUser._id.toString(),
         name: searchUser.name,
         email: searchUser.data.email,
         picture: searchUser.data.picture,

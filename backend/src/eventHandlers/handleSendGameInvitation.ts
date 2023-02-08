@@ -1,6 +1,7 @@
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
+import { emitToUser } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 
 export default function handleSendGameInvitation(p: HandlerParams) {
   p.socket.on("sendGameInvitation", async (timeframe, isRated, friendId, callback) => {
@@ -11,7 +12,7 @@ export default function handleSendGameInvitation(p: HandlerParams) {
       }
 
       const user = await p.usersCollection.findOne(
-        { _id: toValidId(p.userId) }
+        { _id: new ObjectId(p.userId) }
       );
       if (user === null) {
         Terminal.error('User with saved ID was not found in the DB');
@@ -19,15 +20,15 @@ export default function handleSendGameInvitation(p: HandlerParams) {
       }
 
       await p.usersCollection.updateOne(
-        { _id: toValidId(friendId) },
-        { $pull: { invitations: { friendId: user._id } } },
+        { _id: new ObjectId(friendId) },
+        { $pull: { invitations: { friendId: user._id.toString() } } },
       );
       const friendUserResult = await p.usersCollection.findOneAndUpdate(
-        { _id: toValidId(friendId) },
+        { _id: new ObjectId(friendId) },
         {
           $push: {
             invitations: {
-              friendId: user._id,
+              friendId: user._id.toString(),
               name: user.name,
               timeframe: timeframe,
               isRated: isRated,
@@ -47,7 +48,7 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         {
           $set: {
             outInvitation: {
-              friendId: friendUser._id,
+              friendId: friendUser._id.toString(),
               name: friendUser.name,
               timeframe: timeframe,
               isRated: isRated,

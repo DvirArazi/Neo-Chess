@@ -1,6 +1,7 @@
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
+import { emitToUser } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 
 export default function handleDeleteFriend(p: HandlerParams) {
   p.socket.on("deleteFriend", async (friendId) => {
@@ -10,8 +11,8 @@ export default function handleDeleteFriend(p: HandlerParams) {
     }
 
     const userResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
-      { $pull: { friends: { id: toValidId(friendId) } } },
+      { _id: new ObjectId(p.userId) },
+      { $pull: { friends: { id: friendId } } },
       { returnDocument: "after" }
     );
     if (userResult.value === null) {
@@ -21,8 +22,8 @@ export default function handleDeleteFriend(p: HandlerParams) {
     const user = userResult.value;
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(friendId) },
-      { $pull: { friends: { id: toValidId(p.userId) } } },
+      { _id: new ObjectId(friendId) },
+      { $pull: { friends: { id: p.userId } } },
       { returnDocument: "after" }
     );
     if (friendUserResult.value === null) {

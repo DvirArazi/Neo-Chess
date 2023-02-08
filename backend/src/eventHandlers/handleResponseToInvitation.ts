@@ -1,4 +1,4 @@
-import { emitToUser, toValidId } from "backend/src/utils/tools/general";
+import { emitToUser } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
@@ -6,6 +6,7 @@ import { timeframeToTimeFormat } from "shared/tools/general";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { GameStatusCatagory, Player } from "shared/types/game";
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from "mongodb";
 
 export default function handleResponseToInvitation(p: HandlerParams) {
   p.socket.on("responseToInvitation", async (friendId, isAccepted) => {
@@ -15,8 +16,8 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     }
 
     const userResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
-      { $pull: { invitations: { friendId: toValidId(friendId) } } },
+      { _id: new ObjectId(p.userId) },
+      { $pull: { invitations: { friendId: friendId } } },
       { returnDocument: "after" },
     );
     if (userResult.value === null) {
@@ -28,7 +29,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     emitToUser(p, user, "gameInvitationsUpdated", user.invitations);
 
     const friendUserResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(friendId) },
+      { _id: new ObjectId(friendId) },
       { $set: { outInvitation: null } },
       { returnDocument: "before" },
     );
@@ -48,12 +49,12 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     const timeframe = friendUser.outInvitation.timeframe;
     const timeFormat = timeframeToTimeFormat(timeframe);
     const player0: Player = {
-      id: user._id,
+      id: user._id.toString(),
       name: user.name,
       rating: user.ratings[timeFormat]
     }
     const player1: Player = {
-      id: friendUser._id,
+      id: friendUser._id.toString(),
       name: friendUser.name,
       rating: friendUser.ratings[timeFormat]
     }

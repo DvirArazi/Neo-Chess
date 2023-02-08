@@ -1,5 +1,4 @@
 import { BackendParams } from "backend/src/handleSocket";
-import { toValidId } from "backend/src/utils/tools/general";
 
 
 export default function watchUsers(p: BackendParams) {

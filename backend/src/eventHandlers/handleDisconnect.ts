@@ -1,6 +1,7 @@
-import { deleteGameRequestOnDB, deleteOutInvitationForFriend, leave, toValidId } from "backend/src/utils/tools/general";
+import { deleteGameRequestOnDB, deleteOutInvitationForFriend, leave } from "backend/src/utils/tools/general";
 import { Terminal } from "backend/src/utils/terminal";
 import { HandlerParams } from "../handleSocket";
+import { ObjectId } from "mongodb";
 
 export function handleDisconnect(p: HandlerParams) {
   p.socket.on("disconnect", async () => {
@@ -9,7 +10,7 @@ export function handleDisconnect(p: HandlerParams) {
     }
 
     const userBeforeResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
+      { _id: new ObjectId(p.userId) },
       {
         $pull: { socketIds: p.socket.id },
       },
@@ -21,6 +22,6 @@ export function handleDisconnect(p: HandlerParams) {
     }
     const userBefore = userBeforeResult.value;
 
-    leave(p, userBefore._id);
+    leave(p, userBefore._id.toString());
   });
 }

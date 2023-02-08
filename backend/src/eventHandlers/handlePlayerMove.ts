@@ -8,8 +8,9 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, getOngoingGamesTd, toValidId } from "backend/src/utils/tools/general";
+import { emitToUser, getOngoingGamesTd } from "backend/src/utils/tools/general";
 import { GameTd } from "shared/types/general";
+import { ObjectId } from "mongodb";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotionType) => {
@@ -20,13 +21,13 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
+    const user = await p.usersCollection.findOne({ _id: new ObjectId(p.userId) });
     if (user === null) {
       Terminal.error('Couldn\'nt find user with the saved user ID');
       return;
     }
 
-    const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
+    const game = await p.ongoingGamesCollection.findOne({ _id: new ObjectId(gameId) });
     if (game === null) {
       Terminal.warning('Couldn\'nt find game using the id provided by the user');
       return;
@@ -92,7 +93,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
 
     const otherUserId = turnColor ? game.white.id : game.black.id;
-    const otherUser = await p.usersCollection.findOne({ _id: toValidId(otherUserId) });
+    const otherUser = await p.usersCollection.findOne({ _id: new ObjectId(otherUserId) });
     if (otherUser === null) {
       Terminal.error('Could not find other user saved on game');
       return;
@@ -106,8 +107,8 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
           const winColor = turnsToColor(game.turns);
 
-          emitToUser(p, user, "timeout", game._id, winColor);
-          emitToUser(p, otherUser, "timeout", game._id, winColor);
+          emitToUser(p, user, "timeout", game._id.toString(), winColor);
+          emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);
         }, newTimeLeftMs));
 
     p.ongoingGamesCollection.updateOne(

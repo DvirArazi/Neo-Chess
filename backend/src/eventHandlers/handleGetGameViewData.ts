@@ -26,7 +26,7 @@ export default function handleGetGameViewData(p: HandlerParams) {
     })();
 
     callback({
-      id: game._id,
+      id: game._id.toString(),
       role: role,
       ...game,
     });

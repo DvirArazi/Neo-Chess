@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { PieceColor, PieceData, PieceType } from "./piece";
 
 export type Point = {
@@ -20,7 +19,7 @@ export enum TimeFormat {
 }
 
 export type GameRequest = {
-  userId: ObjectId,
+  userId: string,
   timeframe: Timeframe,
   isRated: boolean,
   ratingAbsMin: number,
@@ -46,7 +45,7 @@ export type GameTurn = {
 }
 
 export type Player = {
-  id: ObjectId,
+  id: string,
   name: string,
   rating: number,
 }
@@ -62,7 +61,7 @@ export type GameData = {
 }
 
 export type GameViewData = {
-  id: ObjectId,
+  id: string,
   role: GameRole,
   white: Player,
   black: Player,

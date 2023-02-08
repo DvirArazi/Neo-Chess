@@ -1,10 +1,11 @@
-import { getOngoingGamesTd, toValidId } from "backend/src/utils/tools/general";
+import { getOngoingGamesTd } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { turnsToColor } from "shared/tools/board";
 import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameRequestTd, GameTd } from "shared/types/general";
 import { PieceColor } from "shared/types/piece";
+import { ObjectId } from "mongodb";
 
 export default function handleGetSignedInRowData(p: HandlerParams) {
   p.socket.on("getSignedInRowData", async (callback) => {
@@ -13,14 +14,14 @@ export default function handleGetSignedInRowData(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
+    const user = await p.usersCollection.findOne({ _id: new ObjectId(p.userId) });
     if (user === null) {
       Terminal.error('User is signed in but it\'s ID could not be found in the DB');
       return;
     }
 
     const gameRequest = user.gameRequestId === null ? null :
-      await p.gameRequestsCollection.findOne({ _id: toValidId(user.gameRequestId) });
+      await p.gameRequestsCollection.findOne({ _id: new ObjectId(user.gameRequestId) });
 
     const gamesTd = await getOngoingGamesTd(p, user);
 

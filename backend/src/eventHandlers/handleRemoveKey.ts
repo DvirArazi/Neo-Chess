@@ -1,11 +1,11 @@
-import { toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 
 export default function removeKey(p: HandlerParams) {
   p.socket.on("removeKey", async (aad) => {
     const result = await p.usersCollection.updateOne(
-      { _id: toValidId(aad.id) },
+      { _id: new ObjectId(aad.id) },
       { $pull: { socketIds: { key: aad.key } } },
     );
 

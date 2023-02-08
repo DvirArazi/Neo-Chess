@@ -1,6 +1,7 @@
-import { deleteOutInvitationForFriend, toValidId } from "backend/src/utils/tools/general";
+import { deleteOutInvitationForFriend } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 
 export default function handleDeleteGameRequest(p: HandlerParams) {
   p.socket.on("deleteGameRequest", async (callback) => {
@@ -10,7 +11,7 @@ export default function handleDeleteGameRequest(p: HandlerParams) {
     }
 
     const userResult = await p.usersCollection.findOneAndUpdate(
-      { _id: toValidId(p.userId) },
+      { _id: new ObjectId(p.userId) },
       { $set: { gameRequestId: null, outInvitation: null } },
       { returnDocument: "before" }
     );
@@ -22,7 +23,7 @@ export default function handleDeleteGameRequest(p: HandlerParams) {
 
     if (user.gameRequestId !== null) {
       p.gameRequestsCollection.findOneAndDelete(
-        { _id: toValidId(user.gameRequestId) }
+        { _id: new ObjectId(user.gameRequestId) }
       );
     }
     deleteOutInvitationForFriend(p, user);

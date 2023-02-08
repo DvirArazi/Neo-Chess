@@ -53,7 +53,7 @@ export function handleSignIn(p: HandlerParams) {
     }
     const user = userResult.value;
 
-    p.userId = userResult.value._id;
+    p.userId = userResult.value._id.toString();
 
     emitToUser(p, userResult.value, "signedIn",
       { id: p.userId, key: newKey },

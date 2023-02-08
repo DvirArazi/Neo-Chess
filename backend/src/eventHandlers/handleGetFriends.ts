@@ -1,6 +1,6 @@
-import { toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
+import { ObjectId } from "mongodb";
 import { Friend } from "shared/types/general";
 
 export default function handleGetFriends(p: HandlerParams) {
@@ -10,18 +10,17 @@ export default function handleGetFriends(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
+    const user = await p.usersCollection.findOne({ _id: new ObjectId(p.userId) });
     if (user === null) {
       Terminal.error('Saved user ID was not found in DB');
       return;
     }
 
     const friendUsers: Friend[] = (await p.usersCollection.find({
-      _id: { $in: user.friends.map(friend => toValidId(friend.id)) }
+      _id: { $in: user.friends.map(friend => new ObjectId(friend.id)) }
     }).toArray())
-      // .filter(friendUser => friendUser.socketsIds.length !== 0)
       .map(friendUser => ({
-        id: friendUser._id,
+        id: friendUser._id.toString(),
         name: friendUser.name,
         picture: friendUser.data.picture,
       }));

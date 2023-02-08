@@ -25,13 +25,9 @@ export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
   }
 }
 
-export function toValidId(id: ObjectId) {
-  return new ObjectId(id.toString());
-}
+export async function leave(p: HandlerParams, userId: string) {
 
-export async function leave(p: HandlerParams, userId: ObjectId) {
-
-  const user = await p.usersCollection.findOne({ _id: toValidId(userId) });
+  const user = await p.usersCollection.findOne({ _id: new ObjectId(userId) });
   if (user === null) return;
 
   if (user.socketIds.length !== 0) return;
@@ -49,8 +45,8 @@ export async function deleteOutInvitationForFriend(p: HandlerParams, user: WithI
   if (user.outInvitation === null) return;
 
   const friendUserResult = await p.usersCollection.findOneAndUpdate(
-    { _id: toValidId(user.outInvitation.friendId) },
-    { $pull: { invitations: { friendId: user._id } } },
+    { _id: new ObjectId(user.outInvitation.friendId) },
+    { $pull: { invitations: { friendId: user._id.toString() } } },
     { returnDocument: "after" }
   );
   if (friendUserResult.value === null) {
@@ -66,14 +62,14 @@ export async function deleteOutInvitationForFriend(p: HandlerParams, user: WithI
 
 export function deleteGameRequestOnDB(p: HandlerParams, user: WithId<User>) {
   if (user.gameRequestId !== null) {
-    p.gameRequestsCollection.deleteOne({ _id: toValidId(user.gameRequestId) });
+    p.gameRequestsCollection.deleteOne({ _id: new ObjectId(user.gameRequestId) });
   }
 }
 
 export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
   let gamesTd: GameTd[] = [];
   for (const gameId of user.ongoingGamesIds) {
-    const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
+    const game = await p.ongoingGamesCollection.findOne({ _id: new ObjectId(gameId) });
     if (game === null) {
       Terminal.error('Game ID from the user\'s ongoingGamesIds was not found on DB');
       continue;
