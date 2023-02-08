@@ -1,4 +1,4 @@
-import { deleteGameRequestOnDB, deleteOutInvitationForFriend, leave, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { deleteGameRequestOnDB, deleteOutInvitationForFriend, leave, toValidId } from "backend/src/utils/tools/general";
 import { Terminal } from "backend/src/utils/terminal";
 import { HandlerParams } from "../handleSocket";
 

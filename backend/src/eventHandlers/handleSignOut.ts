@@ -1,5 +1,5 @@
 // import { leave } from "backend/src/eventHandlers/handlerTools";
-import { deleteGameRequestOnDB, deleteOutInvitationForFriend, emitToUser, leave, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { deleteGameRequestOnDB, deleteOutInvitationForFriend, emitToUser, leave, toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
 

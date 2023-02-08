@@ -1,4 +1,4 @@
-import { HandlerParams } from "backend/src/handleSocket";
+import { BackendParams, HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { User } from "backend/src/utils/types";
 import { WithId } from "mongodb";
@@ -11,7 +11,7 @@ import { ServerToClientEvents } from "shared/types/webSocket";
 import { EventNames, EventParams, EventsMap } from "socket.io/dist/typed-events";
 
 export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
-  p: HandlerParams,
+  p: BackendParams,
   user: User,
   ev: Ev,
   ...args: EventParams<ServerToClientEvents, Ev>
@@ -70,7 +70,7 @@ export function deleteGameRequestOnDB(p: HandlerParams, user: WithId<User>) {
   }
 }
 
-export async function getOngoingGamesTd(p: HandlerParams, user: WithId<User>) {
+export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
   let gamesTd: GameTd[] = [];
   for (const gameId of user.ongoingGamesIds) {
     const game = await p.ongoingGamesCollection.findOne({ _id: toValidId(gameId) });
@@ -85,7 +85,6 @@ export async function getOngoingGamesTd(p: HandlerParams, user: WithId<User>) {
       turnColor: turnsToColor(game.turns),
       userColor: user._id.toString() === game.white.id.toString() ? PieceColor.White : PieceColor.Black
     });
-    Terminal.log(`\n${startAndTurnsToBoardLayout(game.start, game.turns)}\n`);
   }
 
   return gamesTd;

@@ -20,6 +20,7 @@ import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameR
 import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponseToInvitation';
+import watchGames from 'backend/src/collectionWatchers/watchGames';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -43,15 +44,21 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
   gameRequestsCollection.deleteMany({});
   ongoingGamesCollection.deleteMany({}); //remove in production
 
+  const backendParams: BackendParams = {
+    webSocketServer: webSocketServer,
+    oAuth2Client: oAuth2Client,
+    usersCollection: usersCollection,
+    gameRequestsCollection: gameRequestsCollection,
+    ongoingGamesCollection: ongoingGamesCollection,
+  }
+
+  watchGames(backendParams);
+
   webSocketServer.on("connection", (socket) => {
     const handlerParams: HandlerParams = {
-      webSocketServer: webSocketServer,
+      ...backendParams,
       socket: socket,
       userId: undefined,
-      oAuth2Client: oAuth2Client,
-      usersCollection: usersCollection,
-      gameRequestsCollection: gameRequestsCollection,
-      ongoingGamesCollection: ongoingGamesCollection,
     };
 
     handleSignIn(handlerParams);
@@ -74,12 +81,15 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
   });
 };
 
-export type HandlerParams = {
+export type BackendParams = {
   webSocketServer: WebSocketServer,
-  socket: ServerSocket,
-  userId: ObjectId | undefined,
   oAuth2Client: OAuth2Client,
   usersCollection: Collection<User>,
   gameRequestsCollection: Collection<GameRequest>,
   ongoingGamesCollection: Collection<Game>,
 }
+
+export type HandlerParams = {
+  socket: ServerSocket,
+  userId: ObjectId | undefined,
+} & BackendParams

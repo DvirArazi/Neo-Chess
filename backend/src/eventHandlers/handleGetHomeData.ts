@@ -1,4 +1,4 @@
-import { toValidId } from "backend/src/eventHandlers/handlerTools";
+import { toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 
@@ -9,7 +9,7 @@ export default function handleGetHomeData(p: HandlerParams) {
       return;
     }
 
-    const user = await p.usersCollection.findOne({_id: toValidId(p.userId)});
+    const user = await p.usersCollection.findOne({ _id: toValidId(p.userId) });
 
     if (user === null) {
       Terminal.warning('User requested home data, but couldn\'t be found in DB');

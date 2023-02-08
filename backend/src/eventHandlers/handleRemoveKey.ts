@@ -1,4 +1,4 @@
-import { toValidId } from "backend/src/eventHandlers/handlerTools";
+import { toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 

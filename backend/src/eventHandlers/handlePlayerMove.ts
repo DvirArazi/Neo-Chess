@@ -8,7 +8,7 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, getOngoingGamesTd, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { emitToUser, getOngoingGamesTd, toValidId } from "backend/src/utils/tools/general";
 import { GameTd } from "shared/types/general";
 
 export default function handlePlayerMoved(p: HandlerParams) {

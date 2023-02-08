@@ -1,4 +1,4 @@
-import { emitToUser, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { emitToUser, toValidId } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
@@ -60,7 +60,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     const start = generateStart();
     const isUser0White = Math.random() < 0.5;
     const path = uuidv4();
-    const game = await p.ongoingGamesCollection.insertOne({
+    p.ongoingGamesCollection.insertOne({
       path: path,
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,
@@ -73,11 +73,5 @@ export default function handleResponseToInvitation(p: HandlerParams) {
       status: { catagory: GameStatusCatagory.Ongoing },
       timeoutId: null
     });
-
-    p.usersCollection.updateOne({ _id: user._id }, { $push: { ongoingGamesIds: game.insertedId } });
-    p.usersCollection.updateOne({ _id: friendUser._id }, { $push: { ongoingGamesIds: game.insertedId } });
-
-    emitToUser(p, user, "createdGame", path);
-    emitToUser(p, friendUser, "createdGame", path);
   });
 }

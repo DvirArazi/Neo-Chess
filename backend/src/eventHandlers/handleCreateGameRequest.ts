@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { GameStatusCatagory, Player } from "shared/types/game";
-import { deleteOutInvitationForFriend, emitToUser, getOngoingGamesTd, toValidId } from "backend/src/eventHandlers/handlerTools";
+import { deleteOutInvitationForFriend, emitToUser, getOngoingGamesTd, toValidId } from "backend/src/utils/tools/general";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -97,7 +97,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     const start = generateStart();
     const isUser0White = Math.random() < 0.5;
     const path = uuidv4();
-    const game = await p.ongoingGamesCollection.insertOne({
+    p.ongoingGamesCollection.insertOne({
       path: path,
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,
@@ -110,14 +110,5 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       status: { catagory: GameStatusCatagory.Ongoing },
       timeoutId: null
     });
-
-    p.usersCollection.updateOne({ _id: user0._id }, { $push: { ongoingGamesIds: game.insertedId } });
-    p.usersCollection.updateOne({ _id: user1._id }, { $push: { ongoingGamesIds: game.insertedId } });
-
-    emitToUser(p, user0, "createdGame", path);
-    emitToUser(p, user1, "createdGame", path);
-
-    emitToUser(p, user0, "ongoingGamesUpdated", await getOngoingGamesTd(p, user0));
-    emitToUser(p, user1, "ongoingGamesUpdated", await getOngoingGamesTd(p, user1));
   });
 }
