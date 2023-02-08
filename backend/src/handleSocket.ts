@@ -20,7 +20,6 @@ import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameR
 import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponseToInvitation';
-import watchGames from 'backend/src/collectionWatchers/watchGames';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -51,8 +50,6 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     gameRequestsCollection: gameRequestsCollection,
     ongoingGamesCollection: ongoingGamesCollection,
   }
-
-  watchGames(backendParams);
 
   webSocketServer.on("connection", (socket) => {
     const handlerParams: HandlerParams = {

@@ -40,7 +40,7 @@ export default function handleGetSignedInRowData(p: HandlerParams) {
           timeframe: user.outInvitation.timeframe,
           isRated: user.outInvitation.isRated,
           isByRating: false,
-          opponentName: user.outInvitation.name,
+          opponentName: user.outInvitation.friendName,
         }
       }
 

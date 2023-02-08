@@ -7,6 +7,7 @@ import { boardLayoutToRep } from "shared/tools/rep";
 import { GameStatusCatagory, Player } from "shared/types/game";
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from "mongodb";
+import ongoingGamesInsert from "backend/src/collectionOperations/ongoingGamesInsert";
 
 export default function handleResponseToInvitation(p: HandlerParams) {
   p.socket.on("responseToInvitation", async (friendId, isAccepted) => {
@@ -14,6 +15,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
       Terminal.warning('User tried to responed to an invitation but was not signed in');
       return;
     }
+
 
     const userResult = await p.usersCollection.findOneAndUpdate(
       { _id: new ObjectId(p.userId) },
@@ -45,7 +47,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
 
     if (!isAccepted) return;
 
-    const isRated = friendUser.outInvitation.isRated;
+    const isUser0White = Math.random() < 0.5;
     const timeframe = friendUser.outInvitation.timeframe;
     const timeFormat = timeframeToTimeFormat(timeframe);
     const player0: Player = {
@@ -59,14 +61,12 @@ export default function handleResponseToInvitation(p: HandlerParams) {
       rating: friendUser.ratings[timeFormat]
     }
     const start = generateStart();
-    const isUser0White = Math.random() < 0.5;
-    const path = uuidv4();
-    p.ongoingGamesCollection.insertOne({
-      path: path,
+    ongoingGamesInsert(p, {
+      path: uuidv4(),
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,
       timeframe: timeframe,
-      isRated: isRated,
+      isRated: friendUser.outInvitation.isRated,
       start: start,
       startRep: boardLayoutToRep(startAndTurnsToBoardLayout(start, [])),
       turns: [],

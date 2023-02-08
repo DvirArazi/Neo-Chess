@@ -44,7 +44,7 @@ function Invitation(props: { data: GameInvitation }) {
         fontWeight: `bold`,
         fontSize: `18px`,
         padding: `0 8px 0 10px`,
-      }}>{data.name}</Box>
+      }}>{data.friendName}</Box>
       {`• ${getFormatBannerString(data.timeframe, data.isRated)}`}
     </Box>
     <VXButtons onClick={(isAccepted) => {

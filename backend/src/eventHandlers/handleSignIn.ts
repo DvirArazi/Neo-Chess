@@ -20,7 +20,7 @@ export function handleSignIn(p: HandlerParams) {
 
     const googleId = data.sub;
     const newKey = uuidv4();
-    const userResult = await p.usersCollection.findOneAndUpdate(
+    const user = (await p.usersCollection.findOneAndUpdate(
       { googleId: googleId },
       {
         $push: {
@@ -46,16 +46,15 @@ export function handleSignIn(p: HandlerParams) {
         upsert: true,
         returnDocument: "after",
       }
-    );
-    if (userResult.value === null) {
+    )).value;
+    if (user === null) {
       Terminal.error("Could not find or create user");
       return;
     }
-    const user = userResult.value;
 
-    p.userId = userResult.value._id.toString();
+    p.userId = user._id.toString();
 
-    emitToUser(p, userResult.value, "signedIn",
+    p.socket.emit("signedIn",
       { id: p.userId, key: newKey },
       { name: user.name, picture: user.data.picture }
     );

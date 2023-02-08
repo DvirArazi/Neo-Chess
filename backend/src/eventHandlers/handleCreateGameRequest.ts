@@ -7,6 +7,7 @@ import { BOARD_SIDE, generateStart, startAndTurnsToBoardLayout } from "shared/to
 import { GameStatusCatagory, Player } from "shared/types/game";
 import { deleteOutInvitationForFriend, emitToUser } from "backend/src/utils/tools/general";
 import { ObjectId } from "mongodb";
+import ongoingGamesInsert from "backend/src/collectionOperations/ongoingGamesInsert";
 
 export default function handleCreateGameRequest(p: HandlerParams) {
   p.socket.on("createGameRequest", async (timeframe, isRated, ratingRelMin, ratingRelMax) => {
@@ -14,16 +15,15 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       Terminal.warning('Attempt to open a game request by an unauthenticated user');
       return;
     }
-    const user0Result = await p.usersCollection.findOneAndUpdate(
+    const user0 = (await p.usersCollection.findOneAndUpdate(
       { _id: new ObjectId(p.userId) },
       { $set: { outInvitation: null } },
       { returnDocument: "before" }
-    );
-    if (user0Result.value === null) {
+    )).value;
+    if (user0 === null) {
       Terminal.error('Could not find document of the saved user ID');
       return;
     }
-    const user0 = user0Result.value;
 
     deleteOutInvitationForFriend(p, user0);
 
@@ -98,7 +98,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     const start = generateStart();
     const isUser0White = Math.random() < 0.5;
     const path = uuidv4();
-    p.ongoingGamesCollection.insertOne({
+    ongoingGamesInsert(p, {
       path: path,
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,

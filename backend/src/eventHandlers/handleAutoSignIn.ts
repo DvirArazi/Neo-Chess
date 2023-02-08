@@ -5,33 +5,29 @@ import { Terminal } from "../utils/terminal";
 
 export function handleAutoSignIn(p: HandlerParams) {
   p.socket.on("autoSignIn", async (aad) => {
-    const userBeforeResult = await p.usersCollection.findOneAndUpdate(
+    const userBefore = (await p.usersCollection.findOneAndUpdate(
       {
         _id: new ObjectId(aad.id),
         aadKeys: aad.key,
       },
       { $pull: { socketIds: { key: aad.key } } },
       { returnDocument: "before" }
-    );
-    if (userBeforeResult.value === null) {
+    )).value;
+    if (userBefore === null) {
       Terminal.warning('User tried to auto sign in with an invalid AAD');
       p.socket.emit("signedOut");
       return;
     }
-    const userBefore = userBeforeResult.value;
 
-    const valuesOld = userBefore.aadKeys.find(key => key === aad.key);
-
-    const userAfterResult = await p.usersCollection.findOneAndUpdate(
+    const userAfter = (await p.usersCollection.findOneAndUpdate(
       { _id: new ObjectId(aad.id), },
       { $push: { socketIds: p.socket.id } },
       { returnDocument: "after" }
-    );
-    if (userAfterResult.value === null) {
+    )).value;
+    if (userAfter === null) {
       Terminal.warning('Could not find user. Somehow...?');
       return;
     }
-    const userAfter = userAfterResult.value;
 
     p.userId = aad.id;
 

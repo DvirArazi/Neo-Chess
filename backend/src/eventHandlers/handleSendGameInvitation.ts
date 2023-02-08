@@ -2,6 +2,8 @@ import { emitToUser } from "backend/src/utils/tools/general";
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { ObjectId } from "mongodb";
+import usersSetOutInvitation from "backend/src/collectionOperations/usersSetOutInvitation";
+import usersPushInvitations from "backend/src/collectionOperations/usersPushInvitations";
 
 export default function handleSendGameInvitation(p: HandlerParams) {
   p.socket.on("sendGameInvitation", async (timeframe, isRated, friendId, callback) => {
@@ -11,63 +13,31 @@ export default function handleSendGameInvitation(p: HandlerParams) {
         return false;
       }
 
-      const user = await p.usersCollection.findOne(
-        { _id: new ObjectId(p.userId) }
-      );
+      const user = await p.usersCollection.findOne({ _id: new ObjectId(p.userId) });
       if (user === null) {
         Terminal.error('User with saved ID was not found in the DB');
         return false;
       }
 
-      await p.usersCollection.updateOne(
-        { _id: new ObjectId(friendId) },
-        { $pull: { invitations: { friendId: user._id.toString() } } },
-      );
-      const friendUserResult = await p.usersCollection.findOneAndUpdate(
-        { _id: new ObjectId(friendId) },
-        {
-          $push: {
-            invitations: {
-              friendId: user._id.toString(),
-              name: user.name,
-              timeframe: timeframe,
-              isRated: isRated,
-            }
-          }
-        },
-        { returnDocument: "after" }
-      );
-      if (friendUserResult.value === null) {
-        Terminal.warning('friendId provided was not found in DB');
+      const friendUser = await p.usersCollection.findOne({ _id: new ObjectId(friendId) });
+      if (friendUser === null) {
+        Terminal.warning('Friend ID was not found in DB');
         return false;
       }
-      const friendUser = friendUserResult.value;
 
-      await p.usersCollection.updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            outInvitation: {
-              friendId: friendUser._id.toString(),
-              name: friendUser.name,
-              timeframe: timeframe,
-              isRated: isRated,
-            },
-            gameRequestId: null,
-          }
-        }
-      );
-
-      emitToUser(p, friendUser, "gameInvitationsUpdated",
-        friendUser.invitations
-      );
-
-      emitToUser(p, user, "gameRequestUpdated", {
+      if (!await usersSetOutInvitation(p, p.userId, {
+        friendId: friendId,
+        friendName: friendUser.name,
         timeframe: timeframe,
         isRated: isRated,
-        isByRating: false,
-        opponentName: friendUser.name,
-      })
+      })) return false;
+
+      if (!await usersPushInvitations(p, friendId, {
+        friendId: p.userId,
+        friendName: user.name,
+        timeframe: timeframe,
+        isRated: isRated,
+      })) return false;
 
       return true;
     })());

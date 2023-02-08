@@ -41,7 +41,7 @@ export async function leave(p: HandlerParams, userId: string) {
   );
 }
 
-export async function deleteOutInvitationForFriend(p: HandlerParams, user: WithId<User>) {
+export async function deleteOutInvitationForFriend(p: BackendParams, user: WithId<User>) {
   if (user.outInvitation === null) return;
 
   const friendUserResult = await p.usersCollection.findOneAndUpdate(
