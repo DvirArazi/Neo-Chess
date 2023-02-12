@@ -38,6 +38,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
   const usersCollection = db.collection<User>("Users");
   const gameRequestsCollection = db.collection<GameRequest>("GameRequests");
   const ongoingGamesCollection = db.collection<Game>("OngoingGames");
+  const historyGamesCollection = db.collection<Game>("HistoryGames");
 
   usersCollection.deleteMany({}); //remove in production
   gameRequestsCollection.deleteMany({});
@@ -49,6 +50,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     usersCollection: usersCollection,
     gameRequestsCollection: gameRequestsCollection,
     ongoingGamesCollection: ongoingGamesCollection,
+    historyGamesCollection: historyGamesCollection,
   }
 
   webSocketServer.on("connection", (socket) => {
@@ -84,6 +86,7 @@ export type BackendParams = {
   usersCollection: Collection<User>,
   gameRequestsCollection: Collection<GameRequest>,
   ongoingGamesCollection: Collection<Game>,
+  historyGamesCollection: Collection<Game>,
 }
 
 export type HandlerParams = {

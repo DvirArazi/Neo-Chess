@@ -16,6 +16,7 @@ export type User = {
   gameRequestId: string | null,
   outInvitation: GameInvitation | null,
   ongoingGamesIds: string[],
+  historyGamesIds: string[],
   name: string,
   ratings: number[],
   friends: Friend[],

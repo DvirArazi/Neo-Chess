@@ -91,7 +91,6 @@ export default function handlePlayerMoved(p: HandlerParams) {
       newLayout, getOppositeColor(turnsToColor(newTurns)), newTurns, game.startRep
     );
 
-
     const otherUserId = turnColor ? game.white.id : game.black.id;
     const otherUser = await p.usersCollection.findOne({ _id: new ObjectId(otherUserId) });
     if (otherUser === null) {
@@ -106,6 +105,11 @@ export default function handlePlayerMoved(p: HandlerParams) {
           Terminal.warning('time is out');
 
           const winColor = turnsToColor(game.turns);
+
+          p.ongoingGamesCollection.updateOne(
+            {_id: game._id},
+            {}
+          );
 
           emitToUser(p, user, "timeout", game._id.toString(), winColor);
           emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);

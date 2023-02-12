@@ -19,6 +19,7 @@ export interface ClientToServerEvents {
   createGameRequest: (timeframe: Timeframe, isRated: boolean, ratingRelMin: number, ratingRelMax: number) => void;
   sendGameInvitation: (timeframe: Timeframe, isRated: boolean, friendId: string, callback: (sent: boolean) => void) => void;
   getGameViewData: (gameId: string, dataCallback: (data: GameViewData | "404") => void) => void;
+  getHistoryGames: (callback: (games: GameTd[]) => void) => void;
   playerMove: (gameId: string, from: Point, to: Point, promotionType: PieceType | null) => void;
 }
 export interface ServerToClientEvents {

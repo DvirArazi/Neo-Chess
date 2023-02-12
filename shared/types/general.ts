@@ -1,5 +1,5 @@
 import { BoardLayout } from "shared/types/boardLayout"
-import { Player, Timeframe } from "shared/types/game"
+import { GameStatus, Player, Timeframe } from "shared/types/game"
 import { PieceColor } from "shared/types/piece"
 
 export type UserViewData = {
@@ -20,6 +20,7 @@ export type GameTd = {
   black: Player,
   userColor: PieceColor,
   turnColor: PieceColor,
+  status: GameStatus,
 }
 
 export type GameInvitation = {

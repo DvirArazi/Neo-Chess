@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import GameOnline from "frontend/src/components/pageExclusives/game/GameOnline";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { GameViewData } from "shared/types/game";
 import { SOCKET } from "../_app";
 import Error from "next/error";
@@ -13,16 +13,14 @@ export default function Game() {
 
   const path = router.query.path as string | undefined;
 
-  console.log(`path`, path);
-
   const gameViewData = new Stateful<GameViewData | "loading" | "404">("loading");
+  const count = useRef(0);
 
   useEffect(() => {
     if (path === undefined) return;
 
     SOCKET.emit("getGameViewData", path, (data) => {
       gameViewData.set(data);
-      console.log('data recieved');
     });
   }, [path]);
 
@@ -30,5 +28,6 @@ export default function Game() {
 
   if (gameViewData.value === "404") return <Error statusCode={404} />;
 
-  return <GameOnline key={path} data={gameViewData.value} />
+  console.log('data', gameViewData.value);
+  return <GameOnline key={count.current++} data={gameViewData.value} />
 }

@@ -20,7 +20,7 @@ import { PieceColor, PieceType } from "shared/types/piece";
 export default function GameOnline(props: { data: GameViewData }) {
   const { data } = props;
 
-  console.log('data', data)
+  // console.log('data', data)
 
   const isWide = WINDOW_WIDTH > 600;
 

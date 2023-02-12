@@ -5,7 +5,9 @@ import { Terminal } from "../utils/terminal";
 
 export default function handleGetGameViewData(p: HandlerParams) {
   p.socket.on("getGameViewData", async (path, callback) => {
-    const game = await p.ongoingGamesCollection.findOne({ path: path });
+    const game =
+      (await p.ongoingGamesCollection.findOne({ path: path })) ??
+      (await p.historyGamesCollection.findOne({ path: path }));
     if (game === null) {
       Terminal.warning('Game path does not exist');
       callback("404");
@@ -14,9 +16,9 @@ export default function handleGetGameViewData(p: HandlerParams) {
 
     const role: GameRole = (() => {
       Terminal.log(
-        `user ID: ${p.userId?.toString()}\n` +
-        `    white ID: ${game.white.id.toString()}\n` +
-        `    black ID: ${game.black.id.toString()}\n`
+        `user ID: ${p.userId?.toString()}\n    ` +
+        `white ID: ${game.white.id.toString()}\n    ` +
+        `black ID: ${game.black.id.toString()}\n`
       );
       switch (p.userId?.toString()) {
         case game.white.id.toString(): return PieceColor.White;
