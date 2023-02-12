@@ -21,7 +21,9 @@ import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponseToInvitation';
 import handleGetHistoryGames from 'backend/src/eventHandlers/handleGetHistoryGames';
-import HandleResign from 'backend/src/eventHandlers/handleResign';
+import handleResign from 'backend/src/eventHandlers/handleResign';
+import handleDrawOffer from 'backend/src/eventHandlers/handleDrawOffer';
+import handleDrawAccept from 'backend/src/eventHandlers/handleDrawAccept';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -76,7 +78,9 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleSendGameInvitation(handlerParams);
     handleGetGameViewData(handlerParams);
     handlePlayerMoved(handlerParams);
-    HandleResign(handlerParams);
+    handleResign(handlerParams);
+    handleDrawOffer(handlerParams);
+    handleDrawAccept(handlerParams);
     handleGetHistoryGames(handlerParams);
     handleDisconnect(handlerParams);
   });

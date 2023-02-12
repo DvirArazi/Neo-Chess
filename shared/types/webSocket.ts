@@ -22,6 +22,8 @@ export interface ClientToServerEvents {
   getHistoryGames: (callback: (games: GameTd[] | "404") => void) => void;
   playerMove: (gameId: string, from: Point, to: Point, promotionType: PieceType | null) => void;
   resign: (gameId: string) => void;
+  drawOffer: (gameId: string) => void;
+  drawAccept: (gameId: string) => void;
 }
 export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: UserViewData) => void;
@@ -36,6 +38,8 @@ export interface ServerToClientEvents {
   playerMoved: (gameId: string, gameTurn: GameTurn, status: GameStatus, timeCrntTurnMs: number) => void;
   timeout: (gameId: string, winColor: PieceColor) => void;
   resigned: (gameId: string, winColor: PieceColor) => void;
+  drawOffered: (gameId: string) => void;
+  drawAccepted: (gameId: string) => void;
 }
 
 export type AutoAuthData = {

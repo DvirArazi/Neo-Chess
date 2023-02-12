@@ -6,22 +6,22 @@ import { ObjectId } from "mongodb";
 export default async function ongoingGamesInsert(p: BackendParams, game: Game) {
   const gameId = (await p.gamesCollection.insertOne(game)).insertedId.toString();
 
-  const userWhite = (await p.usersCollection.findOneAndUpdate(
-    { _id: new ObjectId(game.white.id) },
-    { $push: { ongoingGamesIds: gameId } },
-    { returnDocument: "after" },
-  )).value;
-  if (userWhite === null) return;
-  const userBlack = (await p.usersCollection.findOneAndUpdate(
-    { _id: new ObjectId(game.black.id) },
-    { $push: { ongoingGamesIds: gameId } },
-    { returnDocument: "after" },
-  )).value;
-  if (userBlack === null) return;
+  updateUser(game.white.id);
+  updateUser(game.black.id);
 
-  emitToUser(p, userWhite, "createdGame", game.path);
-  emitToUser(p, userBlack, "createdGame", game.path);
-
-  emitToUser(p, userWhite, "ongoingGamesUpdated", await getOngoingGamesTd(p, userWhite));
-  emitToUser(p, userBlack, "ongoingGamesUpdated", await getOngoingGamesTd(p, userBlack));
+  async function updateUser(id: string) {  
+    const user = (await p.usersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $push: { ongoingGamesIds: gameId },
+        $set: {gameRequestId: null, outInvitation: null},
+      },
+      { returnDocument: "after" },
+    )).value;
+    if (user === null) return;
+  
+    emitToUser(p, user, "createdGame", game.path);
+    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
+    emitToUser(p, user, "gameRequestUpdated", null);
+  }
 }

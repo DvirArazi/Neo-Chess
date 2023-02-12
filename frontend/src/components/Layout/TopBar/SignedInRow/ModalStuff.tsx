@@ -44,8 +44,8 @@ export function VXButtons(props: { onClick: (isAccepted: boolean) => void }) {
   function getButton(isAccepted: boolean) {
     const [iconName, color0, color1, hint, radii]:
       [IconName, string, string, string, string] = isAccepted ?
-        ["approve", `#00e600`, `#00cc00`, 'Approve', `5px 0 0 5px`] :
-        ["deny", `#ff3333`, `#e60000`, 'Deny', `0 5px 5px 0`];
+        ["approve", `#00e600`, `#00cc00`, 'Accept', `5px 0 0 5px`] :
+        ["deny", `#ff3333`, `#e60000`, 'Decline', `0 5px 5px 0`];
 
     return <>
       <Tooltip

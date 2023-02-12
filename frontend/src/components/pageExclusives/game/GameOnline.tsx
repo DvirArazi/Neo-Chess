@@ -1,6 +1,7 @@
-import { Box, Divider, Modal } from "@mui/material";
+import { Alert, Box, Divider, Modal, Portal, Snackbar, SnackbarCloseReason } from "@mui/material";
 import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import Layout from "frontend/src/components/Layout";
+import { VXButtons } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
 import ButtonsBannerOnline from "frontend/src/components/pageExclusives/game/GameOnline/ButtonsBannerOnline";
@@ -8,13 +9,13 @@ import { MenuOnline } from "frontend/src/components/pageExclusives/game/GameOnli
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { useEffect, useRef, useState } from "react";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
 import { getGameStatus, pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
-import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason, EGameRole } from "shared/types/game";
+import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason, EGameRole, DrawReason } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
 
 export default function GameOnline(props: { data: GameViewData }) {
@@ -32,6 +33,8 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isSnackbarOpen = new Stateful(false);
   const snackbarData = useRef({ friendName: '', success: false });
   const isRequestSnackbarOpen = new Stateful(false);
+  const isDrawOfferSnackbarOpen = new Stateful(false);
+  const isDrawOfferedSnackbarOpen = new Stateful(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -43,11 +46,11 @@ export default function GameOnline(props: { data: GameViewData }) {
   const turnColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
 
-  console.log(game.status);
-
   handlePlayerMovedEvent();
   handleTimeoutEvent();
   handleResignedEvent();
+  handleDrawOffered();
+  handleDrawAcceptedEvent();
   handleStepsBackChange();
 
   return <>
@@ -55,6 +58,8 @@ export default function GameOnline(props: { data: GameViewData }) {
     {getMenu()}
     {getSnackbar()}
     {getRequestSnackbar()}
+    {getDrawOfferSnackbar()}
+    {getDrawOfferedSnackbar()}
   </>;
 
   function getWideLayout() {
@@ -242,7 +247,10 @@ export default function GameOnline(props: { data: GameViewData }) {
       isOpen={isMenuOpen}
       status={game.status}
       onTakebackClick={() => { }}
-      onDrawClick={() => { }}
+      onDrawClick={() => {
+        SOCKET.emit("drawOffer", game.id);
+        isDrawOfferSnackbarOpen.set(true);
+      }}
       onResignClick={() => SOCKET.emit("resign", game.id)}
       onRematchClick={sendInvitation}
       onNewOpponentClick={() => {
@@ -285,6 +293,50 @@ export default function GameOnline(props: { data: GameViewData }) {
       severity={"info"}
       message={'Game request sent'}
     />
+  }
+
+  function getDrawOfferSnackbar() {
+    return <AlertSnackbar
+      isOpen={isDrawOfferSnackbarOpen}
+      severity={"info"}
+      message={'Draw offer sent'}
+    />
+  }
+
+  function getDrawOfferedSnackbar() {
+    return <Box sx={{ position: `relative` }}>
+      <Portal>
+        <Snackbar
+          open={isDrawOfferedSnackbarOpen.value}
+          onClose={(_, reason) => handleClose(reason)}
+        >
+          <Alert
+            severity={"info"}
+            sx={{ alignItems: `center` }}
+          >
+            <Box sx={{
+              display: `flex`,
+              alignItems: `center`,
+            }}>
+              <Box>{'Your opponent offers a draw'}</Box>
+              <Box sx={{ width: `20px` }} />
+              <VXButtons onClick={(isAccepted) => {
+                if (isAccepted) {
+                  SOCKET.emit("drawAccept", game.id);
+                }
+                isDrawOfferedSnackbarOpen.set(false);;
+              }} />
+            </Box>
+          </Alert>
+        </Snackbar>
+      </Portal>
+    </Box>;
+
+    function handleClose(reason: SnackbarCloseReason) {
+      if (reason === "clickaway") return;
+
+      isDrawOfferedSnackbarOpen.set(false);
+    }
   }
 
   function handlePlayerMovedEvent() {
@@ -343,6 +395,35 @@ export default function GameOnline(props: { data: GameViewData }) {
             catagory: GameStatusCatagory.Win,
             winColor: winColor,
             reason: WinReason.Resignation,
+          }
+        });
+
+        stepsBack.set(0);
+        isMenuOpen.set(true);
+      });
+    }, []);
+  }
+
+  function handleDrawOffered() {
+    useEffect(() => {
+      SOCKET.on("drawOffered", (gameId) => {
+        if (game.id.toString() !== gameId.toString()) return;
+
+        isDrawOfferedSnackbarOpen.set(true);
+      });
+    }, []);
+  }
+
+  function handleDrawAcceptedEvent() {
+    useEffect(() => {
+      SOCKET.on("drawAccepted", (gameId) => {
+        if (game.id.toString() !== gameId.toString()) return;
+
+        setGame({
+          ...game,
+          status: {
+            catagory: GameStatusCatagory.Draw,
+            reason: DrawReason.Agreement,
           }
         });
 

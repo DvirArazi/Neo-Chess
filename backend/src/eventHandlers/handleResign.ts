@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { GameStatusCatagory, WinReason } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 
-export default function HandleResign(p: HandlerParams) {
+export default function handleResign(p: HandlerParams) {
   p.socket.on("resign", async (gameId) => {
     if (p.userId === undefined) {
       Terminal.warning('User tried to resign but was not signed in');
@@ -25,15 +25,6 @@ export default function HandleResign(p: HandlerParams) {
     }
 
     const isUserWhite = p.userId === game.white.id;
-
-    const otherUser = await p.usersCollection.findOne(
-      { _id: new ObjectId(isUserWhite ? game.black.id : game.white.id) }
-    );
-    if (otherUser === null) {
-      Terminal.error('Could not find user with ID saved in game');
-      return;
-    }
-
     const winColor = isUserWhite ? PieceColor.Black : PieceColor.White;
 
     p.gamesCollection.updateOne(
@@ -48,6 +39,14 @@ export default function HandleResign(p: HandlerParams) {
         }
       }
     )
+
+    const otherUser = await p.usersCollection.findOne(
+      { _id: new ObjectId(isUserWhite ? game.black.id : game.white.id) }
+    );
+    if (otherUser === null) {
+      Terminal.error('Could not find user with ID saved in game');
+      return;
+    }
 
     OnGameUpdate(p, user, otherUser, gameId, true);
 
