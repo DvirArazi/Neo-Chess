@@ -5,18 +5,18 @@ import { THEME } from "frontend/src/pages/_app";
 export default function ButtonsBannerOnline(props: {
   canStepBack: boolean,
   canStepForward: boolean,
-  isUntimed: boolean,
+  isViewer: boolean,
   onMenuClick: () => void,
   onBackClick: () => void,
   onForwardClick: () => void,
 }) {
   const {
+    canStepBack,
+    canStepForward,
+    isViewer,
     onMenuClick,
     onBackClick,
-    isUntimed,
     onForwardClick,
-    canStepBack,
-    canStepForward
   } = props;
 
   return <Box sx={{
@@ -24,13 +24,16 @@ export default function ButtonsBannerOnline(props: {
     flexDirection: `row`,
     justifyContent: `space-around`,
   }}>
-    <IconButton onClick={onMenuClick}>
-      <Icon
-        name="menu"
-        side={40}
-        filter={THEME.icon}
-      />
-    </IconButton>
+    {
+      isViewer ? <></> :
+        <IconButton onClick={onMenuClick}>
+          <Icon
+            name="menu"
+            side={40}
+            filter={THEME.icon}
+          />
+        </IconButton>
+    }
 
     <IconButton
       disabled={!canStepBack}

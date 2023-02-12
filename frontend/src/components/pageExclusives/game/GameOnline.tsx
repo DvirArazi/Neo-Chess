@@ -14,7 +14,7 @@ import { getGameStatus, pointToIndex, startAndTurnsToBoardLayout } from "shared/
 import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
-import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason } from "shared/types/game";
+import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason, EGameRole } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
 
 export default function GameOnline(props: { data: GameViewData }) {
@@ -31,6 +31,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   const postTurn = new Stateful<boolean>(false);
   const isSnackbarOpen = new Stateful(false);
   const snackbarData = useRef({ friendName: '', success: false });
+  const isRequestSnackbarOpen = new Stateful(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -46,12 +47,14 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   handlePlayerMovedEvent();
   handleTimeoutEvent();
+  handleResignedEvent();
   handleStepsBackChange();
 
   return <>
     {isWide ? getWideLayout() : getNarrowLayout()}
     {getMenu()}
     {getSnackbar()}
+    {getRequestSnackbar()}
   </>;
 
   function getWideLayout() {
@@ -227,7 +230,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     return <ButtonsBannerOnline
       canStepBack={stepsBack.value < game.turns.length}
       canStepForward={stepsBack.value > 0}
-      isUntimed={game.timeframe === "untimed"}
+      isViewer={game.role === EGameRole.Viewer}
       onBackClick={() => stepsBack.set(v => v + 1)}
       onForwardClick={() => stepsBack.set(v => v - 1)}
       onMenuClick={() => isMenuOpen.set(true)}
@@ -240,10 +243,12 @@ export default function GameOnline(props: { data: GameViewData }) {
       status={game.status}
       onTakebackClick={() => { }}
       onDrawClick={() => { }}
-      onResignClick={() => { }}
+      onResignClick={() => SOCKET.emit("resign", game.id)}
       onRematchClick={sendInvitation}
-      onNewOpponentClick={() => { }}
-      onShareClick={() => { }}
+      onNewOpponentClick={() => {
+        SOCKET.emit("createGameRequest", game.timeframe, game.isRated, -200, 200);
+        isRequestSnackbarOpen.set(true);
+      }}
     />
 
     function sendInvitation() {
@@ -271,6 +276,14 @@ export default function GameOnline(props: { data: GameViewData }) {
         `Invitation to ${friendName} ${success ?
           'was sent successfully' : 'could not be sent'}`
       }
+    />
+  }
+
+  function getRequestSnackbar() {
+    return <AlertSnackbar
+      isOpen={isRequestSnackbarOpen}
+      severity={"info"}
+      message={'Game request sent'}
     />
   }
 
@@ -310,6 +323,26 @@ export default function GameOnline(props: { data: GameViewData }) {
             catagory: GameStatusCatagory.Win,
             winColor: winColor,
             reason: WinReason.Timeout,
+          }
+        });
+
+        stepsBack.set(0);
+        isMenuOpen.set(true);
+      });
+    }, []);
+  }
+
+  function handleResignedEvent() {
+    useEffect(() => {
+      SOCKET.on("resigned", (gameId, winColor) => {
+        if (game.id.toString() !== gameId.toString()) return;
+
+        setGame({
+          ...game,
+          status: {
+            catagory: GameStatusCatagory.Win,
+            winColor: winColor,
+            reason: WinReason.Resignation,
           }
         });
 

@@ -8,7 +8,7 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, getOngoingGamesTd } from "backend/src/utils/tools/general";
+import { emitToUser, getOngoingGamesTd, OnGameUpdate } from "backend/src/utils/tools/general";
 import { GameTd } from "shared/types/general";
 import { ObjectId, WithId } from "mongodb";
 import { User } from "backend/src/utils/types";
@@ -120,7 +120,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
             }
           );
 
-          OnGameUpdate(p, user, otherUser, gameId, newStatus);
+          OnGameUpdate(p, user, otherUser, gameId, true);
 
           emitToUser(p, user, "timeout", game._id.toString(), winColor);
           emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);
@@ -138,7 +138,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       }
     );
 
-    OnGameUpdate(p, user, otherUser, gameId, newStatus);
+    OnGameUpdate(p, user, otherUser, gameId, newStatus.catagory !== GameStatusCatagory.Ongoing);
 
     const lastTurn = newTurns[newTurns.length - 1];
 
@@ -176,40 +176,4 @@ function isPromotionValid(layout: BoardLayout, turnColor: PieceColor, promotion:
   }
 
   return true;
-}
-
-async function OnGameUpdate(
-  p: BackendParams,
-  user0: WithId<User>,
-  user1: WithId<User>,
-  gameId: string,
-  status: GameStatus,
-) {
-  const users = [user0, user1];
-
-  if (status.catagory !== GameStatusCatagory.Ongoing) {
-    users.map(async (user, i) => {
-      const userAfter = (await p.usersCollection.findOneAndUpdate(
-        { _id: user._id },
-        {
-          $pull: { ongoingGamesIds: gameId },
-          $push: { historyGamesIds: gameId },
-        },
-        { returnDocument: "after" }
-      )).value!
-
-
-      emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
-    })
-    p.gamesCollection.updateOne(
-      { _id: new ObjectId(gameId) },
-      { $set: { viewerSocketIds: [] } }
-    );
-
-    return;
-  }
-
-  users.map(async user =>
-    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user))
-  );
 }

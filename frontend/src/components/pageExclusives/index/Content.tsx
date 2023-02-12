@@ -155,8 +155,8 @@ export default function Content() {
   function getRequestSnackbar() {
     return <AlertSnackbar
       isOpen={isRequestSnackbarOpen}
-      message="Game request sent"
-      severity="info"
+      severity={"info"}
+      message={'Game request sent'}
     />;
   }
 

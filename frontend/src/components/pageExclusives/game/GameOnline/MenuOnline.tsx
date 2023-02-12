@@ -1,11 +1,10 @@
-import { Box, Divider, List } from "@mui/material";
+import { Divider, List } from "@mui/material";
 import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import MenuOption from "frontend/src/components/pageExclusives/game/MenuOption";
 import MenuTitle from "frontend/src/components/pageExclusives/game/MenuTitle";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { getOppositeColor } from "shared/tools/piece";
-import { DrawReason, GameStatus, GameStatusCatagory, WinReason } from "shared/types/game";
+import { GameStatus, GameStatusCatagory } from "shared/types/game";
 import { isMobile } from "react-device-detect";
 
 export function MenuOnline(props: {
@@ -16,7 +15,6 @@ export function MenuOnline(props: {
   onResignClick: () => void,
   onRematchClick: () => void,
   onNewOpponentClick: () => void,
-  onShareClick: () => void,
 }) {
   const {
     isOpen,
@@ -26,7 +24,6 @@ export function MenuOnline(props: {
     onResignClick,
     onRematchClick,
     onNewOpponentClick,
-    onShareClick,
   } = props;
 
   const isSnackbarOpen = new Stateful(false);
@@ -92,15 +89,19 @@ export function MenuOnline(props: {
     return <MenuOption
       text='Share'
       iconPath='share'
-      action={async () =>
-        isMobile ?
+      action={async () => {
+        if (isMobile) {
           await navigator.share({
             title: "Neo-Chess",
             url: window.location.href
-          }) :
+          })
+     } else {
           navigator.clipboard.writeText(
             window.location.href
-          )
+          );
+          isSnackbarOpen.set(true);
+        }
+      }
       }
     />
   }

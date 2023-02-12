@@ -85,3 +85,38 @@ export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
 
   return gamesTd;
 }
+
+export async function OnGameUpdate(
+  p: BackendParams,
+  user0: WithId<User>,
+  user1: WithId<User>,
+  gameId: string,
+  isGameEnd: boolean,
+) {
+  const users = [user0, user1];
+
+  if (isGameEnd) {
+    users.map(async (user, i) => {
+      const userAfter = (await p.usersCollection.findOneAndUpdate(
+        { _id: user._id },
+        {
+          $pull: { ongoingGamesIds: gameId },
+          $push: { historyGamesIds: gameId },
+        },
+        { returnDocument: "after" }
+      )).value!
+
+      emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, userAfter));
+    })
+    p.gamesCollection.updateOne(
+      { _id: new ObjectId(gameId) },
+      { $set: { viewerSocketIds: [] } }
+    );
+
+    return;
+  }
+
+  users.map(async user =>
+    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user))
+  );
+}
