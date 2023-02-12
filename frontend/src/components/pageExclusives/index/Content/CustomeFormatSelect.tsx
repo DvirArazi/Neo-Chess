@@ -66,8 +66,8 @@ export default function CustomeFormatPanel(props: {
           borderRadius: `10px`,
         }}
       >
-        {times.map((v) =>
-          <MenuItem key={v} value={v}>{timeToString(v)}</MenuItem>
+        {times.map((v, i) =>
+          <MenuItem key={i} value={v}>{timeToString(v)}</MenuItem>
         )}
       </Select>
     </Box>

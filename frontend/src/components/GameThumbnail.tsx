@@ -27,7 +27,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
     const isUserTurn = userColor === turnColor;
     const borderColor = status.catagory === GameStatusCatagory.Ongoing ?
       isUserTurn ? `#00b300` : `#6666ff` :
-      status.catagory === GameStatusCatagory.Win ? status.winColor === userColor ? `#00ff00` : `#ff0000` :
+      status.catagory === GameStatusCatagory.Win ? status.winColor === userColor ? `#00cc00` : `#ff0000` :
       `#bfbfbf`;
   
     return <Button
@@ -48,8 +48,8 @@ export default function GameThumbnail(props: { data: GameTd }) {
       }}>
   
         {/* board thumbnail */}
+        <Box>
         <Box sx={{
-          // padding: `3px`,
           borderStyle: `solid`,
           borderWidth: `3.5px`,
           borderColor: borderColor,
@@ -65,6 +65,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
             <BoardBackground />
             {getPieces()}
           </Box>
+        </Box>
         </Box>
   
         {/* game info */}
@@ -89,6 +90,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
             {getPlayer(black)}
           </Box>
           <Box sx={{
+            padding: `0 15px`,
             fontWeight: `bold`,
             fontSize: `15px`,
             color: borderColor,

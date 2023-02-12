@@ -48,6 +48,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
 
+  console.log(game.turns.map(turn => turn.timeLeftMs))
+
   handleGameStatusChange();
   handleStepsBackTriggerChange();
   handleStepsBackOrTurnsOrIsPausedChange();
@@ -93,11 +95,11 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       turnsLength >= 2 ?
         (
           isGameJustOverByTimeout.value ? 0 :
-          game.turns[turnsLength - 2].timeLeftMs + (
-            hasTimedOut.value ? 0 :
-            - (timeCrntTurnMs - game.timeLastTurnMs)
-            + game.timeframe.incSec * 1000
-          )
+            game.turns[turnsLength - 2].timeLeftMs + (
+              hasTimedOut.value ? 0 :
+                - (timeCrntTurnMs - game.timeLastTurnMs)
+                + game.timeframe.incSec * 1000
+            )
         ) : game.timeframe.overallSec * 1000;
 
     const newTurns = [
@@ -188,6 +190,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function handleStepsBackOrTurnsOrIsPausedChange() {
     useEffect(() => {
+      timeUnpausedMs.set(0);
+
       if (timeoutId.current !== null) {
         clearTimeout(timeoutId.current);
       }
@@ -252,9 +256,14 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
         return game.timeframe.overallSec * 1000;
       }
 
-      const [iMod, timeMod] = isWhiteTurn === isWhite ?
-        [-1, -timeUnpausedMs.value] : [0, 0];
-      return game.turns[turnsLength - 1 + iMod].timeLeftMs + timeMod;
+      const check = (turnsLength % 2 === 0) === isWhite;
+
+      const iMod = turnsLength - 2 + (check ? 0 : 1);
+      // console.log('jmod', iMod)
+      // console.log(timeUnpausedMs.value)
+
+      const timeMod = check ? -timeUnpausedMs.value : 0;
+      return game.turns[iMod].timeLeftMs + timeMod;
     }
 
     function getIsTicking() {

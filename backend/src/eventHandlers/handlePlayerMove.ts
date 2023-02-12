@@ -1,4 +1,4 @@
-import { HandlerParams } from "backend/src/handleSocket";
+import { BackendParams, HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { BOARD_SIDE, getGameStatus, getLegalMoves, isInCheckmate, isKingCaptured, startAndTurnsToBoardLayout, step } from "shared/tools/boardLayout";
 import Lodash from "lodash";
@@ -10,7 +10,8 @@ import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
 import { emitToUser, getOngoingGamesTd } from "backend/src/utils/tools/general";
 import { GameTd } from "shared/types/general";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
+import { User } from "backend/src/utils/types";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotionType) => {
@@ -27,7 +28,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       return;
     }
 
-    const game = await p.ongoingGamesCollection.findOne({ _id: new ObjectId(gameId) });
+    const game = await p.gamesCollection.findOne({ _id: new ObjectId(gameId) });
     if (game === null) {
       Terminal.warning('Couldn\'nt find game using the id provided by the user');
       return;
@@ -101,21 +102,31 @@ export default function handlePlayerMoved(p: HandlerParams) {
     if (game.timeoutId !== null) { clearTimeout(game.timeoutId); }
     const newTimeoutId =
       game.turns.length < 1 || newStatus.catagory !== GameStatusCatagory.Ongoing ? null :
-        Number(setTimeout(() => {
+        Number(setTimeout(async () => {
           Terminal.warning('time is out');
 
           const winColor = turnsToColor(game.turns);
 
-          p.ongoingGamesCollection.updateOne(
-            {_id: game._id},
-            {}
+          await p.gamesCollection.updateOne(
+            { _id: game._id },
+            {
+              $set: {
+                status: {
+                  catagory: GameStatusCatagory.Win,
+                  winColor: winColor,
+                  reason: WinReason.Timeout,
+                }
+              }
+            }
           );
+
+          OnGameUpdate(p, user, otherUser, gameId, newStatus);
 
           emitToUser(p, user, "timeout", game._id.toString(), winColor);
           emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);
         }, newTimeLeftMs));
 
-    p.ongoingGamesCollection.updateOne(
+    p.gamesCollection.updateOne(
       { _id: game._id },
       {
         $set: {
@@ -127,11 +138,10 @@ export default function handlePlayerMoved(p: HandlerParams) {
       }
     );
 
+    OnGameUpdate(p, user, otherUser, gameId, newStatus);
+
     emitToUser(p, user, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
     emitToUser(p, otherUser, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
-
-    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
-    emitToUser(p, otherUser, "ongoingGamesUpdated", await getOngoingGamesTd(p, otherUser));
   });
 }
 
@@ -158,4 +168,36 @@ function isPromotionValid(layout: BoardLayout, turnColor: PieceColor, promotion:
   }
 
   return true;
+}
+
+async function OnGameUpdate(
+  p: BackendParams,
+  user0: WithId<User>,
+  user1: WithId<User>,
+  gameId: string,
+  status: GameStatus,
+) {
+  const users = [user0, user1];
+
+  if (status.catagory !== GameStatusCatagory.Ongoing) {
+    users.map(async (user, i) => {
+      const userAfter = (await p.usersCollection.findOneAndUpdate(
+        { _id: user._id },
+        {
+          $pull: { ongoingGamesIds: gameId },
+          $push: { historyGamesIds: gameId },
+        },
+        { returnDocument: "after" }
+      )).value!
+
+      
+      emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
+    })
+
+    return;
+  }
+
+  users.map(async user =>
+    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user))
+  );
 }

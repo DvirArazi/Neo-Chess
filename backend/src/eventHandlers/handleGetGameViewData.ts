@@ -6,8 +6,7 @@ import { Terminal } from "../utils/terminal";
 export default function handleGetGameViewData(p: HandlerParams) {
   p.socket.on("getGameViewData", async (path, callback) => {
     const game =
-      (await p.ongoingGamesCollection.findOne({ path: path })) ??
-      (await p.historyGamesCollection.findOne({ path: path }));
+      (await p.gamesCollection.findOne({ path: path }));
     if (game === null) {
       Terminal.warning('Game path does not exist');
       callback("404");

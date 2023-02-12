@@ -16,7 +16,7 @@ export default function handleDeleteFriend(p: HandlerParams) {
       { returnDocument: "after" }
     );
     if (userResult.value === null) {
-      Terminal.log('Saved user ID was not found in DB');
+      Terminal.warning('Saved user ID was not found in DB');
       return;
     }
     const user = userResult.value;
@@ -27,7 +27,7 @@ export default function handleDeleteFriend(p: HandlerParams) {
       { returnDocument: "after" }
     );
     if (friendUserResult.value === null) {
-      Terminal.log('Friend ID was not found in DB');
+      Terminal.warning('Friend ID was not found in DB');
       return;
     }
     const friendUser = friendUserResult.value;

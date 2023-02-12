@@ -4,9 +4,9 @@ import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
 import { useEffect, useRef } from "react";
 import { GameViewData } from "shared/types/game";
-import { SOCKET } from "../_app";
+import { SOCKET, USER_DATA } from "../_app";
 import Error from "next/error";
-import Loading from "frontend/src/components/Loading";
+import Empty from "frontend/src/components/Empty";
 
 export default function Game() {
   const router = useRouter();
@@ -22,9 +22,9 @@ export default function Game() {
     SOCKET.emit("getGameViewData", path, (data) => {
       gameViewData.set(data);
     });
-  }, [path]);
+  }, [path, USER_DATA]);
 
-  if (gameViewData.value === "loading") return <Loading />;
+  if (gameViewData.value === "loading") return <Empty message='Loading...'/>;
 
   if (gameViewData.value === "404") return <Error statusCode={404} />;
 

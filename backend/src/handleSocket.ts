@@ -20,6 +20,7 @@ import handleDeleteGameRequest from 'backend/src/eventHandlers/handleDeleteGameR
 import handleGetFriends from 'backend/src/eventHandlers/handleGetFriends';
 import handleSendGameInvitation from 'backend/src/eventHandlers/handleSendGameInvitation';
 import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponseToInvitation';
+import handleGetHistoryGames from 'backend/src/eventHandlers/handleGetHistoryGames';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -37,20 +38,18 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
   const db = mongoClient.db("NeoChessDB");
   const usersCollection = db.collection<User>("Users");
   const gameRequestsCollection = db.collection<GameRequest>("GameRequests");
-  const ongoingGamesCollection = db.collection<Game>("OngoingGames");
-  const historyGamesCollection = db.collection<Game>("HistoryGames");
+  const GamesCollection = db.collection<Game>("Games");
 
   usersCollection.deleteMany({}); //remove in production
   gameRequestsCollection.deleteMany({});
-  ongoingGamesCollection.deleteMany({}); //remove in production
+  GamesCollection.deleteMany({}); //remove in production
 
   const backendParams: BackendParams = {
     webSocketServer: webSocketServer,
     oAuth2Client: oAuth2Client,
     usersCollection: usersCollection,
     gameRequestsCollection: gameRequestsCollection,
-    ongoingGamesCollection: ongoingGamesCollection,
-    historyGamesCollection: historyGamesCollection,
+    gamesCollection: GamesCollection,
   }
 
   webSocketServer.on("connection", (socket) => {
@@ -76,6 +75,7 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handleSendGameInvitation(handlerParams);
     handleGetGameViewData(handlerParams);
     handlePlayerMoved(handlerParams);
+    handleGetHistoryGames(handlerParams);
     handleDisconnect(handlerParams);
   });
 };
@@ -85,8 +85,7 @@ export type BackendParams = {
   oAuth2Client: OAuth2Client,
   usersCollection: Collection<User>,
   gameRequestsCollection: Collection<GameRequest>,
-  ongoingGamesCollection: Collection<Game>,
-  historyGamesCollection: Collection<Game>,
+  gamesCollection: Collection<Game>,
 }
 
 export type HandlerParams = {

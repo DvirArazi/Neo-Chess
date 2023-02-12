@@ -69,7 +69,7 @@ export function deleteGameRequestOnDB(p: HandlerParams, user: WithId<User>) {
 export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
   let gamesTd: GameTd[] = [];
   for (const gameId of user.ongoingGamesIds) {
-    const game = await p.ongoingGamesCollection.findOne({ _id: new ObjectId(gameId) });
+    const game = await p.gamesCollection.findOne({ _id: new ObjectId(gameId) });
     if (game === null) {
       Terminal.error('Game ID from the user\'s ongoingGamesIds was not found on DB');
       continue;

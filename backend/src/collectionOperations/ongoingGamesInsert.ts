@@ -4,7 +4,7 @@ import { Game } from "backend/src/utils/types";
 import { ObjectId } from "mongodb";
 
 export default async function ongoingGamesInsert(p: BackendParams, game: Game) {
-  const gameId = (await p.ongoingGamesCollection.insertOne(game)).insertedId.toString();
+  const gameId = (await p.gamesCollection.insertOne(game)).insertedId.toString();
 
   const userWhite = (await p.usersCollection.findOneAndUpdate(
     { _id: new ObjectId(game.white.id) },

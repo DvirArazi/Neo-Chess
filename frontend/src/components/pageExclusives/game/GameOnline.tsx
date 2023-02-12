@@ -194,15 +194,22 @@ export default function GameOnline(props: { data: GameViewData }) {
         return game.timeframe.overallSec * 1000;
       }
 
-      const iMod = isWhiteTurn === isWhite ? -1 : 0;
+      const iMod = (game.turns.length % 2 === 0) === isWhite ? -1 : 0;
 
-      if (!isStatusOngoing && isWhiteTurn == isWhite) {
-        return game.turns[game.turns.length - 1 + iMod].timeLeftMs
-          - (new Date().getTime() - game.timeLastTurnMs);
+      if (!isStatusOngoing) {
+        const crntI = game.turns.length - 1 - stepsBack.value
+          + (((game.turns.length - stepsBack.value) % 2 === 0) === isWhite ? -1 : 0);
+        console.log(crntI);
+        return crntI <= 0 ? game.timeframe.overallSec * 1000 : game.turns[crntI].timeLeftMs;
       }
 
+      // if (!isStatusOngoing && isWhiteTurn === isWhite) {
+      //   return game.turns[game.turns.length - 1 + iMod].timeLeftMs
+      //     - (new Date().getTime() - game.timeLastTurnMs);
+      // }
+
       const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
-        -(new Date().getTime() - game.timeLastTurnMs)
+        - (new Date().getTime() - game.timeLastTurnMs)
         + game.timeframe.incSec * 1000;
 
       return game.turns[game.turns.length - 1 + iMod].timeLeftMs + timeMod;

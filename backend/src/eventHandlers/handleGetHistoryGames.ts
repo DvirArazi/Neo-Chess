@@ -12,18 +12,20 @@ export default function handleGetHistoryGames(p: HandlerParams) {
   p.socket.on("getHistoryGames", async (callback)=>{
     if (p.userId === undefined) {
       Terminal.warning('User tried to get history games but was not signed in');
+      callback("404");
       return;
     }
 
     const user = await p.usersCollection.findOne({_id: new ObjectId(p.userId)});
     if (user === null) {
       Terminal.error('Saved user ID was not found on DB');
+      callback("404");
       return;
     }
 
     let historyGamesTd: GameTd[] = [];
-    for (const gameId in user.historyGamesIds) {
-      const game = await p.historyGamesCollection.findOne({_id: new ObjectId(gameId)});
+    for (const gameId of user.historyGamesIds) {
+      const game = await p.gamesCollection.findOne({_id: new ObjectId(gameId)});
       if (game === null) {
         Terminal.error('history game with the ID saved in user was not found in DB');
         continue;
