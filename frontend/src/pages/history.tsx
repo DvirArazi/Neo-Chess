@@ -9,15 +9,17 @@ import { GameTd } from "shared/types/general";
 import { AAD_COOKIE } from "frontend/src/utils/tools/cookies";
 
 export default function history() {
+  const aad = AAD_COOKIE.get();
+
   const gamesTd = new Stateful<GameTd[] | "loading" | "404">("loading");
 
   useEffect(() => {
-    if (AAD_COOKIE.get() !== undefined && USER_DATA === undefined) return;
+    if (aad !== undefined && USER_DATA === undefined) return;
 
     SOCKET.emit("getHistoryGames", (newGames) => {
       gamesTd.set(newGames);
     });
-  }, [AAD_COOKIE.get(), USER_DATA]);
+  }, [aad, USER_DATA]);
 
 
   if (gamesTd.value === "loading") return <Empty message='Loading...'/>;

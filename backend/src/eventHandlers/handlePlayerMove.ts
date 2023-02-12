@@ -115,7 +115,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
                   catagory: GameStatusCatagory.Win,
                   winColor: winColor,
                   reason: WinReason.Timeout,
-                }
+                },
               }
             }
           );
@@ -140,8 +140,16 @@ export default function handlePlayerMoved(p: HandlerParams) {
 
     OnGameUpdate(p, user, otherUser, gameId, newStatus);
 
-    emitToUser(p, user, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
-    emitToUser(p, otherUser, "playerMoved", gameId, newTurns[newTurns.length - 1], newStatus, timeCrntTurnMs);
+    const lastTurn = newTurns[newTurns.length - 1];
+
+    emitToUser(p, user, "playerMoved", gameId, lastTurn, newStatus, timeCrntTurnMs);
+    emitToUser(p, otherUser, "playerMoved", gameId, lastTurn, newStatus, timeCrntTurnMs);
+
+    if (game.viewerSocketIds.length !== 0) {
+      p.webSocketServer.to(game.viewerSocketIds).emit("playerMoved",
+        gameId, lastTurn, newStatus, timeCrntTurnMs
+      );
+    }
   });
 }
 
@@ -190,9 +198,13 @@ async function OnGameUpdate(
         { returnDocument: "after" }
       )).value!
 
-      
+
       emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, user));
     })
+    p.gamesCollection.updateOne(
+      { _id: new ObjectId(gameId) },
+      { $set: { viewerSocketIds: [] } }
+    );
 
     return;
   }

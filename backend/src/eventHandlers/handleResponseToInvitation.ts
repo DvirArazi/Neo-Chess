@@ -65,6 +65,7 @@ export default function handleResponseToInvitation(p: HandlerParams) {
       path: uuidv4(),
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,
+      viewerSocketIds: [],
       timeframe: timeframe,
       isRated: friendUser.outInvitation.isRated,
       start: start,

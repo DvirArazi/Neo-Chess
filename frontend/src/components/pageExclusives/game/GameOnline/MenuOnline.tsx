@@ -1,11 +1,12 @@
 import { Box, Divider, List } from "@mui/material";
+import AlertSnackbar from "frontend/src/components/AlertSnackbar";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import MenuOption from "frontend/src/components/pageExclusives/game/MenuOption";
 import MenuTitle from "frontend/src/components/pageExclusives/game/MenuTitle";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { getOppositeColor } from "shared/tools/piece";
 import { DrawReason, GameStatus, GameStatusCatagory, WinReason } from "shared/types/game";
-import { PieceColor } from "shared/types/piece";
+import { isMobile } from "react-device-detect";
 
 export function MenuOnline(props: {
   isOpen: Stateful<boolean>,
@@ -28,10 +29,19 @@ export function MenuOnline(props: {
     onShareClick,
   } = props;
 
-  return <ModalFrame isOpen={isOpen} keepMounted={false}>{
-    status.catagory === GameStatusCatagory.Ongoing ?
-      getOngoingMenu() : getEndMenu()
-  }</ModalFrame>;
+  const isSnackbarOpen = new Stateful(false);
+
+  return <ModalFrame isOpen={isOpen} keepMounted={false}>
+    {
+      status.catagory === GameStatusCatagory.Ongoing ?
+        getOngoingMenu() : getEndMenu()
+    }
+    <AlertSnackbar
+      isOpen={isSnackbarOpen}
+      severity={"info"}
+      message={'Game link was copied to clipboard'}
+    />
+  </ModalFrame>;
 
   function getOngoingMenu() {
     return <List sx={{ padding: 0 }}>
@@ -52,6 +62,8 @@ export function MenuOnline(props: {
         iconPath='resign'
         action={onResignClick}
       />
+      <Divider />
+      {getShareOption()}
     </List>
   }
 
@@ -71,12 +83,25 @@ export function MenuOnline(props: {
           action={onNewOpponentClick}
         />
         <Divider />
-        <MenuOption
-          text='Share'
-          iconPath='share'
-          action={onShareClick}
-        />
+        {getShareOption()}
       </List>
     </>
+  }
+
+  function getShareOption() {
+    return <MenuOption
+      text='Share'
+      iconPath='share'
+      action={async () =>
+        isMobile ?
+          await navigator.share({
+            title: "Neo-Chess",
+            url: window.location.href
+          }) :
+          navigator.clipboard.writeText(
+            window.location.href
+          )
+      }
+    />
   }
 }

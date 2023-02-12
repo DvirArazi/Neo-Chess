@@ -29,4 +29,5 @@ export type Game = {
   timeoutId: number | null,
   white: Player,
   black: Player,
+  viewerSocketIds: string[],
 } & GameData

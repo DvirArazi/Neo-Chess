@@ -102,6 +102,7 @@ export default function handleCreateGameRequest(p: HandlerParams) {
       path: path,
       white: isUser0White ? player0 : player1,
       black: isUser0White ? player1 : player0,
+      viewerSocketIds: [],
       timeframe: timeframe,
       isRated: isRated,
       start: start,

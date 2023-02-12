@@ -1,4 +1,4 @@
-import { GameRole, EGameRole } from "shared/types/game";
+import { GameRole, EGameRole, GameStatusCatagory } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
 import { HandlerParams } from "../handleSocket";
 import { Terminal } from "../utils/terminal";
@@ -22,7 +22,16 @@ export default function handleGetGameViewData(p: HandlerParams) {
       switch (p.userId?.toString()) {
         case game.white.id.toString(): return PieceColor.White;
         case game.black.id.toString(): return PieceColor.Black;
-        default: return EGameRole.Viewer;
+        default: {
+          if (game.status.catagory === GameStatusCatagory.Ongoing) {
+            p.gamesCollection.updateOne(
+              { _id: game._id },
+              { $addToSet: { viewerSocketIds: p.socket.id } }
+            )
+          }
+
+          return EGameRole.Viewer;
+        }
       };
     })();
 

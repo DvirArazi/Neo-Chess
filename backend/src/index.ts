@@ -7,6 +7,7 @@ import handleSocket from './handleSocket'
 import { WebSocketServer } from './utils/types'
 import * as dotenv from 'dotenv'
 import { Terminal } from './utils/terminal'
+import helmet from 'helmet'
 
 dotenv.config({
   path: ".env"
@@ -33,6 +34,9 @@ app.prepare().then(() => {
 
   const publicFolder = path.join(process.cwd(), '/client/public/');
 
+  if (process.env.NODE_ENV === "production") {
+    expressApp.use(helmet());
+  }
   expressApp.use(express.static(publicFolder));
 
   handleSocket(webSocketServer);
