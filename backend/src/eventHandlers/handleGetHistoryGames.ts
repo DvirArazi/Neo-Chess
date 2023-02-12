@@ -39,6 +39,6 @@ export default function handleGetHistoryGames(p: HandlerParams) {
       });
     }
 
-    callback(historyGamesTd);
+    callback(historyGamesTd.reverse());
   });
 }

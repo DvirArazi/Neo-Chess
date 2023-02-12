@@ -5,10 +5,12 @@ import GamesModal from "frontend/src/components/Layout/TopBar/SignedInRow/GamesM
 import { SOCKET, THEME } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { IconName } from "frontend/src/utils/types/iconName";
+import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FriendsModalData, GamesModalData } from "shared/types/general";
 
 export default function SignedInRow() {
+  const router = useRouter();
 
   const gamesModalData = new Stateful<GamesModalData>({
     ongoingGamesTd: [],
@@ -36,7 +38,7 @@ export default function SignedInRow() {
       {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
       {friendsModalData.value.friendRequests.length > 0 ? getAlert() : <></>}
     </Box>
-    {getButton("history", 25, () => { })}
+    {getButton("history", 25, () => router.push('/history'))}
     {getGamesModal()}
     {getFriendsModal()}
   </>;

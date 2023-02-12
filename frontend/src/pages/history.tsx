@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Divider, Grid } from "@mui/material";
 import GameThumbnail from "frontend/src/components/GameThumbnail";
 import Empty from "frontend/src/components/Empty";
 import { SOCKET, USER_DATA } from "frontend/src/pages/_app";
@@ -24,9 +24,32 @@ export default function history() {
 
   if (gamesTd.value === "404") return <Error statusCode={404} />;
 
-  return <Box>{
-    gamesTd.value.length === 0 ?
-      <Empty message={'You don\'t yet have any games in your history'} /> :
-      gamesTd.value.reverse().map(gameTd => <GameThumbnail key={gameTd.path} data={gameTd} />)
-  }</Box>;
+  return <Box sx={{
+    display: `flex`,
+    flexDirection: `column`,
+    alignItems: `center`,
+  }}>
+    <Box sx={{
+      fontFamily: `robotoslab`,
+      fontSize: `30px`,
+      padding: `10px`,
+    }}>{'Games History'}</Box>
+    <Divider variant="middle" sx={{width: `100%`, maxWidth: `500px`}}/>
+    <Box sx={{height: `10px`}}/>
+    {
+      gamesTd.value.length === 0 ?
+        <Empty message={'You don\'t yet have any games in your history'} /> :
+        <Grid container spacing={0} 
+          // direction="column"
+          alignItems="center"
+          justifyContent="center"
+        >{
+          gamesTd.value.map(gameTd => 
+            <Grid key={gameTd.path} sx={{maxWidth: `500px`}}>
+              <GameThumbnail data={gameTd} />
+            </Grid>
+          )
+        }</Grid>
+    }
+  </Box>;
 }
