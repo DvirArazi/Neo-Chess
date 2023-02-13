@@ -8,7 +8,7 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, getOngoingGamesTd, OnGameUpdate } from "backend/src/utils/tools/general";
+import { emitToUser, getOngoingGamesTd, handleGameUpdate } from "backend/src/utils/tools/general";
 import { GameTd } from "shared/types/general";
 import { ObjectId, WithId } from "mongodb";
 import { User } from "backend/src/utils/types";
@@ -120,7 +120,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
             }
           );
 
-          OnGameUpdate(p, user, otherUser, gameId, true);
+          handleGameUpdate(p, user, otherUser, gameId, true);
 
           emitToUser(p, user, "timeout", game._id.toString(), winColor);
           emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);
@@ -138,7 +138,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       }
     );
 
-    OnGameUpdate(p, user, otherUser, gameId, newStatus.catagory !== GameStatusCatagory.Ongoing);
+    handleGameUpdate(p, user, otherUser, gameId, newStatus.catagory !== GameStatusCatagory.Ongoing);
 
     const lastTurn = newTurns[newTurns.length - 1];
 

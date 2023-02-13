@@ -1,6 +1,6 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, OnGameUpdate } from "backend/src/utils/tools/general";
+import { emitToUser, handleGameUpdate } from "backend/src/utils/tools/general";
 import { ObjectId } from "mongodb";
 import { GameStatusCatagory, WinReason } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
@@ -48,7 +48,7 @@ export default function handleResign(p: HandlerParams) {
       return;
     }
 
-    OnGameUpdate(p, user, otherUser, gameId, true);
+    handleGameUpdate(p, user, otherUser, gameId, true);
 
     emitToUser(p, user, "resigned", gameId, winColor);
     emitToUser(p, otherUser, "resigned", gameId, winColor);

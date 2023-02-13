@@ -86,7 +86,7 @@ export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
   return gamesTd;
 }
 
-export async function OnGameUpdate(
+export async function handleGameUpdate(
   p: BackendParams,
   user0: WithId<User>,
   user1: WithId<User>,
@@ -97,7 +97,7 @@ export async function OnGameUpdate(
 
   p.gamesCollection.updateOne(
     { _id: new ObjectId(gameId) },
-    { $set: { drawOffer: null } }
+    { $set: { drawOffer: null, takeback: null } }
   )
 
   if (isGameEnd) {

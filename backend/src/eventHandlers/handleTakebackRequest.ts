@@ -2,6 +2,7 @@ import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
 import { emitToUser } from "backend/src/utils/tools/general";
 import { ObjectId } from "mongodb";
+import { PieceColor } from "shared/types/piece";
 
 export default function handleTakebackRequest(p: HandlerParams) {
   p.socket.on("takebackRequest", async (gameId) => {
@@ -17,6 +18,20 @@ export default function handleTakebackRequest(p: HandlerParams) {
     }
 
     const isUserWhite = p.userId === game.white.id;
+    const crnt = game.turns.length;
+    const toTurn = crnt + (isUserWhite ? -2 + (crnt % 2) : -1 - (crnt % 2));
+
+    p.gamesCollection.updateOne(
+      { _id: game._id },
+      {
+        $set: {
+          takeback: {
+            color: isUserWhite ? PieceColor.White : PieceColor.Black,
+            toTurn: toTurn
+          }
+        }
+      }
+    );
 
     const otherUser = await p.usersCollection.findOne(
       { _id: new ObjectId(isUserWhite ? game.black.id : game.white.id) }

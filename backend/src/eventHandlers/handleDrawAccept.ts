@@ -1,6 +1,6 @@
 import { HandlerParams } from "backend/src/handleSocket";
 import { Terminal } from "backend/src/utils/terminal";
-import { emitToUser, OnGameUpdate } from "backend/src/utils/tools/general";
+import { emitToUser, handleGameUpdate } from "backend/src/utils/tools/general";
 import { ObjectId } from "mongodb";
 import { DrawReason, GameStatusCatagory } from "shared/types/game";
 import { PieceColor } from "shared/types/piece";
@@ -26,21 +26,19 @@ export default function handleDrawResponse(p: HandlerParams) {
 
     const isUserWhite = p.userId === game.white.id;
 
-    const gameUpdated = (await p.gamesCollection.findOneAndUpdate(
-      {
-        _id: new ObjectId(gameId),
-        drawOffer: isUserWhite ? PieceColor.Black : PieceColor.White
-      },
+    if (game.drawOffer !== (isUserWhite ? PieceColor.Black : PieceColor.White)) {
+      Terminal.warning('User tried to accept a draw offer, but no offer from the opponent was made');
+      return;
+    }
+
+    p.gamesCollection.updateOne(
+      { _id: new ObjectId(gameId) },
       {
         $set: {
           status: { catagory: GameStatusCatagory.Draw, reason: DrawReason.Agreement }
         }
       }
-    )).value;
-    if (gameUpdated === null) {
-      Terminal.warning('User tried to accept a draw, but no draw was offered by the opponent');
-      return;
-    }
+    );
 
     const otherUser = await p.usersCollection.findOne(
       { _id: new ObjectId(isUserWhite ? game.black.id : game.white.id) }
@@ -50,7 +48,7 @@ export default function handleDrawResponse(p: HandlerParams) {
       return;
     }
 
-    OnGameUpdate(p, user, otherUser, gameId, true);
+    handleGameUpdate(p, user, otherUser, gameId, true);
 
     emitToUser(p, user, "drawAccepted", gameId);
     emitToUser(p, otherUser, "drawAccepted", gameId);

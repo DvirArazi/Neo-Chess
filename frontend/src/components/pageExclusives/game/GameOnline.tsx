@@ -21,8 +21,6 @@ import { PieceColor, PieceType } from "shared/types/piece";
 export default function GameOnline(props: { data: GameViewData }) {
   const { data } = props;
 
-  // console.log('data', data)
-
   const isWide = WINDOW_WIDTH > 600;
 
   const [game, setGame] = useState<GameViewData>(data);
@@ -54,6 +52,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   handleDrawOfferedEvent();
   handleDrawAcceptedEvent();
   handleTakebackRequestedEvent();
+  handleTakebackAcceptedEvent();
   handleStepsBackChange();
 
   return <>
@@ -64,6 +63,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     {getDrawOfferSnackbar()}
     {getDrawOfferedSnackbar()}
     {getTakebackSnackbar()}
+    {getTakebackRequestedSnackbar()}
   </>;
 
   function getWideLayout() {
@@ -371,7 +371,7 @@ export default function GameOnline(props: { data: GameViewData }) {
               <Box sx={{ width: `20px` }} />
               <VXButtons onClick={(isAccepted) => {
                 if (isAccepted) {
-                  SOCKET.emit("drawAccept", game.id);
+                  SOCKET.emit("takebackAccept", game.id);
                 }
                 isTakeback2SnackbarOpen.set(false);;
               }} />
@@ -389,11 +389,11 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function handlePlayerMovedEvent() {
-    useEffect(()=>{
+    useEffect(() => {
       SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
         if (game.id.toString() !== gameId.toString()) return;
-  
-        setGame(v=>{
+
+        setGame(v => {
           const newTurns = v.turns.concat(newTurn);
           layout.set(startAndTurnsToBoardLayout(v.start, newTurns));
 
@@ -404,15 +404,15 @@ export default function GameOnline(props: { data: GameViewData }) {
             timeLastTurnMs: timeCrntTurnMs,
           };
         });
-  
+
         if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
           isMenuOpen.set(true);
         }
-  
+
         stepsBack.set(0);
         postTurn.set(false);
         isDrawOfferedSnackbarOpen.set(false);
-  
+
         promotionType.current = null;
       });
     }, []);
@@ -423,14 +423,14 @@ export default function GameOnline(props: { data: GameViewData }) {
       SOCKET.on("timeout", (gameId, winColor) => {
         if (game.id.toString() !== gameId.toString()) return;
 
-        setGame({
-          ...game,
+        setGame(v => ({
+          ...v,
           status: {
             catagory: GameStatusCatagory.Win,
             winColor: winColor,
             reason: WinReason.Timeout,
           }
-        });
+        }));
 
         stepsBack.set(0);
         isMenuOpen.set(true);
@@ -443,14 +443,14 @@ export default function GameOnline(props: { data: GameViewData }) {
       SOCKET.on("resigned", (gameId, winColor) => {
         if (game.id.toString() !== gameId.toString()) return;
 
-        setGame({
-          ...game,
+        setGame(v => ({
+          ...v,
           status: {
             catagory: GameStatusCatagory.Win,
             winColor: winColor,
             reason: WinReason.Resignation,
           }
-        });
+        }));
 
         stepsBack.set(0);
         isMenuOpen.set(true);
@@ -473,13 +473,13 @@ export default function GameOnline(props: { data: GameViewData }) {
       SOCKET.on("drawAccepted", (gameId) => {
         if (game.id.toString() !== gameId.toString()) return;
 
-        setGame({
-          ...game,
+        setGame(v => ({
+          ...v,
           status: {
             catagory: GameStatusCatagory.Draw,
             reason: DrawReason.Agreement,
           }
-        });
+        }));
 
         stepsBack.set(0);
         isMenuOpen.set(true);
@@ -493,6 +493,29 @@ export default function GameOnline(props: { data: GameViewData }) {
         if (game.id.toString() !== gameId.toString()) return;
 
         isTakeback2SnackbarOpen.set(true);
+      });
+    }, []);
+  }
+
+  function handleTakebackAcceptedEvent() {
+    useEffect(() => {
+      SOCKET.on("takebackAccepted", (gameId, toTurn, timeCrntTurnMs) => {
+        if (game.id.toString() !== gameId.toString()) return;
+
+        setGame(v => {
+          const newTurns = v.turns.slice(0, toTurn);
+          layout.set(startAndTurnsToBoardLayout(v.start, newTurns));
+
+          return ({
+            ...v,
+            turns: newTurns,
+            timeLastTurnMs: timeCrntTurnMs,
+          })
+        });
+
+        stepsBack.set(0);
+
+        promotionType.current = null;
       });
     }, []);
   }
