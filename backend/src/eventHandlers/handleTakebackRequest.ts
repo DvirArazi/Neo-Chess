@@ -21,6 +21,11 @@ export default function handleTakebackRequest(p: HandlerParams) {
     const crnt = game.turns.length;
     const toTurn = crnt + (isUserWhite ? -2 + (crnt % 2) : -1 - (crnt % 2));
 
+    if (toTurn < 0) {
+      Terminal.warning('User tried to request a takeback but has not yet made a move');
+      return;
+    }
+
     p.gamesCollection.updateOne(
       { _id: game._id },
       {

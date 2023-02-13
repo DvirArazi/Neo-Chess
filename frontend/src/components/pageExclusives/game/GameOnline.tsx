@@ -1,6 +1,5 @@
 import { Alert, Box, Divider, Modal, Portal, Snackbar, SnackbarCloseReason } from "@mui/material";
 import AlertSnackbar from "frontend/src/components/AlertSnackbar";
-import Layout from "frontend/src/components/Layout";
 import { VXButtons } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import Board from "frontend/src/components/pageExclusives/game/Board";
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
@@ -9,11 +8,8 @@ import { MenuOnline } from "frontend/src/components/pageExclusives/game/GameOnli
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import Stateful from "frontend/src/utils/tools/stateful";
-import { SyntheticEvent, useEffect, useRef, useState } from "react";
-import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { getGameStatus, pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
-import { getOppositeColor } from "shared/tools/piece";
-import { boardLayoutToRep } from "shared/tools/rep";
+import { useEffect, useRef, useState } from "react";
+import { pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { BoardLayout } from "shared/types/boardLayout";
 import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason, EGameRole, DrawReason } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
@@ -248,6 +244,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     return <MenuOnline
       isOpen={isMenuOpen}
       status={game.status}
+      isTakebackEnabled={game.turns.length > (game.role === PieceColor.White ? 0 : 1)}
       onTakebackClick={() => {
         SOCKET.emit("takebackRequest", game.id);
         isTakebackSnackbarOpen.set(true);
@@ -329,7 +326,7 @@ export default function GameOnline(props: { data: GameViewData }) {
                 if (isAccepted) {
                   SOCKET.emit("drawAccept", game.id);
                 }
-                isDrawOfferedSnackbarOpen.set(false);;
+                isDrawOfferedSnackbarOpen.set(false);
               }} />
             </Box>
           </Alert>
@@ -384,7 +381,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     function handleClose(reason: SnackbarCloseReason) {
       if (reason === "clickaway") return;
 
-      isDrawOfferedSnackbarOpen.set(false);
+      isTakeback2SnackbarOpen.set(false);
     }
   }
 
@@ -412,6 +409,7 @@ export default function GameOnline(props: { data: GameViewData }) {
         stepsBack.set(0);
         postTurn.set(false);
         isDrawOfferedSnackbarOpen.set(false);
+        isTakeback2SnackbarOpen.set(false);
 
         promotionType.current = null;
       });

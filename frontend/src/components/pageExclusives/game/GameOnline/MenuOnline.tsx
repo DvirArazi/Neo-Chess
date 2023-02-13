@@ -10,6 +10,7 @@ import { isMobile } from "react-device-detect";
 export function MenuOnline(props: {
   isOpen: Stateful<boolean>,
   status: GameStatus,
+  isTakebackEnabled: boolean,
   onTakebackClick: () => void,
   onDrawClick: () => void,
   onResignClick: () => void,
@@ -19,6 +20,7 @@ export function MenuOnline(props: {
   const {
     isOpen,
     status,
+    isTakebackEnabled,
     onTakebackClick,
     onDrawClick,
     onResignClick,
@@ -43,6 +45,7 @@ export function MenuOnline(props: {
   function getOngoingMenu() {
     return <List sx={{ padding: 0 }}>
       <MenuOption
+        isEnabled={isTakebackEnabled}
         text='Propose a takeback'
         iconPath='takeback'
         action={onTakebackClick}

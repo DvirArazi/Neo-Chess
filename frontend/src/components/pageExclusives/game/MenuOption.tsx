@@ -5,11 +5,14 @@ import { IconName } from "frontend/src/utils/types/iconName";
 export default function MenuOption(props: {
   text: string,
   iconPath: IconName,
+  isEnabled?: boolean
   action: () => void,
 }) {
   const { text, iconPath, action } = props;
+  const isEnabled = props.isEnabled ?? true;
 
   return <ListItemButton
+    disabled={!isEnabled}
     onClick={action}
   >
     <ListItemText>
