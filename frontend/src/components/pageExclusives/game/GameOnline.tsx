@@ -389,29 +389,33 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function handlePlayerMovedEvent() {
-    SOCKET.off("playerMoved"); //change this 
-    SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
-      if (game.id.toString() !== gameId.toString()) return;
+    useEffect(()=>{
+      SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
+        if (game.id.toString() !== gameId.toString()) return;
+  
+        setGame(v=>{
+          const newTurns = v.turns.concat(newTurn);
+          layout.set(startAndTurnsToBoardLayout(v.start, newTurns));
 
-      const newTurns = game.turns.concat(newTurn);
-      layout.set(startAndTurnsToBoardLayout(game.start, newTurns));
-      setGame({
-        ...game,
-        turns: newTurns,
-        status: newStatus,
-        timeLastTurnMs: timeCrntTurnMs,
+          return {
+            ...v,
+            turns: newTurns,
+            status: newStatus,
+            timeLastTurnMs: timeCrntTurnMs,
+          };
+        });
+  
+        if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
+          isMenuOpen.set(true);
+        }
+  
+        stepsBack.set(0);
+        postTurn.set(false);
+        isDrawOfferedSnackbarOpen.set(false);
+  
+        promotionType.current = null;
       });
-
-      if (newStatus.catagory !== GameStatusCatagory.Ongoing) {
-        isMenuOpen.set(true);
-      }
-
-      stepsBack.set(0);
-      postTurn.set(false);
-      isDrawOfferedSnackbarOpen.set(false);
-
-      promotionType.current = null;
-    });
+    }, []);
   }
 
   function handleTimeoutEvent() {
