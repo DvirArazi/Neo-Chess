@@ -95,6 +95,11 @@ export async function OnGameUpdate(
 ) {
   const users = [user0, user1];
 
+  p.gamesCollection.updateOne(
+    { _id: new ObjectId(gameId) },
+    { $set: { drawOffer: null } }
+  )
+
   if (isGameEnd) {
     users.map(async (user, i) => {
       const userAfter = (await p.usersCollection.findOneAndUpdate(

@@ -35,6 +35,8 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isRequestSnackbarOpen = new Stateful(false);
   const isDrawOfferSnackbarOpen = new Stateful(false);
   const isDrawOfferedSnackbarOpen = new Stateful(false);
+  const isTakebackSnackbarOpen = new Stateful(false);
+  const isTakeback2SnackbarOpen = new Stateful(false);
 
   const layoutRef = useRef<BoardLayout>(layout.value);
   const from = useRef<Point>({ x: 0, y: 0 });
@@ -49,8 +51,9 @@ export default function GameOnline(props: { data: GameViewData }) {
   handlePlayerMovedEvent();
   handleTimeoutEvent();
   handleResignedEvent();
-  handleDrawOffered();
+  handleDrawOfferedEvent();
   handleDrawAcceptedEvent();
+  handleTakebackRequestedEvent();
   handleStepsBackChange();
 
   return <>
@@ -60,6 +63,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     {getRequestSnackbar()}
     {getDrawOfferSnackbar()}
     {getDrawOfferedSnackbar()}
+    {getTakebackSnackbar()}
   </>;
 
   function getWideLayout() {
@@ -122,8 +126,6 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getBoard() {
-    // console.log(isStatusOngoing, game.role, turnColor, stepsBack.value);
-
     return <Board
       enabled={
         isStatusOngoing &&
@@ -246,7 +248,10 @@ export default function GameOnline(props: { data: GameViewData }) {
     return <MenuOnline
       isOpen={isMenuOpen}
       status={game.status}
-      onTakebackClick={() => { }}
+      onTakebackClick={() => {
+        SOCKET.emit("takebackRequest", game.id);
+        isTakebackSnackbarOpen.set(true);
+      }}
       onDrawClick={() => {
         SOCKET.emit("drawOffer", game.id);
         isDrawOfferSnackbarOpen.set(true);
@@ -339,6 +344,50 @@ export default function GameOnline(props: { data: GameViewData }) {
     }
   }
 
+  function getTakebackSnackbar() {
+    return <AlertSnackbar
+      isOpen={isDrawOfferSnackbarOpen}
+      severity={"info"}
+      message={'Takeback request sent'}
+    />
+  }
+
+  function getTakebackRequestedSnackbar() {
+    return <Box sx={{ position: `relative` }}>
+      <Portal>
+        <Snackbar
+          open={isTakeback2SnackbarOpen.value}
+          onClose={(_, reason) => handleClose(reason)}
+        >
+          <Alert
+            severity={"info"}
+            sx={{ alignItems: `center` }}
+          >
+            <Box sx={{
+              display: `flex`,
+              alignItems: `center`,
+            }}>
+              <Box>{'Your opponent requests a takeback'}</Box>
+              <Box sx={{ width: `20px` }} />
+              <VXButtons onClick={(isAccepted) => {
+                if (isAccepted) {
+                  SOCKET.emit("drawAccept", game.id);
+                }
+                isTakeback2SnackbarOpen.set(false);;
+              }} />
+            </Box>
+          </Alert>
+        </Snackbar>
+      </Portal>
+    </Box>;
+
+    function handleClose(reason: SnackbarCloseReason) {
+      if (reason === "clickaway") return;
+
+      isDrawOfferedSnackbarOpen.set(false);
+    }
+  }
+
   function handlePlayerMovedEvent() {
     SOCKET.off("playerMoved"); //change this 
     SOCKET.on("playerMoved", (gameId, newTurn, newStatus, timeCrntTurnMs) => {
@@ -359,6 +408,7 @@ export default function GameOnline(props: { data: GameViewData }) {
 
       stepsBack.set(0);
       postTurn.set(false);
+      isDrawOfferedSnackbarOpen.set(false);
 
       promotionType.current = null;
     });
@@ -404,7 +454,7 @@ export default function GameOnline(props: { data: GameViewData }) {
     }, []);
   }
 
-  function handleDrawOffered() {
+  function handleDrawOfferedEvent() {
     useEffect(() => {
       SOCKET.on("drawOffered", (gameId) => {
         if (game.id.toString() !== gameId.toString()) return;
@@ -429,6 +479,16 @@ export default function GameOnline(props: { data: GameViewData }) {
 
         stepsBack.set(0);
         isMenuOpen.set(true);
+      });
+    }, []);
+  }
+
+  function handleTakebackRequestedEvent() {
+    useEffect(() => {
+      SOCKET.on("takebackRequested", (gameId) => {
+        if (game.id.toString() !== gameId.toString()) return;
+
+        isTakeback2SnackbarOpen.set(true);
       });
     }, []);
   }

@@ -23,7 +23,9 @@ import handleResponseToInvitation from 'backend/src/eventHandlers/handleResponse
 import handleGetHistoryGames from 'backend/src/eventHandlers/handleGetHistoryGames';
 import handleResign from 'backend/src/eventHandlers/handleResign';
 import handleDrawOffer from 'backend/src/eventHandlers/handleDrawOffer';
-import handleDrawAccept from 'backend/src/eventHandlers/handleDrawAccept';
+import handleDrawResponse from 'backend/src/eventHandlers/handleDrawAccept';
+import handleTakebackRequest from 'backend/src/eventHandlers/handleTakebackRequest';
+import handleTakebackAccept from 'backend/src/eventHandlers/handleTakebackAccept';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
   const oAuth2Client = new OAuth2Client(
@@ -80,7 +82,9 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
     handlePlayerMoved(handlerParams);
     handleResign(handlerParams);
     handleDrawOffer(handlerParams);
-    handleDrawAccept(handlerParams);
+    handleDrawResponse(handlerParams);
+    handleTakebackRequest(handlerParams);
+    handleTakebackAccept(handlerParams);
     handleGetHistoryGames(handlerParams);
     handleDisconnect(handlerParams);
   });

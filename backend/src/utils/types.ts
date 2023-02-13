@@ -2,6 +2,7 @@ import { TokenPayload } from "google-auth-library";
 import { ObjectId } from "mongodb";
 import { GameData, GameTurn, Player, Timeframe } from "shared/types/game";
 import { Friend, FriendRequest, GameInvitation } from "shared/types/general";
+import { PieceColor } from "shared/types/piece";
 import { AutoAuthData, ClientToServerEvents, ServerToClientEvents } from "shared/types/webSocket";
 import { Server, Socket } from "socket.io";
 
@@ -30,4 +31,6 @@ export type Game = {
   white: Player,
   black: Player,
   viewerSocketIds: string[],
+  drawOffer: PieceColor | null,
+  takeback: {color: PieceColor, toTurn: number} | null
 } & GameData

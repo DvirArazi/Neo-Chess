@@ -24,6 +24,8 @@ export interface ClientToServerEvents {
   resign: (gameId: string) => void;
   drawOffer: (gameId: string) => void;
   drawAccept: (gameId: string) => void;
+  takebackRequest: (gameId: string) => void;
+  takebackAccept: (gameId: string) => void;
 }
 export interface ServerToClientEvents {
   signedIn: (aad: AutoAuthData, data: UserViewData) => void;
@@ -40,6 +42,7 @@ export interface ServerToClientEvents {
   resigned: (gameId: string, winColor: PieceColor) => void;
   drawOffered: (gameId: string) => void;
   drawAccepted: (gameId: string) => void;
+  takebackRequested: (gameId: string) => void;
 }
 
 export type AutoAuthData = {
