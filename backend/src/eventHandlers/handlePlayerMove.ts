@@ -8,10 +8,8 @@ import { getOppositeColor } from "shared/tools/piece";
 import { boardLayoutToRep, hasCausedRepetition } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
 import { pointsToAction, turnsToColor } from "shared/tools/board";
-import { emitToUser, getOngoingGamesTd, handleGameUpdate } from "backend/src/utils/tools/general";
-import { GameTd } from "shared/types/general";
-import { ObjectId, WithId } from "mongodb";
-import { User } from "backend/src/utils/types";
+import { emitToUser, handleGameUpdate } from "backend/src/utils/tools/general";
+import { ObjectId } from "mongodb";
 
 export default function handlePlayerMoved(p: HandlerParams) {
   p.socket.on("playerMove", async (gameId, from, to, promotionType) => {

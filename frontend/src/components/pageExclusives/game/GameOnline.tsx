@@ -7,6 +7,7 @@ import ButtonsBannerOnline from "frontend/src/components/pageExclusives/game/Gam
 import { MenuOnline } from "frontend/src/components/pageExclusives/game/GameOnline/MenuOnline";
 import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBanner";
 import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
+import { getAdvantage } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
 import { pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
@@ -41,6 +42,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   const isWhiteTurn = game.turns.length % 2 === 0;
   const turnColor = isWhiteTurn ? PieceColor.White : PieceColor.Black;
   const isStatusOngoing = game.status.catagory === GameStatusCatagory.Ongoing;
+  const advantage = getAdvantage(layout.value);
 
   handlePlayerMovedEvent();
   handleTimeoutEvent();
@@ -183,6 +185,7 @@ export default function GameOnline(props: { data: GameViewData }) {
       isWide={isWide}
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
+      advantage={advantage * (isWhite ? 1 : -1)}
     />;
 
     function getTimeLeft() {

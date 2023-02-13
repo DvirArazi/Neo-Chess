@@ -18,6 +18,7 @@ export default function PlayerBanner(props: {
   isWide: boolean,
   isUntimed: boolean,
   layout: BoardLayout,
+  advantage: number,
 }) {
   const {
     name,
@@ -29,7 +30,8 @@ export default function PlayerBanner(props: {
     isOnTop,
     isWide,
     isUntimed,
-    layout
+    layout,
+    advantage
   } = props;
 
   const oppositeColor = getOppositeColor(color);
@@ -92,7 +94,17 @@ export default function PlayerBanner(props: {
       crntX += 12;
     }
 
-    return <Box sx={{ position: `relative`, height: `25px` }}>{pieces}</Box>;
+    return <Box sx={{ position: `relative`, height: `25px` }}>
+      {pieces}
+      <Box sx={{
+        fontFamily: `robotoslab`,
+        position: `absolute`,
+        left: `${crntX + 5}px`,
+        top: `3px`,
+      }}>
+        {advantage > 0 ? `+${advantage}` : advantage < 0 ? `−${advantage*-1}` : ``}
+      </Box>
+    </Box>;
   }
 }
 

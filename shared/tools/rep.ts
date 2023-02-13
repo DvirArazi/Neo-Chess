@@ -18,14 +18,19 @@ export function boardLayoutToRep(layout: BoardLayout) {
 }
 
 export function hasCausedRepetition(turns: GameTurn[], startRep: string): boolean {
+  let count = 0;
+  
   const repLast = turns[turns.length - 1].rep;
   if (startRep === repLast) {
-    return true;
+    count++;
   }
 
   for (let i = 0; i < turns.length - 2; i++) {
     if (turns[i].rep === repLast) {
-      return true;
+      count++;
+      if (count === 2) {
+        return true;
+      }
     }
   }
 

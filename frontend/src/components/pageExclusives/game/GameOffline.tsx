@@ -240,6 +240,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       isWide={isWide}
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
+      advantage={5}
     />;
 
     function getTimeLeft() {

@@ -249,6 +249,12 @@ export function getGameStatus(
 ): GameStatus {
   const oppositeColor = getOppositeColor(turnColor)
 
+  if (layout.filter(square => square !== null).length <= 2) {
+    return {
+      catagory: GameStatusCatagory.Draw,
+      reason: DrawReason.InsufficientMaterial,
+    }
+  }
   if (isKingCaptured(layout, oppositeColor)) {
     return {
       catagory: GameStatusCatagory.Win,

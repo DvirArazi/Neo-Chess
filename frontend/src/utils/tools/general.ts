@@ -1,7 +1,8 @@
 import { timeframeToTimeFormat } from "shared/tools/general";
 import { getOppositeColor } from "shared/tools/piece";
+import { BoardLayout } from "shared/types/boardLayout";
 import { DrawReason, GameStatus, GameStatusCatagory, TimeFormat, Timeframe, WinReason } from "shared/types/game";
-import { PieceColor } from "shared/types/piece";
+import { PieceColor, PieceType } from "shared/types/piece";
 
 export function timeToString(time: number) {
   if (time < 60) {
@@ -71,4 +72,25 @@ export function gameStatusToMessage(status: GameStatus) {
       throw new Error(`MenuTitle opened with an invalid status catagory: ${status.catagory}`);
     }
   }
+}
+
+export function getAdvantage(layout: BoardLayout) {
+  let advantage = 0;
+
+  for (const square of layout) {
+    if (square === null) continue;
+
+    advantage += (()=>{
+      switch (square.type) {
+        case PieceType.Pawn: return 1;
+        case PieceType.Rook: return 5;
+        case PieceType.Knight: return 3;
+        case PieceType.Bishop: return 3;
+        case PieceType.Queen: return 9;
+        default: return 0;
+      }
+    })() * (square.color === PieceColor.White ? 1 : -1);
+  }
+
+  return advantage;
 }
