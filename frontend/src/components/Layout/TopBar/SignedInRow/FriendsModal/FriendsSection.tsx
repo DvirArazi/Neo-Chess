@@ -80,7 +80,7 @@ function FriendStrip(props: { friend: Friend, onDelete: () => void }) {
       display: `flex`,
       alignItems: `center`,
     }}>
-      <img
+      <img crossOrigin="anonymous"
         src={friend.picture}
         style={{
           borderRadius: `50%`,

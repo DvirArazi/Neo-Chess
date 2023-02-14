@@ -50,7 +50,7 @@ export function SignOutButton() {
   >
     {
       data.picture !== undefined ? 
-        <img
+        <img crossOrigin="anonymous"
           src={data.picture}
           style={{
             borderRadius: `50%`,

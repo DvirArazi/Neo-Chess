@@ -8,7 +8,7 @@ export default function FriendRequestStrip(props: { friend: FriendRequest }) {
     display: `flex`,
     alignItems: `center`,
   }}>
-    <img
+    <img crossOrigin="anonymous"
       src={friend.picture}
       style={{
         borderRadius: `50%`,

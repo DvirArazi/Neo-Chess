@@ -82,7 +82,7 @@ function FriendStrip(props: { friend: Friend }) {
     justifyContent: `center`,
     alignItems: `center`,
   }}>
-    <img
+    <img crossOrigin="anonymous"
       src={friend.picture}
       style={{
         borderRadius: `50%`,
