@@ -53,7 +53,6 @@ export default function PlayerBanner(props: {
   </Box>
 
   function getMainRow() {
-    console.log(ratingMod)
     return <Box sx={{
       display: `flex`,
       flexDirection: `row`,

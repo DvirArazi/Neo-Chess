@@ -48,8 +48,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
 
-  console.log(game.turns.map(turn => turn.timeLeftMs))
-
   handleGameStatusChange();
   handleStepsBackTriggerChange();
   handleStepsBackOrTurnsOrIsPausedChange();
@@ -261,8 +259,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       const check = (turnsLength % 2 === 0) === isWhite;
 
       const iMod = turnsLength - 2 + (check ? 0 : 1);
-      // console.log('jmod', iMod)
-      // console.log(timeUnpausedMs.value)
 
       const timeMod = check ? -timeUnpausedMs.value : 0;
       return game.turns[iMod].timeLeftMs + timeMod;

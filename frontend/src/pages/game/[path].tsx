@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import GameOnline from "frontend/src/components/pageExclusives/game/GameOnline";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useRouter } from "next/router";
@@ -28,6 +27,5 @@ export default function Game() {
 
   if (gameViewData.value === "404") return <Error statusCode={404} />;
 
-  console.log('data', gameViewData.value);
   return <GameOnline key={count.current++} data={gameViewData.value} />
 }

@@ -93,7 +93,6 @@ export default function SignedInRow() {
   function handleOngoingGamesUpdatedEvent() {
     useEffect(() => {
       SOCKET.on("ongoingGamesUpdated", (gamesTd) => {
-        console.log('ongoing games updating', gamesTd);
         gamesModalData.set(v => ({
           ...v,
           ongoingGamesTd: gamesTd

@@ -34,8 +34,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
 
     const deletedGameRequest = await p.gameRequestsCollection.findOneAndDelete({
       userId: { $ne: p.userId },
-      ratingAbsMin: { $gte: ratingAbsMin },
-      ratingAbsMax: { $lte: ratingAbsMax },
+      ratingAbsMin: { $lte: ratingAbsMax },
+      ratingAbsMax: { $gte: ratingAbsMin },
     });
 
     //if a request with matching settings was not found
