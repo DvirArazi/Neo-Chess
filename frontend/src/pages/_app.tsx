@@ -43,7 +43,7 @@ export default function App({ Component, pageProps }: AppProps) {
     });
 
     SOCKET.on("autoSignedIn", (data) => {
-      console.log('auto signed in')
+      // console.log('auto signed in')
       SET_USER_DATA(data);
     });
 
@@ -58,7 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
     const aad = AAD_COOKIE.get();
     if (aad !== undefined && USER_DATA === undefined) {
-      console.log('auto sign in');
+      // console.log('auto sign in');
       SOCKET.emit("autoSignIn", aad);
     }
 

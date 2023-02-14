@@ -527,7 +527,6 @@ export default function GameOnline(props: { data: GameViewData }) {
   function handleRatingsUpdatedEvent() {
     useEffect(()=>{
       SOCKET.on("ratingsUpdated", (gameId, newWhiteRating, newBlackRating)=>{
-        console.log(newWhiteRating, newBlackRating);
         if (game.id.toString() !== gameId.toString()) return;
 
         setGame(v=>({
