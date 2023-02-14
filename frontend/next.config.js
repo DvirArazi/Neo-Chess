@@ -55,17 +55,19 @@ const nextConfig = {
   },
 
   async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "script-src 'self' https://accounts.google.com",
-          },
-        ],
-      },
-    ];
+    if (process.env.NODE_ENV === "production") {
+      return [
+        {
+          source: '/(.*)',
+          headers: [
+            {
+              key: 'Content-Security-Policy',
+              value: "script-src 'self' https://accounts.google.com",
+            },
+          ],
+        },
+      ];
+    }
   },
 }
 

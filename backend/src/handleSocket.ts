@@ -28,6 +28,7 @@ import handleTakebackRequest from 'backend/src/eventHandlers/handleTakebackReque
 import handleTakebackAccept from 'backend/src/eventHandlers/handleTakebackAccept';
 
 export default async function handleSocket(webSocketServer: WebSocketServer) {
+  console.log(process.env.GOOGLE_CLIENT_ID);
   const oAuth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
