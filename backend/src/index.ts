@@ -42,6 +42,7 @@ app.prepare().then(() => {
   handleSocket(webSocketServer);
 
   expressApp.all('*', (req, res) => {
+    req.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     return handle(req, res);
   });
 
