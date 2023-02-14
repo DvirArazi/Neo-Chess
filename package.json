@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon --watch backend/**/*.ts --exec ts-node backend/src/index.ts",
     "build": "cd frontend && next build && cd .. && tsc --project backend/tsconfig.json",
-    "start": "cross-env NODE_ENV=production NODE_PATH=backend/dist/ node backend/dist/backend/src/index.js",
+    "start": "export NODE_ENV=production && export NODE_PATH=backend/dist/ && node backend/dist/backend/src/index.js",
     "generate": "ts-node -r esm generate/generate.ts",
     "lint": "next lint"
   },
@@ -21,7 +21,6 @@
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.10",
     "@types/uuid": "^9.0.0",
-    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "google-auth-library": "^8.7.0",
