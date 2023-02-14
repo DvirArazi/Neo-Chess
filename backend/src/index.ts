@@ -43,6 +43,7 @@ app.prepare().then(() => {
 
   expressApp.all('*', (req, res) => {
     res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     return handle(req, res);
   });
 
