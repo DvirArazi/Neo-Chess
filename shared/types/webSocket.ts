@@ -44,6 +44,7 @@ export interface ServerToClientEvents {
   drawAccepted: (gameId: string) => void;
   takebackRequested: (gameId: string) => void;
   takebackAccepted: (gameId: string, toTurn: number, timeCrntTurnMs: number) => void;
+  ratingsUpdated: (gameId: string, whiteRating: number, blackRating: number) => void;
 }
 
 export type AutoAuthData = {

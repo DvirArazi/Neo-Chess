@@ -10,6 +10,7 @@ import { PieceColor } from "shared/types/piece";
 export default function PlayerBanner(props: {
   name: string,
   rating: number | null,
+  ratingMod: number | null,
   timeLeftMs: number,
   isTicking: boolean,
   initDateTimeMs: number,
@@ -23,6 +24,7 @@ export default function PlayerBanner(props: {
   const {
     name,
     rating,
+    ratingMod,
     timeLeftMs,
     isTicking,
     initDateTimeMs,
@@ -51,6 +53,7 @@ export default function PlayerBanner(props: {
   </Box>
 
   function getMainRow() {
+    console.log(ratingMod)
     return <Box sx={{
       display: `flex`,
       flexDirection: `row`,
@@ -60,7 +63,16 @@ export default function PlayerBanner(props: {
     }}>
       <Box sx={{ textAlign: `left` }}>
         <Box sx={{ fontSize: `16px`, fontWeight: `600` }}>{name}</Box>
-        <Box sx={{ fontSize: `14px` }}>{rating}</Box>
+        <Box sx={{
+          fontSize: `14px`,
+          fontWeight: ratingMod === null ? `` : `bold`,
+          color: ratingMod === null ? `black` : (ratingMod >= 0 ? `#00cc00` : `#ff0000`)
+        }}>{
+          (rating === null ? '' : Math.floor(rating)) +
+            (ratingMod === null ? '' : 
+              (ratingMod >= 0 ? ` + ${Math.floor(ratingMod)}` : ` − ${Math.floor(Math.abs(ratingMod))}`)
+            )
+        }</Box>
       </Box>
       {
         isUntimed ? <></> :
@@ -93,7 +105,6 @@ export default function PlayerBanner(props: {
 
       crntX += 12;
     }
-
     return <Box sx={{ position: `relative`, height: `25px` }}>
       {pieces}
       <Box sx={{
@@ -102,7 +113,7 @@ export default function PlayerBanner(props: {
         left: `${crntX + 5}px`,
         top: `3px`,
       }}>
-        {advantage > 0 ? `+${advantage}` : advantage < 0 ? `−${advantage*-1}` : ``}
+        {advantage > 0 ? `+${advantage}` : advantage < 0 ? `−${advantage * -1}` : ``}
       </Box>
     </Box>;
   }

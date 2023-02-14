@@ -22,7 +22,7 @@ export default function history() {
   }, [aad, USER_DATA]);
 
 
-  if (gamesTd.value === "loading") return <Empty message='Loading...'/>;
+  if (gamesTd.value === "loading") return <Empty message='Loading...' />;
 
   if (gamesTd.value === "404") return <Error statusCode={404} />;
 
@@ -36,22 +36,24 @@ export default function history() {
       fontSize: `30px`,
       padding: `10px`,
     }}>{'Games History'}</Box>
-    <Divider variant="middle" sx={{width: `100%`, maxWidth: `500px`}}/>
-    <Box sx={{height: `10px`}}/>
+    <Box sx={{ width: `100%`, maxWidth: `500px` }}>
+      <Divider variant="middle" />
+    </Box>
+    <Box sx={{ height: `10px` }} />
     {
       gamesTd.value.length === 0 ?
         <Empty message={'You don\'t yet have any games in your history'} /> :
-        <Grid container spacing={0} 
+        <Grid container spacing={0}
           // direction="column"
           alignItems="center"
           justifyContent="center"
         >{
-          gamesTd.value.map(gameTd => 
-            <Grid key={gameTd.path} sx={{maxWidth: `500px`}}>
-              <GameThumbnail data={gameTd} />
-            </Grid>
-          )
-        }</Grid>
+            gamesTd.value.map(gameTd =>
+              <Grid key={gameTd.path} sx={{ maxWidth: `500px` }}>
+                <GameThumbnail data={gameTd} />
+              </Grid>
+            )
+          }</Grid>
     }
   </Box>;
 }

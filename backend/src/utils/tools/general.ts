@@ -5,6 +5,8 @@ import { WithId } from "mongodb";
 import { ObjectId } from "mongodb";
 import { turnsToColor } from "shared/tools/board";
 import { startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
+import { timeframeToTimeFormat } from "shared/tools/general";
+import { GameStatus, GameStatusCatagory } from "shared/types/game";
 import { GameTd } from "shared/types/general";
 import { PieceColor } from "shared/types/piece";
 import { ServerToClientEvents } from "shared/types/webSocket";
@@ -50,7 +52,7 @@ export async function deleteOutInvitationForFriend(p: BackendParams, user: WithI
     { returnDocument: "after" }
   );
   if (friendUserResult.value === null) {
-    Terminal.warning('Couldn\'t friend ID in DB');
+    Terminal.warning('Couldn\'t find friend ID in DB');
     return;
   }
   const friendUser = friendUserResult.value;
@@ -88,40 +90,108 @@ export async function getOngoingGamesTd(p: BackendParams, user: WithId<User>) {
 
 export async function handleGameUpdate(
   p: BackendParams,
-  user0: WithId<User>,
-  user1: WithId<User>,
   gameId: string,
-  isGameEnd: boolean,
 ) {
-  const users = [user0, user1];
-
-  p.gamesCollection.updateOne(
+  const game = (await p.gamesCollection.findOneAndUpdate(
     { _id: new ObjectId(gameId) },
     { $set: { drawOffer: null, takeback: null } }
-  )
+  )).value;
+  if (game === null) {
+    Terminal.warning('Game ID provided was not found in DB');
+    return;
+  }
 
-  if (isGameEnd) {
-    users.map(async (user, i) => {
-      const userAfter = (await p.usersCollection.findOneAndUpdate(
-        { _id: user._id },
+  const whiteUser = await p.usersCollection.findOne({ _id: new ObjectId(game.white.id) });
+  if (whiteUser === null) { Terminal.error('User with ID saved in game was not found in DB'); return; }
+  const blackUser = await p.usersCollection.findOne({ _id: new ObjectId(game.black.id) });
+  if (blackUser === null) { Terminal.error('User with ID saved in game was not found in DB'); return; }
+
+  if (game.status.catagory !== GameStatusCatagory.Ongoing) {
+    if (game.isRated) {
+      const tfn = timeframeToTimeFormat(game.timeframe) as number;
+      const result = game.status.catagory === GameStatusCatagory.Draw ? 0.5 :
+        (game.status.winColor === PieceColor.White ? 1 : 0);
+      const { newRating0, newRating1 } = getNewRatings(whiteUser.ratings[tfn], blackUser.ratings[tfn], result);
+
+      p.gamesCollection.updateOne(
+        { _id: new ObjectId(gameId) },
         {
-          $pull: { ongoingGamesIds: gameId },
-          $push: { historyGamesIds: gameId },
-        },
-        { returnDocument: "after" }
-      )).value!
+          $set: {
+            viewerSocketIds: [],
+            "white.ratingMod": newRating0 - whiteUser.ratings[tfn],
+            "black.ratingMod": newRating1 - blackUser.ratings[tfn],
+          }
+        }
+      );
 
-      emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, userAfter));
-    })
-    p.gamesCollection.updateOne(
-      { _id: new ObjectId(gameId) },
-      { $set: { viewerSocketIds: [] } }
-    );
+      updateUserWithRatings(whiteUser, newRating0, tfn, newRating0, newRating1);
+      updateUserWithRatings(blackUser, newRating1, tfn, newRating0, newRating1);
+    } else {
+      p.gamesCollection.updateOne(
+        { _id: new ObjectId(gameId) },
+        { $set: { viewerSocketIds: [] } }
+      );
+
+      updateUser(whiteUser);
+      updateUser(blackUser);
+    }
 
     return;
   }
 
-  users.map(async user =>
-    emitToUser(p, user, "ongoingGamesUpdated", await getOngoingGamesTd(p, user))
-  );
+  emitToUser(p, whiteUser, "ongoingGamesUpdated", await getOngoingGamesTd(p, whiteUser));
+  emitToUser(p, blackUser, "ongoingGamesUpdated", await getOngoingGamesTd(p, blackUser));
+
+  async function updateUser(user: WithId<User>) {
+    const userAfter = (await p.usersCollection.findOneAndUpdate(
+      { _id: user._id },
+      {
+        $pull: { ongoingGamesIds: gameId },
+        $push: { historyGamesIds: gameId },
+      },
+      { returnDocument: "after" }
+    )).value;
+    if (userAfter === null) return;
+
+    emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, userAfter));
+  }
+
+  async function updateUserWithRatings(
+    user: WithId<User>,
+    newRating: number,
+    tfn: number,
+    whiteRating: number,
+    blackRating: number,
+  ) {
+    const newRatings = user.ratings;
+    newRatings[tfn] = newRating;
+
+    const userAfter = (await p.usersCollection.findOneAndUpdate(
+      { _id: user._id },
+      {
+        $pull: { ongoingGamesIds: gameId },
+        $push: { historyGamesIds: gameId },
+        $set: { ratings: newRatings }
+      },
+      { returnDocument: "after" }
+    )).value;
+    if (userAfter === null) return;
+
+    emitToUser(p, userAfter, "ongoingGamesUpdated", await getOngoingGamesTd(p, userAfter));
+    emitToUser(p, userAfter, "ratingsUpdated", gameId, whiteRating, blackRating);
+  }
+}
+
+export function getNewRatings(
+  rating0: number, rating1: number, result: number,
+): { newRating0: number, newRating1: number } {
+  const k = 16;
+
+  const e0 = 1 / (1 + 10 ** ((rating0 - rating1) / 400));
+  const e1 = 1 / (1 + 10 ** ((rating1 - rating0) / 400));
+
+  return {
+    newRating0: rating0 + k * (result - e0),
+    newRating1: rating1 + k * ((1 - result) - e1)
+  };
 }

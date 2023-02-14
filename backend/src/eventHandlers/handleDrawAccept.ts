@@ -31,8 +31,8 @@ export default function handleDrawResponse(p: HandlerParams) {
       return;
     }
 
-    p.gamesCollection.updateOne(
-      { _id: new ObjectId(gameId) },
+    await p.gamesCollection.updateOne(
+      { _id: game._id },
       {
         $set: {
           status: { catagory: GameStatusCatagory.Draw, reason: DrawReason.Agreement }
@@ -48,7 +48,7 @@ export default function handleDrawResponse(p: HandlerParams) {
       return;
     }
 
-    handleGameUpdate(p, user, otherUser, gameId, true);
+    await handleGameUpdate(p, gameId);
 
     emitToUser(p, user, "drawAccepted", gameId);
     emitToUser(p, otherUser, "drawAccepted", gameId);

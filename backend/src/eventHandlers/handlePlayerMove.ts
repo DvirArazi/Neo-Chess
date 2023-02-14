@@ -118,13 +118,13 @@ export default function handlePlayerMoved(p: HandlerParams) {
             }
           );
 
-          handleGameUpdate(p, user, otherUser, gameId, true);
+          await handleGameUpdate(p, gameId);
 
           emitToUser(p, user, "timeout", game._id.toString(), winColor);
           emitToUser(p, otherUser, "timeout", game._id.toString(), winColor);
         }, newTimeLeftMs));
 
-    p.gamesCollection.updateOne(
+    await p.gamesCollection.updateOne(
       { _id: game._id },
       {
         $set: {
@@ -136,7 +136,7 @@ export default function handlePlayerMoved(p: HandlerParams) {
       }
     );
 
-    handleGameUpdate(p, user, otherUser, gameId, newStatus.catagory !== GameStatusCatagory.Ongoing);
+    await handleGameUpdate(p, gameId);
 
     const lastTurn = newTurns[newTurns.length - 1];
 

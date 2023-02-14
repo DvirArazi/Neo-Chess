@@ -70,7 +70,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
   
         {/* game info */}
         <Box sx={{
-          padding: `5px`,
+          padding: `0 5px`,
   
           flex: `1`,
           display: `flex`,
@@ -78,7 +78,9 @@ export default function GameThumbnail(props: { data: GameTd }) {
           justifyContent: `space-around`,
           alignItems: `center`,
         }}>
-          {getFormatBannerString(timeframe, isRated)}
+          <Box sx={{paddingBottom: `6px`, fontFamily: `robotoslab`}}>
+            {getFormatBannerString(timeframe, isRated)}
+          </Box>
           <Box sx={{
             display: `flex`,
             flexDirection: `row`,
@@ -86,7 +88,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
             alignItems: `center`,
           }}>
             {getPlayer(white)}
-            <Box sx={{ width: `60px` }}>{'VS'}</Box>
+            <Box sx={{ width: `60px`, fontFamily: `robotoslab` }}>{'VS'}</Box>
             {getPlayer(black)}
           </Box>
           <Box sx={{
@@ -94,7 +96,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
             fontWeight: `bold`,
             fontSize: `15px`,
             color: borderColor,
-            borderRadius: `5px`,
+            lineHeight: `20px`,
           }}
           >{
             status.catagory === GameStatusCatagory.Ongoing ?
@@ -115,7 +117,16 @@ export default function GameThumbnail(props: { data: GameTd }) {
           fontSize: `15px`,
           lineHeight: `15px`,
         }}>{player.name}</Box>
-        <Box>{player.rating}</Box>
+        <Box sx={{
+          fontSize: `14px`,
+          fontWeight: player.ratingMod === null ? `` : `bold`,
+          color: player.ratingMod === null ? `black` : (player.ratingMod >= 0 ? `#00cc00` : `#ff0000`)
+        }}>{
+          (player.rating === null ? '' : Math.floor(player.rating)) +
+            (player.ratingMod === null ? '' : 
+              (player.ratingMod >= 0 ? ` + ${Math.floor(player.ratingMod)}` : ` − ${Math.floor(Math.abs(player.ratingMod))}`)
+            )
+        }</Box>
       </Box>;
     }
   

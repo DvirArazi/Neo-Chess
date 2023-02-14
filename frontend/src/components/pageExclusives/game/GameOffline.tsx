@@ -232,6 +232,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     return <PlayerBanner key={Number(isOnTop)}
       name={isWhite ? 'White' : 'Black'}
       rating={null}
+      ratingMod={null}
       timeLeftMs={getTimeLeft()}
       isTicking={getIsTicking()}
       initDateTimeMs={game.timeLastTurnMs}

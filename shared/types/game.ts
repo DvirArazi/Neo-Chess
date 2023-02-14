@@ -48,6 +48,7 @@ export type Player = {
   id: string,
   name: string,
   rating: number,
+  ratingMod: number | null,
 }
 
 export type GameData = {
@@ -60,12 +61,22 @@ export type GameData = {
   status: GameStatus,
 }
 
+export type GameDataWithPlayers = {
+  timeframe: Timeframe,
+  isRated: boolean,
+  start: PieceType[],
+  timeLastTurnMs: number,
+  startRep: string,
+  turns: GameTurn[],
+  status: GameStatus,
+  white: Player,
+  black: Player,
+}
+
 export type GameViewData = {
   id: string,
   role: GameRole,
-  white: Player,
-  black: Player,
-} & GameData
+} & GameDataWithPlayers
 
 export enum MoveError {
   NoPiece = 'There\'s no piece on the specified sqaure',

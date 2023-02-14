@@ -27,7 +27,7 @@ export default function handleResign(p: HandlerParams) {
     const isUserWhite = p.userId === game.white.id;
     const winColor = isUserWhite ? PieceColor.Black : PieceColor.White;
 
-    p.gamesCollection.updateOne(
+    await p.gamesCollection.updateOne(
       { _id: game._id },
       {
         $set: {
@@ -38,7 +38,7 @@ export default function handleResign(p: HandlerParams) {
           }
         }
       }
-    )
+    );
 
     const otherUser = await p.usersCollection.findOne(
       { _id: new ObjectId(isUserWhite ? game.black.id : game.white.id) }
@@ -48,7 +48,7 @@ export default function handleResign(p: HandlerParams) {
       return;
     }
 
-    handleGameUpdate(p, user, otherUser, gameId, true);
+    await handleGameUpdate(p, gameId);
 
     emitToUser(p, user, "resigned", gameId, winColor);
     emitToUser(p, otherUser, "resigned", gameId, winColor);

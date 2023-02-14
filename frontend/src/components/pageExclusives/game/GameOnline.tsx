@@ -51,6 +51,7 @@ export default function GameOnline(props: { data: GameViewData }) {
   handleDrawAcceptedEvent();
   handleTakebackRequestedEvent();
   handleTakebackAcceptedEvent();
+  handleRatingsUpdatedEvent();
   handleStepsBackChange();
 
   return <>
@@ -174,9 +175,12 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getPlayerBanner(isWhite: boolean, isOnTop: boolean) {
+    const player = isWhite ? game.white : game.black;
+
     return <PlayerBanner key={Number(isOnTop)}
-      name={isWhite ? game.white.name : game.black.name}
-      rating={isWhite ? game.white.rating : game.black.rating}
+      name={player.name}
+      rating={player.rating}
+      ratingMod={player.ratingMod}
       timeLeftMs={getTimeLeft()}
       isTicking={isTicking()}
       initDateTimeMs={game.timeLastTurnMs}
@@ -208,7 +212,6 @@ export default function GameOnline(props: { data: GameViewData }) {
       if (!isStatusOngoing) {
         const crntI = game.turns.length - 1 - stepsBack.value
           + (((game.turns.length - stepsBack.value) % 2 === 0) === isWhite ? -1 : 0);
-        console.log(crntI);
         return crntI <= 0 ? game.timeframe.overallSec * 1000 : game.turns[crntI].timeLeftMs;
       }
 
@@ -517,6 +520,21 @@ export default function GameOnline(props: { data: GameViewData }) {
         stepsBack.set(0);
 
         promotionType.current = null;
+      });
+    }, []);
+  }
+
+  function handleRatingsUpdatedEvent() {
+    useEffect(()=>{
+      SOCKET.on("ratingsUpdated", (gameId, newWhiteRating, newBlackRating)=>{
+        console.log(newWhiteRating, newBlackRating);
+        if (game.id.toString() !== gameId.toString()) return;
+
+        setGame(v=>({
+          ...v,
+          white: {...v.white, ratingMod: newWhiteRating - v.white.rating},
+          black: {...v.black, ratingMod: newBlackRating - v.black.rating}
+        }))
       });
     }, []);
   }

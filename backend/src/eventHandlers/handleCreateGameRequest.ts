@@ -34,8 +34,8 @@ export default function handleCreateGameRequest(p: HandlerParams) {
 
     const deletedGameRequest = await p.gameRequestsCollection.findOneAndDelete({
       userId: { $ne: p.userId },
-      ratingAbsMin: { $lte: ratingAbsMin },
-      ratingAbsMax: { $gte: ratingAbsMax },
+      ratingAbsMin: { $gte: ratingAbsMin },
+      ratingAbsMax: { $lte: ratingAbsMax },
     });
 
     //if a request with matching settings was not found
@@ -87,12 +87,14 @@ export default function handleCreateGameRequest(p: HandlerParams) {
     const player0: Player = {
       id: user0._id.toString(),
       name: user0.name,
-      rating: user0.ratings[timeFormat]
+      rating: user0.ratings[timeFormat],
+      ratingMod: null,
     }
     const player1: Player = {
       id: user1._id.toString(),
       name: user1.name,
-      rating: user1.ratings[timeFormat]
+      rating: user1.ratings[timeFormat],
+      ratingMod: null,
     }
 
     const start = generateStart();

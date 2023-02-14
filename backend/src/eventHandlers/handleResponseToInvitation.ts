@@ -53,12 +53,14 @@ export default function handleResponseToInvitation(p: HandlerParams) {
     const player0: Player = {
       id: user._id.toString(),
       name: user.name,
-      rating: user.ratings[timeFormat]
+      rating: user.ratings[timeFormat],
+      ratingMod: null,
     }
     const player1: Player = {
       id: friendUser._id.toString(),
       name: friendUser.name,
-      rating: friendUser.ratings[timeFormat]
+      rating: friendUser.ratings[timeFormat],
+      ratingMod: null,
     }
     const start = generateStart();
     ongoingGamesInsert(p, {

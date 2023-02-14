@@ -29,7 +29,7 @@ export default function handleTakebackAccept(p: HandlerParams) {
       return;
     }
 
-    p.gamesCollection.findOneAndUpdate(
+    await p.gamesCollection.updateOne(
       { _id: game._id },
       {
         $set: {
@@ -53,7 +53,7 @@ export default function handleTakebackAccept(p: HandlerParams) {
       return;
     }
 
-    handleGameUpdate(p, user, otherUser, gameId, false);
+    await handleGameUpdate(p, gameId);
 
     const crntTimeMs = new Date().getTime();
 
