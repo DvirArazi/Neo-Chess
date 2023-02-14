@@ -16,6 +16,7 @@ import { MenuOffline } from "frontend/src/components/pageExclusives/game/GameOff
 import { getOppositeColor } from "shared/tools/piece";
 import { THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import { FLIP_PIECES_COOKIE } from "frontend/src/utils/tools/cookies";
+import { getAdvantage } from "frontend/src/utils/tools/general";
 
 export default function GameOffline(props: { timeframe: Timeframe }) {
   const { timeframe } = props;
@@ -47,6 +48,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isStatusTimeout = game.status.catagory === GameStatusCatagory.Win
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
+  const advantage = getAdvantage(layout.value);
 
   handleGameStatusChange();
   handleStepsBackTriggerChange();
@@ -239,7 +241,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       isWide={isWide}
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
-      advantage={5}
+      advantage={advantage * (isWhite ? 1 : -1)}
     />;
 
     function getTimeLeft() {

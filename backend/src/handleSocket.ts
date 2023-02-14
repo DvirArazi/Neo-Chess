@@ -45,9 +45,12 @@ export default async function handleSocket(webSocketServer: WebSocketServer) {
   const gameRequestsCollection = db.collection<GameRequest>("GameRequests");
   const GamesCollection = db.collection<Game>("Games");
 
-  usersCollection.deleteMany({}); //remove in production
   gameRequestsCollection.deleteMany({});
-  GamesCollection.deleteMany({}); //remove in production
+
+  if (process.env.NODE_ENV === "development") { 
+    usersCollection.deleteMany({});
+    GamesCollection.deleteMany({});
+  }
 
   const backendParams: BackendParams = {
     webSocketServer: webSocketServer,
