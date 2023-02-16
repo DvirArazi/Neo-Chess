@@ -42,8 +42,11 @@ app.prepare().then(() => {
   handleSocket(webSocketServer);
 
   expressApp.all('*', (req, res) => {
-    res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    if (process.env.NODE_ENV === "production") {
+      res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+    // res.set('Access-Control-Allow-Origin', '*');
     return handle(req, res);
   });
 

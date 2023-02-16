@@ -13,9 +13,10 @@ export function AuthButton() {
 export function SignInButton() {
   return (
     <GoogleLogin
+      ux_mode="redirect"
       onSuccess={(credentialResponse) => {
         const idToken = credentialResponse.credential!;
-
+        console.log('sign in');
         SOCKET.emit("signIn", idToken);
       }}
       onError={() => {
@@ -49,7 +50,7 @@ export function SignOutButton() {
     }}
   >
     {
-      data.picture !== undefined ? 
+      data.picture !== undefined ?
         <img crossOrigin="anonymous"
           src={data.picture}
           style={{
