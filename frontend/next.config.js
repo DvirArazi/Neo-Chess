@@ -67,6 +67,8 @@ const nextConfig = {
           ],
         },
       ];
+    } else {
+      return [];
     }
   },
 }
