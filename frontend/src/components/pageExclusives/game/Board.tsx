@@ -33,7 +33,7 @@ export default function Board(props: {
   } = props;
 
   const boxRef = useRef<HTMLDivElement>(null);
-  const mousePercentPos = useRef<Point | null>(null);
+  // const mousePercentPos = useRef<Point | null>(null);
 
   const from = new Stateful<Point | null>(null);
   const promotionTo = new Stateful<Point | null>(null);
@@ -66,11 +66,6 @@ export default function Board(props: {
         flex: `1`,
       }}>
         <Box ref={boxRef}
-          onMouseMove={e => setMouseRelPos({ x: e.clientX, y: e.clientY })}
-          onTouchMove={e => {
-            const touch = e.changedTouches[0];
-            setMouseRelPos({ x: touch.clientX, y: touch.clientY });
-          }}
           sx={{
             position: `relative`,
             width: `100%`,
@@ -88,13 +83,9 @@ export default function Board(props: {
     </Box>
   );
 
-  function bla(e: React.TouchEvent<HTMLDivElement>) {
-    const touch = e.changedTouches[0];
-
-  }
-  function setMouseRelPos(globalPos: Point) {
+  function globalToRelPos(globalPos: Point): Point | null {
     const rect = boxRef.current?.getBoundingClientRect();
-    if (rect === undefined) return;
+    if (rect === undefined) return null;
 
     const getPos = () => {
       const pos: Point = {
@@ -108,10 +99,11 @@ export default function Board(props: {
       };
     }
 
-    mousePercentPos.current = (
-      globalPos.x < rect.left || globalPos.x > rect.right ||
-      globalPos.y < rect.top || globalPos.y > rect.bottom
-    ) ? null : getPos()
+    // mousePercentPos.current = (
+    //   globalPos.x < rect.left || globalPos.x > rect.right ||
+    //   globalPos.y < rect.top || globalPos.y > rect.bottom
+    // ) ? null : getPos()
+    return getPos();
   };
 
   function getPieces(): JSX.Element[] {
@@ -127,9 +119,15 @@ export default function Board(props: {
           isEnabled={enabled && data.color === turnColor}
           slide={pieceSlide.value}
           isFlipped={flipPieces}
-          onStart={onStart}
-          onEnd={() => {
-            move();
+          onStart={(globalPos)=>{
+            const relPos = globalToRelPos(globalPos);
+            if (relPos === null) return;
+            onStart(relPos);
+          }}
+          onEnd={(globalPos) => {
+            const relPos = globalToRelPos(globalPos);
+            if (relPos === null) return;
+            move(relPos);
             pieceSlide.set(false);
           }}
         />
@@ -144,8 +142,10 @@ export default function Board(props: {
       ...legalMoves.value.map((legalMove, i) =>
         <Dot key={i}
           position={getPoint(legalMove)}
-          onPressed={() => {
-            move();
+          onPressed={(globalPos) => {
+            const relPos = globalToRelPos(globalPos);
+            if (relPos === null) return;
+            move(relPos);
             pieceSlide.set(true);
           }}
         />
@@ -170,10 +170,8 @@ export default function Board(props: {
     />;
   }
 
-  function onStart() {
-    if (mousePercentPos.current === null) return;
-
-    const mouseSquarePos: Point = percentPosToSquarePos(mousePercentPos.current);
+  function onStart(relPos: Point) {
+    const mouseSquarePos: Point = percentPosToSquarePos(relPos);
     const moves = getLegalMoves(layout, turnColor, mouseSquarePos);
     if (moves.ok) {
       from.set(mouseSquarePos);
@@ -181,10 +179,10 @@ export default function Board(props: {
     }
   }
 
-  function move() {
-    if (from.value === null || mousePercentPos.current === null) return;
+  function move(relPos: Point) {
+    if (from.value === null) return;
 
-    const newTo = percentPosToSquarePos(mousePercentPos.current);
+    const newTo = percentPosToSquarePos(relPos);
     if (!legalMoves.value.some(legalMove => comparePoints(legalMove, newTo))) return;
 
     const fromI = pointToIndex(from.value);

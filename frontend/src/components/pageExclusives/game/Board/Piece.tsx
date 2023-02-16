@@ -14,8 +14,8 @@ export default function Piece(props: {
   isEnabled: boolean,
   slide: boolean,
   isFlipped: boolean,
-  onStart: () => void,
-  onEnd: () => void,
+  onStart: (globalPos: Point) => void,
+  onEnd: (globalPos: Point) => void,
 }) {
   const { data, isEnabled, index, slide, isFlipped, onStart, onEnd } = props;
 
@@ -42,19 +42,26 @@ export default function Piece(props: {
       disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
       onStart={(e) => {
+        e.stopPropagation();
+
         const gPos = getGlobalPos(e);
         if (gPos === null) return;
         console.log(gPos);
 
         mouseDownTime.set(new Date().getTime());
-        onStart();
+        onStart(gPos);
       }}
       onStop={(e) => {
         e.stopPropagation();
+
+        const gPos = getGlobalPos(e);
+        if (gPos === null) return;
+        console.log(gPos);
+
         const timePassed = new Date().getTime() - mouseDownTime.value;
         if (timePassed < 300) return;
 
-        onEnd();
+        onEnd(gPos);
       }}
     >
       <Box ref={draggableRef}

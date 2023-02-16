@@ -4,14 +4,14 @@ import { Point } from "shared/types/game";
 
 const dia = 0.4;
 
-export function Dot(props: { position: Point, onPressed: () => void }) {
+export function Dot(props: { position: Point, onPressed: (globalPos: Point) => void }) {
   const { position, onPressed } = props;
 
   return (
     <Box
       onMouseDown={(e) => {
         e.stopPropagation();
-        onPressed();
+        onPressed({x: e.clientX, y: e.clientY});
       }}
       sx={{
         position: `absolute`,
