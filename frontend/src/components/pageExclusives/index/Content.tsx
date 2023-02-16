@@ -44,15 +44,16 @@ export default function Content() {
         isOnline.value ? THEME.iconNotSelected : THEME.icon
       } />
     </Toggle>
-    {!isAuthed ? <></> :
-      <OnlinePanel
-        isOnline={isOnline.value}
-        isRated={isRated}
-        isRanged={isRanged}
-        range={range}
-        chosenFriend={chosenFriend}
-      />
-    }
+    <Box sx={{padding: `10px`}}>{
+      !isAuthed ? <></> :
+        <OnlinePanel
+          isOnline={isOnline.value}
+          isRated={isRated}
+          isRanged={isRanged}
+          range={range}
+          chosenFriend={chosenFriend}
+        />
+    }</Box>
     {getCatagoryButtons()}
     <CustomeFormatPanel
       onPlay={start}

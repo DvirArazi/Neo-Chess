@@ -32,8 +32,6 @@ export default function OnlinePanel(
 
   return (
     <Box sx={{
-      padding: `10px`,
-
       display: `flex`,
       justifyContent: `center`,
     }}>

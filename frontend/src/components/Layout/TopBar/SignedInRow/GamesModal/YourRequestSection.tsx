@@ -54,7 +54,7 @@ export default function YourRequestSection(props: {
         <Box>
           {
             getFormatBannerString(r.timeframe, r.isRated)
-            + ` • (${r.isByRating ? `${r.ratingAbsMin} to ${r.ratingAbsMax}` : `vs ${r.opponentName}`})`
+            + ` • (${r.isByRating ? `${Math.floor(r.ratingAbsMin)} to ${Math.floor(r.ratingAbsMax)}` : `vs ${r.opponentName}`})`
           }
         </Box>
         <Box sx={{ width: `15px` }} />

@@ -41,7 +41,6 @@ app.prepare().then(() => {
         includeSubDomains: true,
         preload: true,
       },
-      
     }));
     expressApp.use((req, res, next) => {
       if (req.headers['x-forwarded-proto'] !== 'https') {
