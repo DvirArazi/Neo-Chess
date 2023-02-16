@@ -43,6 +43,12 @@ app.prepare().then(() => {
       },
       
     }));
+    expressApp.use((req, res, next) => {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect('https://' + req.hostname + req.url);
+      }
+      return next();
+    });
   }
   expressApp.use(express.static(publicFolder));
 
