@@ -13,7 +13,7 @@ export function AuthButton() {
 export function SignInButton() {
   return (
     <GoogleLogin
-      ux_mode="redirect"
+      ux_mode="popup"
       onSuccess={(credentialResponse) => {
         const idToken = credentialResponse.credential!;
         console.log('sign in');
