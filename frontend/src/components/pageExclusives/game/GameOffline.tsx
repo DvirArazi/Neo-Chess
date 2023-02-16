@@ -50,6 +50,8 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
   const advantage = getAdvantage(layout.value);
 
+  console.log(timeUnpausedMs.value);
+
   handleGameStatusChange();
   handleStepsBackTriggerChange();
   handleStepsBackOrTurnsOrIsPausedChange();
@@ -190,8 +192,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
 
   function handleStepsBackOrTurnsOrIsPausedChange() {
     useEffect(() => {
-      timeUnpausedMs.set(0);
-
       if (timeoutId.current !== null) {
         clearTimeout(timeoutId.current);
       }
@@ -297,6 +297,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       canStepBack={stepsBack.value < game.turns.length}
       canStepForward={stepsBack.value > 0}
       isPaused={isPaused.value}
+      isPauseEnabled={!hasTimedOut.value}
       isUntimed={game.timeframe === "untimed"}
       onMenuClick={() => isMenuOpen.set(true)}
       onPauseClick={() => {

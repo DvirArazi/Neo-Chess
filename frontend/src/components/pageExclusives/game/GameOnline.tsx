@@ -215,11 +215,6 @@ export default function GameOnline(props: { data: GameViewData }) {
         return crntI <= 0 ? game.timeframe.overallSec * 1000 : game.turns[crntI].timeLeftMs;
       }
 
-      // if (!isStatusOngoing && isWhiteTurn === isWhite) {
-      //   return game.turns[game.turns.length - 1 + iMod].timeLeftMs
-      //     - (new Date().getTime() - game.timeLastTurnMs);
-      // }
-
       const timeMod = !(postTurn.value && isWhiteTurn === isWhite) ? 0 :
         - (new Date().getTime() - game.timeLastTurnMs)
         + game.timeframe.incSec * 1000;

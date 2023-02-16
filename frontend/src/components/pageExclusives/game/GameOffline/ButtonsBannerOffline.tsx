@@ -6,6 +6,7 @@ export default function ButtonsBannerOffline(props: {
   canStepBack: boolean,
   canStepForward: boolean,
   isPaused: boolean,
+  isPauseEnabled: boolean
   isUntimed: boolean,
   onMenuClick: () => void,
   onPauseClick: () => void,
@@ -16,6 +17,7 @@ export default function ButtonsBannerOffline(props: {
     onMenuClick,
     onBackClick,
     isPaused,
+    isPauseEnabled,
     isUntimed,
     onForwardClick,
     onPauseClick,
@@ -38,12 +40,12 @@ export default function ButtonsBannerOffline(props: {
 
     {
       isUntimed ? <></> :
-        <IconButton onClick={onPauseClick}>
+        <IconButton onClick={onPauseClick} disabled={!isPauseEnabled}>
           <Box sx={{ padding: `5px` }}>
             <Icon
               name={isPaused ? "play" : "pause"}
               side={30}
-              filter={THEME.icon}
+              filter={isPauseEnabled ? THEME.icon : THEME.iconDisabled}
             />
           </Box>
         </IconButton>
