@@ -35,7 +35,14 @@ app.prepare().then(() => {
   const publicFolder = path.join(process.cwd(), '/client/public/');
 
   if (process.env.NODE_ENV === "production") {
-    expressApp.use(helmet());
+    expressApp.use(helmet({
+      hsts: {
+        maxAge: Number.MAX_SAFE_INTEGER,
+        includeSubDomains: true,
+        preload: true,
+      },
+      
+    }));
   }
   expressApp.use(express.static(publicFolder));
 
