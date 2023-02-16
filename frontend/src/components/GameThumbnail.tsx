@@ -36,6 +36,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
         fontFamily: `unset !important`,
         textTransform: `unset !important`,
         color: `unset !important`,
+        width: `400px`
       }}
     >
       <Box sx={{
