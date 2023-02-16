@@ -1,6 +1,6 @@
 import { Box, createTheme } from "@mui/material";
 import { PieceData } from "shared/types/piece";
-import Draggable, { ControlPosition } from "react-draggable";
+import Draggable, { DraggableCore, DraggableEvent } from "react-draggable";
 import { Point } from "shared/types/game";
 import { useEffect, useRef } from "react";
 import Icon from "frontend/src/components/Icon";
@@ -42,7 +42,10 @@ export default function Piece(props: {
       disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
       onStart={(e) => {
-        e.stopPropagation();
+        const gPos = getGlobalPos(e);
+        if (gPos === null) return;
+        console.log(gPos);
+
         mouseDownTime.set(new Date().getTime());
         onStart();
       }}
@@ -85,4 +88,18 @@ export default function Piece(props: {
       </Box>
     </Draggable >
   );
+}
+
+function getGlobalPos(e: DraggableEvent): Point | null {
+  const mouseE = e as React.MouseEvent<HTMLDivElement, MouseEvent>;
+  if (mouseE.clientX !== undefined && mouseE.clientY !== undefined) {
+    return {x: mouseE.clientX, y: mouseE.clientY};
+  }
+
+  const touchE = (e as React.TouchEvent<HTMLDivElement>).changedTouches[0];
+  if (touchE.clientX !== undefined && touchE.clientY !== undefined) {
+    return {x: touchE.clientX, y: touchE.clientY};
+  }
+
+  return null
 }

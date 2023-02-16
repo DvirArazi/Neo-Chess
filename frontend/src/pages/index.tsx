@@ -8,10 +8,16 @@ import Icon from "frontend/src/components/Icon";
 import { BoardLayout } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
 import { THEME } from "frontend/src/pages/_app";
+import Draggable from "react-draggable";
 
 
 export default function Home() {
   return <>
+  {/* <Draggable
+    onStart={()=>{console.log('fuuuuuck')}}
+  >
+    <Box>{'fuck me'}</Box>
+  </Draggable> */}
     <Content />
     {/* <GameOffline timeframe={{ overallSec: 10*60, incSec: 5 }} /> */}
   </>;

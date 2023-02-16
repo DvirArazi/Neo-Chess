@@ -66,7 +66,11 @@ export default function Board(props: {
         flex: `1`,
       }}>
         <Box ref={boxRef}
-          onMouseMove={setMouseRelPos}
+          onMouseMove={e => setMouseRelPos({ x: e.clientX, y: e.clientY })}
+          onTouchMove={e => {
+            const touch = e.changedTouches[0];
+            setMouseRelPos({ x: touch.clientX, y: touch.clientY });
+          }}
           sx={{
             position: `relative`,
             width: `100%`,
@@ -84,14 +88,18 @@ export default function Board(props: {
     </Box>
   );
 
-  function setMouseRelPos(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function bla(e: React.TouchEvent<HTMLDivElement>) {
+    const touch = e.changedTouches[0];
+
+  }
+  function setMouseRelPos(globalPos: Point) {
     const rect = boxRef.current?.getBoundingClientRect();
     if (rect === undefined) return;
 
     const getPos = () => {
       const pos: Point = {
-        x: (e.clientX - rect.x) / rect.width,
-        y: (e.clientY - rect.y) / rect.height,
+        x: (globalPos.x - rect.x) / rect.width,
+        y: (globalPos.y - rect.y) / rect.height,
       };
 
       return isFlipped ? pos : {
@@ -101,8 +109,8 @@ export default function Board(props: {
     }
 
     mousePercentPos.current = (
-      e.clientX < rect.left || e.clientX > rect.right ||
-      e.clientY < rect.top || e.clientY > rect.bottom
+      globalPos.x < rect.left || globalPos.x > rect.right ||
+      globalPos.y < rect.top || globalPos.y > rect.bottom
     ) ? null : getPos()
   };
 
