@@ -10,27 +10,28 @@ export const BOARD_SIDE = 8;
 export const SQUARE_SIZE = 1 / BOARD_SIDE * 100;
 
 export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]) {
-  const layout: BoardLayout = new Array<PieceDataWithKey | null>(BOARD_SIDE * BOARD_SIDE).fill(null);
+  const layout: BoardLayout = new Array<PieceDataWithKey | null>(64).fill(null);
+  // King,
+  // Queen,
+  // Rook,
+  // Knight,
+  // Bishop,
+  // Pawn,
+  const pieceKeys = [0, 1, 2, 4, 6];
 
-  const pieceCrntIs = new Map<PieceType, number>(
-    Object.values(PieceType).map(pieceType => [pieceType as PieceType, 0])
-  );
-  const backRankKeyIs = start.map(pieceType => {
-    pieceCrntIs.set(pieceType, pieceCrntIs.get(pieceType)! + 1);
-    return pieceCrntIs.get(pieceType)!;
-  })
+  for (let x = 0; x < 8; x++) {
+    layout[x] = { type: start[x], color: PieceColor.White, key: pieceKeys[start[x]] };
+    layout[8 + x] = { type: PieceType.Pawn, color: PieceColor.White, key: 8 + x };
+    layout[48 + x] = { type: PieceType.Pawn, color: PieceColor.Black, key: 16 + x };
+    layout[56 + x] = { type: start[x], color: PieceColor.Black, key: 24 + pieceKeys[start[x]] };
 
-  for (let x = 0; x < BOARD_SIDE; x++) {
-    layout[x] = getPiece({ type: start[x], color: PieceColor.White }, backRankKeyIs[x]);
-    layout[BOARD_SIDE + x] = getPiece({ type: PieceType.Pawn, color: PieceColor.White }, x);
-    layout[BOARD_SIDE * (BOARD_SIDE - 2) + x] = getPiece({ type: PieceType.Pawn, color: PieceColor.Black }, x);
-    layout[BOARD_SIDE * (BOARD_SIDE - 1) + x] = getPiece({ type: start[x], color: PieceColor.Black }, backRankKeyIs[x]);;
+    pieceKeys[start[x]]++;
   }
 
   for (const turn of turns) {
     const action = turn.action;
-    const fromI = action % BOARD_SIDE ** 2;
-    const toI = Math.floor(action / BOARD_SIDE ** 2);
+    const fromI = action % 64;
+    const toI = Math.floor(action / 64);
     layout[toI] = layout[fromI];
     layout[fromI] = null;
 
@@ -41,10 +42,6 @@ export function startAndTurnsToBoardLayout(start: PieceType[], turns: GameTurn[]
   }
 
   return layout;
-
-  function getPiece(data: PieceData, i: number): PieceDataWithKey {
-    return { ...data, key: `${pieceDataToRepChar(data)}${i}` }
-  }
 }
 
 export function getLegalMoves(layout: BoardLayout, turnColor: PieceColor, square0: Point): Result<Point[], MoveError> {

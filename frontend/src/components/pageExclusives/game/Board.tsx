@@ -87,51 +87,48 @@ export default function Board(props: {
     const rect = boxRef.current?.getBoundingClientRect();
     if (rect === undefined) return null;
 
-    const getPos = () => {
-      const pos: Point = {
-        x: (globalPos.x - rect.x) / rect.width,
-        y: (globalPos.y - rect.y) / rect.height,
-      };
+    const pos: Point = {
+      x: (globalPos.x - rect.x) / rect.width,
+      y: (globalPos.y - rect.y) / rect.height,
+    };
 
-      return isFlipped ? pos : {
-        x: 1 - pos.x,
-        y: 1 - pos.y
-      };
-    }
-
-    // mousePercentPos.current = (
-    //   globalPos.x < rect.left || globalPos.x > rect.right ||
-    //   globalPos.y < rect.top || globalPos.y > rect.bottom
-    // ) ? null : getPos()
-    return getPos();
+    return isFlipped ? pos : {
+      x: 1 - pos.x,
+      y: 1 - pos.y
+    };
   };
 
   function getPieces(): JSX.Element[] {
-    return layout
-      .map((data, i) => data !== null ? { ...data, ...{ index: i } } : null)
-      .filter(data => data !== null)
-      .sort((a, b) => a!.key > b!.key ? 1 : -1)
-      .map(dataO => {
-        const data = dataO!;
-        return <Piece key={data.key}
-          data={data}
-          index={getIndex(data.index)}
-          isEnabled={enabled && data.color === turnColor}
-          slide={pieceSlide.value}
-          isFlipped={flipPieces}
-          onStart={(globalPos)=>{
-            const relPos = globalToRelPos(globalPos);
-            if (relPos === null) return;
-            onStart(relPos);
-          }}
-          onEnd={(globalPos) => {
-            const relPos = globalToRelPos(globalPos);
-            if (relPos === null) return;
-            move(relPos);
-            pieceSlide.set(false);
-          }}
-        />
-      });
+    const pieces = new Array<JSX.Element>(32).fill(<></>);
+
+    for (let i = 0; i < layout.length; i++) {
+      const piece = layout[i];
+      if (piece === null) continue;
+      pieces[piece.key] = <Piece key={piece.key}
+        data={piece}
+        index={getIndex(i)}
+        isEnabled={enabled && piece.color === turnColor}
+        slide={pieceSlide.value}
+        isFlipped={flipPieces}
+        onStart={handleStart}
+        onEnd={handleEnd}
+      />
+    }
+
+    return pieces;
+
+    function handleStart(globalPos: Point) {
+      const relPos = globalToRelPos(globalPos);
+      if (relPos === null) return;
+      onStart(relPos);
+    }
+
+    function handleEnd(globalPos: Point) {
+      const relPos = globalToRelPos(globalPos);
+      if (relPos === null) return;
+      move(relPos);
+      pieceSlide.set(false);
+    }
   }
 
   function getVisuals(): JSX.Element[] {
