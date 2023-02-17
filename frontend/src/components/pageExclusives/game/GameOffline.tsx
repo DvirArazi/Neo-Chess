@@ -50,8 +50,6 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
   const advantage = getAdvantage(layout.value);
 
-  console.log(timeUnpausedMs.value);
-
   handleGameStatusChange();
   handleStepsBackTriggerChange();
   handleStepsBackOrTurnsOrIsPausedChange();

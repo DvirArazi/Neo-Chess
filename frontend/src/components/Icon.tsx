@@ -17,7 +17,7 @@ export default function Icon(props: {
     pointerEvents: `none`,
     userSelect: `none`,
   }}>
-    <img crossOrigin="anonymous"
+    <img
       style={{
         width: `100%`,
         height: `100%`,

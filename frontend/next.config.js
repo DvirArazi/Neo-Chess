@@ -22,16 +22,12 @@ const nextConfig = {
       ]
     });
 
-    // //to load svgs
-    // //============
-    // config.module.rules.push({
-    //   test: /\.svg$/,
-    //   use: [
-    //     {
-    //       loader: 'svg-inline-loader',
-    //     }
-    //   ]
-    // });
+    //to load svgs
+    //============
+    config.module.rules.push({
+      test: /\.(png|jp(e*)g|svg|gif)$/,
+      type: "asset/resource",
+    });
 
     //to enable using SVGR
     //====================

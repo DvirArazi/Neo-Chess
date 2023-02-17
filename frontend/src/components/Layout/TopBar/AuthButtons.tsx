@@ -16,7 +16,6 @@ export function SignInButton() {
       ux_mode="popup"
       onSuccess={(credentialResponse) => {
         const idToken = credentialResponse.credential!;
-        console.log('sign in');
         SOCKET.emit("signIn", idToken);
       }}
       onError={() => {

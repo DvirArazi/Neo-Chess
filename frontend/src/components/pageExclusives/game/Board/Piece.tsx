@@ -46,7 +46,6 @@ export default function Piece(props: {
 
         const gPos = getGlobalPos(e);
         if (gPos === null) return;
-        console.log(gPos);
 
         mouseDownTime.set(new Date().getTime());
         onStart(gPos);
@@ -56,7 +55,6 @@ export default function Piece(props: {
 
         const gPos = getGlobalPos(e);
         if (gPos === null) return;
-        console.log(gPos);
 
         const timePassed = new Date().getTime() - mouseDownTime.value;
         if (timePassed < 300) return;

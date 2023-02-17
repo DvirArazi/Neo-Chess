@@ -13,12 +13,6 @@ import Draggable from "react-draggable";
 
 export default function Home() {
   return <>
-  {/* <Draggable
-    onStart={()=>{console.log('fuuuuuck')}}
-  >
-    <Box>{'fuck me'}</Box>
-  </Draggable> */}
     <Content />
-    {/* <GameOffline timeframe={{ overallSec: 10*60, incSec: 5 }} /> */}
   </>;
 }
