@@ -30,7 +30,7 @@ function generateIconLinks() {
   fs.writeFileSync(`frontend/src/components/IconLinks.tsx`, 
     `export default function IconLinks() {\n` +
     `  return <>\n` +
-    filePaths.map(path=>`    <link rel="preload" as="image/svg+xml" href="${path}"/>\n`).join('') +
+    filePaths.map(path=>`    <link rel="preload" as="image/svg+xml" href="/svgs/${path}"/>\n`).join('') +
     `  </>\n` +
     `}\n`
   );
