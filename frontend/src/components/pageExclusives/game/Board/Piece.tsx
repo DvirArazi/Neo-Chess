@@ -78,6 +78,8 @@ export default function Piece(props: {
           ":active": {
             zIndex: `20`,
           },
+          transform: `translateZ(0)`,
+          willChange: `left, top`,
           transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
       >
