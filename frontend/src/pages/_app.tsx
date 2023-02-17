@@ -15,6 +15,7 @@ import React from 'react';
 import { UserViewData } from 'shared/types/general';
 import { ThemeProvider } from '@emotion/react';
 import Layout from 'frontend/src/components/Layout';
+import IconLinks from 'frontend/src/components/IconLinks';
 
 export let SOCKET: WebSocketClient;
 export let WINDOW_WIDTH: number;
@@ -87,6 +88,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             <meta name="referrer" content="no-referrer-when-downgrade" />
             <link rel="icon" href="/favicon.ico" />
+            <IconLinks/>
           </Head>
           <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID!}>
             <Layout>
