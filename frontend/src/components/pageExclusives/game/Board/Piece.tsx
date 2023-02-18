@@ -77,7 +77,7 @@ export default function Piece(props: {
         height: `${SQUARE_SIZE}%`,
         zIndex: `10`,
         willChange: `transform`,
-        transition: `left 0.3s, top 0.3s ease-out`,
+        transition: slide ? `left 0.3s, top 0.3s ease-out` : `none`,
         ":hover": {
           cursor: `${isEnabled ? `pointer` : `default`}`,
         },
