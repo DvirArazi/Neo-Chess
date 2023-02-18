@@ -49,7 +49,6 @@ export default function Piece(props: {
         if (gPos === null) return;
 
         mouseDownTime.set(new Date().getTime());
-        console.log('start');
         onStart(gPos);
       }}
       onStop={(e) => {

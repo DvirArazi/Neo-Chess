@@ -49,6 +49,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
     && game.status.reason === WinReason.Timeout;
   const isGameOver = !(isStatusOngoing || isStatusTimeout);
   const advantage = getAdvantage(layout.value);
+  const flipPiecesAndBanners = isWhiteTurn === isFlipped.value && flipPieces.value;
 
   handleGameStatusChange();
   handleStepsBackTriggerChange();
@@ -240,6 +241,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
       advantage={advantage * (isWhite ? 1 : -1)}
+      isTurned={flipPiecesAndBanners}
     />;
 
     function getTimeLeft() {
@@ -280,10 +282,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       layout={layout.value}
       turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
       isFlipped={isFlipped.value}
-      flipPieces={
-        isWhiteTurn === isFlipped.value &&
-        flipPieces.value
-      }
+      flipPieces={flipPiecesAndBanners}
       onMove={onMove}
       onPromotion={onPromotion}
       onTurnEnd={onTurnEnd}

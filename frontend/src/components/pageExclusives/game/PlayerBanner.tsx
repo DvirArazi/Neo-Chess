@@ -20,6 +20,7 @@ export default function PlayerBanner(props: {
   isUntimed: boolean,
   layout: BoardLayout,
   advantage: number,
+  isTurned: boolean,
 }) {
   const {
     name,
@@ -33,7 +34,8 @@ export default function PlayerBanner(props: {
     isWide,
     isUntimed,
     layout,
-    advantage
+    advantage,
+    isTurned: isFlipped,
   } = props;
 
   const oppositeColor = getOppositeColor(color);
@@ -59,6 +61,7 @@ export default function PlayerBanner(props: {
       justifyContent: `space-between`,
       alignItems: `center`,
       minHeight: `30px`,
+      transform: isFlipped ? `rotate(0.5turn)` : `none`
     }}>
       <Box sx={{ textAlign: `left` }}>
         <Box sx={{ fontSize: `16px`, fontWeight: `600` }}>{name}</Box>
@@ -104,7 +107,11 @@ export default function PlayerBanner(props: {
 
       crntX += 12;
     }
-    return <Box sx={{ position: `relative`, height: `25px` }}>
+    return <Box sx={{
+      position: `relative`,
+      height: `25px`,
+      transform: isFlipped ? `rotate(0.5turn)` : `none`
+      }}>
       {pieces}
       <Box sx={{
         fontFamily: `robotoslab`,
