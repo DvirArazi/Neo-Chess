@@ -90,10 +90,15 @@ export default function PlayerBanner(props: {
 
     const capturedCounts = getCapturedCountsWithPawns(layout, oppositeColor);
 
+    console.log(`===${name}===`)
     let crntX = 0;
     for (const pieceCount of capturedCounts) {
       if (pieceCount.count === 0) continue;
       for (let i = 0; i < pieceCount.count; i++) {
+        if (name === "White") {
+          console.log(pieceCount.type, pieceDataToIconName({ type: pieceCount.type, color: oppositeColor }));
+        }
+        
         pieces.push(<MiniPiece key={crntX}
           iconName={pieceDataToIconName({ type: pieceCount.type, color: oppositeColor })}
           x={crntX}

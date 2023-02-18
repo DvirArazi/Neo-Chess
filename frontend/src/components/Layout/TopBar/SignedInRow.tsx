@@ -31,14 +31,14 @@ export default function SignedInRow() {
 
   return <>
     <Box>
-      {getButton("fight", 33, () => isGamesModalOpen.set(true))}
+      {getButton("fight", 28, () => isGamesModalOpen.set(true))}
       {gamesModalData.value.invitations.length > 0 || alertGameTd() ? getAlert() : <></>}
     </Box>
     <Box>
       {getButton("friends", 33, () => isFriendsModalOpen.set(true))}
       {friendsModalData.value.friendRequests.length > 0 ? getAlert() : <></>}
     </Box>
-    {getButton("history", 33, () => router.push('/history'))}
+    {getButton("history", 25, () => router.push('/history'))}
     {getGamesModal()}
     {getFriendsModal()}
   </>;
@@ -58,11 +58,11 @@ export default function SignedInRow() {
     return <IconButton
       onClick={onClick}
     >
-      <Box sx={{ padding: `${0}px`, background: `blue` }}>
+      <Box sx={{ padding: `${padding / 2}px` }}>
         <Icon
           name={name}
           side={side}
-          filter={THEME.icon}
+          fill={THEME.icon}
         />
       </Box>
     </IconButton>
@@ -139,7 +139,7 @@ export default function SignedInRow() {
   }
 
   function alertGameTd(): boolean {
-    return (gamesModalData.value.ongoingGamesTd.some(td => 
+    return (gamesModalData.value.ongoingGamesTd.some(td =>
       td.userColor === td.turnColor && window.location.pathname !== `/game/${td.path}`
     )
     )

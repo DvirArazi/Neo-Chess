@@ -32,7 +32,7 @@ export default function YourRequestSection(props: {
   }
 
   function initRequestValue() {
-    useEffect(()=>{
+    useEffect(() => {
       request.set(initRequest);
     }, [initRequest]);
   }
@@ -63,14 +63,14 @@ export default function YourRequestSection(props: {
           placement={"top"}
           arrow
         >
-          <IconButton onClick={()=>SOCKET.emit("deleteGameRequest", ()=>{
+          <IconButton onClick={() => SOCKET.emit("deleteGameRequest", () => {
             if (request.value === null) return;
 
             isByRating.current = request.value?.isByRating;
             isSnackbarOpen.set(true);
             request.set(null);
           })}>
-            <Icon name="cancel" side={25} filter={THEME.icon}/>
+            <Icon name="cancel" side={25} fill={THEME.icon} />
           </IconButton>
         </Tooltip>
       </Box>

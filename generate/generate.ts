@@ -1,7 +1,6 @@
 import fs from 'fs';
 
 generateIconName();
-generateIconLinks();
 
 function generateIconName() {
   const filePaths = getAllFileNames('frontend/public/svgs/');
@@ -17,19 +16,6 @@ function generateIconName() {
     `}\n`
   );
 }
-
-function generateIconLinks() {
-  const filePaths = getAllFileNames('frontend/public/svgs/');
-
-  fs.writeFileSync(`frontend/src/components/IconLinks.tsx`, 
-    `export default function IconLinks() {\n` +
-    `  return [\n` +
-    filePaths.map((path, i)=>`    <link key="${i}" rel="preload" as="image" href="/svgs/${path}.svg"/>,\n`).join('') +
-    `  ]\n` +
-    `}\n`
-  );
-}
-
 
 function getAllFileNames(dir: string): string[] {
   let files = fs.readdirSync(dir);

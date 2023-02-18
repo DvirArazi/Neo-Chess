@@ -30,7 +30,7 @@ export function ModalEmpty(props: { text: string }) {
 }
 
 export function VXButtons(props: { onClick: (isAccepted: boolean) => void }) {
-  const {onClick} = props;
+  const { onClick } = props;
 
   return <Box sx={{
     display: `flex`,
@@ -62,7 +62,7 @@ export function VXButtons(props: { onClick: (isAccepted: boolean) => void }) {
             ":hover": { background: color1 },
           }}
         >
-          <Icon name={iconName} side={30} filter={THEME.negativeIcon} />
+          <Icon name={iconName} side={30} fill={THEME.negativeIcon} />
         </IconButton>
       </Tooltip>
     </>

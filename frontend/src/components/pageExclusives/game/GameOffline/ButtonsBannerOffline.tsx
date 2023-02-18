@@ -34,7 +34,7 @@ export default function ButtonsBannerOffline(props: {
       <Icon
         name="menu"
         side={40}
-        filter={THEME.icon}
+        fill={THEME.icon}
       />
     </IconButton>
 
@@ -45,7 +45,7 @@ export default function ButtonsBannerOffline(props: {
             <Icon
               name={isPaused ? "play" : "pause"}
               side={30}
-              filter={isPauseEnabled ? THEME.icon : THEME.iconDisabled}
+              fill={isPauseEnabled ? THEME.icon : THEME.iconDisabled}
             />
           </Box>
         </IconButton>
@@ -58,7 +58,7 @@ export default function ButtonsBannerOffline(props: {
       <Icon
         name="navigateLeft"
         side={40}
-        filter={canStepBack ? THEME.icon : THEME.iconDisabled}
+        fill={canStepBack ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
 
@@ -69,7 +69,7 @@ export default function ButtonsBannerOffline(props: {
       <Icon
         name="navigateRight"
         side={40}
-        filter={canStepForward ? THEME.icon : THEME.iconDisabled}
+        fill={canStepForward ? THEME.icon : THEME.iconDisabled}
       />
     </IconButton>
 

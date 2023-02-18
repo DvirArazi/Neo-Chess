@@ -61,6 +61,6 @@ export function SignOutButton() {
     }
     <Box sx={{ paddingLeft: `8px`, fontWeight: `550` }}>{data.name!}</Box>
     <Box sx={{ padding: `3px` }} />
-    <Icon name="signOut" side={25} filter={THEME.icon} />
+    <Icon name="signOut" side={25} fill={THEME.icon} />
   </Button>;
 }

@@ -102,7 +102,7 @@ function FriendStrip(props: { friend: Friend, onDelete: () => void }) {
         SOCKET.emit("deleteFriend", friend.id);
         onDelete();
       }}>
-        <Icon name="delete" side={25} filter={THEME.icon} />
+        <Icon name="delete" side={25} fill={THEME.icon} />
       </IconButton>
     </Tooltip>
   </Box>

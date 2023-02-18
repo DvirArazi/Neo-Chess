@@ -98,8 +98,8 @@ export default function Board(props: {
     };
   };
 
-  function getPieces(): JSX.Element[] {
-    const pieces = new Array<JSX.Element>(32).fill(<></>);
+  function getPieces(): (JSX.Element | null)[] {
+    const pieces = new Array<JSX.Element | null>(32).fill(null);
 
     for (let i = 0; i < layout.length; i++) {
       const piece = layout[i];

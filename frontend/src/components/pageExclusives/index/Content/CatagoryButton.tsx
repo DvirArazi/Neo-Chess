@@ -30,7 +30,7 @@ export default function CatagoryButton(props: {
         <Box sx={{ fontSize: `24px`, textTransform: `none` }}>{
           catagory.title != "Untimed" ?
             `${timeToString(catagory.time)} | ${timeToString(catagory.increment)}` :
-            <Box sx={{ padding: `4px` }}><Icon name="infinity" side={34} filter={THEME.infinity} /></Box>
+            <Box sx={{ padding: `4px` }}><Icon name="infinity" side={34} fill={THEME.infinity} /></Box>
         }</Box>
         {rating != null ? <Box sx={{ fontSize: `13px` }}>{Math.floor(rating)}</Box> : null}
       </Button>

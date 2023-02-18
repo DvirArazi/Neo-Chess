@@ -34,17 +34,17 @@ export default function Content() {
   return <>
     <Box sx={{ padding: `10px` }} />
     <Toggle isOn={isOnline} isOnDisabled={!isAuthed}>
-      <Icon name="wifi" side={25} filter={
+      <Icon name="wifi" side={25} fill={
         isAuthed ?
           (isOnline.value ? THEME.icon : THEME.iconNotSelected) :
           THEME.iconDisabled
       }
       />
-      <Icon name="wifiOff" side={25} filter={
+      <Icon name="wifiOff" side={25} fill={
         isOnline.value ? THEME.iconNotSelected : THEME.icon
       } />
     </Toggle>
-    <Box sx={{padding: `10px`}}>{
+    <Box sx={{ padding: `10px` }}>{
       !isAuthed ? <></> :
         <OnlinePanel
           isOnline={isOnline.value}

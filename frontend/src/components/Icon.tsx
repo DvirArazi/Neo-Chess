@@ -7,33 +7,39 @@ const SVG_CACHE: { [url: string]: string } = {};
 
 export default function Icon(props: {
   name: IconName,
-  filter?: string,
+  fill?: string,
   side?: number
 }): JSX.Element {
-  const { name, filter, side } = props;
+  const { name, fill, side } = props;
   const sideStr = side !== undefined ? `${props.side}px` : `100%`;
 
   const [svg, setSvg] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSvg(`/svgs/${iconNameToPath(name)}.svg`).then((svg)=>{
+    loadSvg(`/svgs/${iconNameToPath(name)}.svg`).then((svg) => {
       setSvg(svg);
     });
-  }, []);
+  }, [name]);
 
   if (svg === null) return <></>;
 
   return <Box
-      style={{
-        pointerEvents: `none`,
-        userSelect: `none`,
+    sx={{
+      display: `flex`,
+      alignItems: `center`,
+      justifyContent: `center`,
+
+      width: sideStr,
+      height: sideStr,
+
+      'svg': {
         width: `100%`,
         height: `100%`,
-        // filter: filter !== undefined ? filter : 'none',
-        // fill: `red`,
-      }}
-      dangerouslySetInnerHTML={{__html: svg}}
-    />
+        fill: fill,
+      },
+    }}
+    dangerouslySetInnerHTML={{ __html: svg }}
+  />
 }
 
 async function loadSvg(url: string): Promise<string> {
