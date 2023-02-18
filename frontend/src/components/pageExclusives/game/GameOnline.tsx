@@ -10,6 +10,7 @@ import { SOCKET, THEME, WINDOW_WIDTH } from "frontend/src/pages/_app";
 import { getAdvantage } from "frontend/src/utils/tools/general";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
+import { actionToIndexes } from "shared/tools/board";
 import { pointToIndex, startAndTurnsToBoardLayout } from "shared/tools/boardLayout";
 import { BoardLayout } from "shared/types/boardLayout";
 import { GameStatusCatagory, GameStatus, GameTurn, GameViewData, Point, WinReason, EGameRole, DrawReason } from "shared/types/game";
@@ -125,6 +126,9 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getBoard() {
+    const prevMove = game.turns.length - 1 < 0 ? null :
+      actionToIndexes(game.turns[game.turns.length - 1].action);
+
     return <Board
       enabled={
         isStatusOngoing &&
@@ -133,6 +137,7 @@ export default function GameOnline(props: { data: GameViewData }) {
       }
       layout={layout.value}
       turnColor={turnColor}
+      prevMove={prevMove}
       onMove={onMove}
       onPromotion={onPromotion}
       onTurnEnd={onTurnEnd}
@@ -190,6 +195,7 @@ export default function GameOnline(props: { data: GameViewData }) {
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
       advantage={advantage * (isWhite ? 1 : -1)}
+      isFlipped={false}
     />;
 
     function getTimeLeft() {
@@ -520,14 +526,14 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function handleRatingsUpdatedEvent() {
-    useEffect(()=>{
-      SOCKET.on("ratingsUpdated", (gameId, newWhiteRating, newBlackRating)=>{
+    useEffect(() => {
+      SOCKET.on("ratingsUpdated", (gameId, newWhiteRating, newBlackRating) => {
         if (game.id.toString() !== gameId.toString()) return;
 
-        setGame(v=>({
+        setGame(v => ({
           ...v,
-          white: {...v.white, ratingMod: newWhiteRating - v.white.rating},
-          black: {...v.black, ratingMod: newBlackRating - v.black.rating}
+          white: { ...v.white, ratingMod: newWhiteRating - v.white.rating },
+          black: { ...v.black, ratingMod: newBlackRating - v.black.rating }
         }))
       });
     }, []);

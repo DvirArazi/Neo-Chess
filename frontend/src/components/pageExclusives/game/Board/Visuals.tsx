@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { SQUARE_SIZE } from "shared/tools/boardLayout";
 import { Point } from "shared/types/game";
 
-const dia = 0.4;
+const DIA = 0.4;
 
 export function Dot(props: { position: Point, onPressed: (globalPos: Point) => void }) {
   const { position, onPressed } = props;
@@ -11,7 +11,7 @@ export function Dot(props: { position: Point, onPressed: (globalPos: Point) => v
     <Box
       onMouseDown={(e) => {
         e.stopPropagation();
-        onPressed({x: e.clientX, y: e.clientY});
+        onPressed({ x: e.clientX, y: e.clientY });
       }}
       sx={{
         position: `absolute`,
@@ -27,10 +27,10 @@ export function Dot(props: { position: Point, onPressed: (globalPos: Point) => v
     >
       <Box sx={{
         position: `absolute`,
-        left: `${(1 - dia) / 2 * 100}%`,
-        top: `${(1 - dia) / 2 * 100}%`,
-        width: `${dia * 100}%`,
-        height: `${dia * 100}%`,
+        left: `${(1 - DIA) / 2 * 100}%`,
+        top: `${(1 - DIA) / 2 * 100}%`,
+        width: `${DIA * 100}%`,
+        height: `${DIA * 100}%`,
         borderRadius: `50%`,
         background: `rgb(33, 150, 243, 0.6)`,
         ":hover": {
@@ -41,21 +41,42 @@ export function Dot(props: { position: Point, onPressed: (globalPos: Point) => v
   );
 }
 
-const extra = 0.8;
+const CHOSEN_EXTRA = 0.8;
 
-export function Highlight(props: { position: Point }) {
+export function ChosenHighlight(props: { position: Point }) {
   const { position } = props;
 
   return (
     <Box
       sx={{
         position: `absolute`,
-        left: `${position.x * SQUARE_SIZE - extra}%`,
-        top: `${position.y * SQUARE_SIZE - extra}%`,
-        width: `${SQUARE_SIZE + extra * 2}%`,
-        height: `${SQUARE_SIZE + extra * 2}%`,
+        left: `${position.x * SQUARE_SIZE - CHOSEN_EXTRA}%`,
+        top: `${position.y * SQUARE_SIZE - CHOSEN_EXTRA}%`,
+        width: `${SQUARE_SIZE + CHOSEN_EXTRA * 2}%`,
+        height: `${SQUARE_SIZE + CHOSEN_EXTRA * 2}%`,
         borderRadius: `50%`,
         background: `rgb(255, 191, 0, 0.3)`,
+      }}
+    />
+  );
+}
+
+const PREV_EXTRA = -0.0;
+
+export function PreviousHighlight(props: { position: Point }) {
+  const { position } = props;
+
+  return (
+    <Box
+      sx={{
+        position: `absolute`,
+        left: `${position.x * SQUARE_SIZE - PREV_EXTRA}%`,
+        top: `${position.y * SQUARE_SIZE - PREV_EXTRA}%`,
+        width: `${SQUARE_SIZE + PREV_EXTRA * 2}%`,
+        height: `${SQUARE_SIZE + PREV_EXTRA * 2}%`,
+        borderRadius: `35%`,
+        background: `rgb(255, 255, 50, 0.3)`,
+        transform: `translate(0.0px, 0.0px)`
       }}
     />
   );

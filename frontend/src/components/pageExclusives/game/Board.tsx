@@ -1,10 +1,10 @@
 import { Box } from "@mui/material";
 import BoardBackground from "frontend/src/components/pageExclusives/game/BoardBackground";
 import Piece from "frontend/src/components/pageExclusives/game/Board/Piece";
-import { Dot, Highlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
+import { Dot, ChosenHighlight, PreviousHighlight } from "frontend/src/components/pageExclusives/game/Board/Visuals";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef } from "react";
-import { BOARD_SIDE, getLegalMoves, getCapturedCountsWithoutPawns, pointToIndex } from "shared/tools/boardLayout";
+import { BOARD_SIDE, getLegalMoves, getCapturedCountsWithoutPawns, pointToIndex, indexToPoint } from "shared/tools/boardLayout";
 import { BoardLayout, PieceCount, PieceDataWithKey } from "shared/types/boardLayout";
 import { Point } from "shared/types/game";
 import { PieceColor, PieceType } from "shared/types/piece";
@@ -17,6 +17,7 @@ export default function Board(props: {
   enabled: boolean,
   isFlipped: boolean,
   flipPieces: boolean,
+  prevMove: {from: Point, to: Point} | null,
   onMove: (from: Point, to: Point, layout: BoardLayout) => void,
   onPromotion: (promotionType: PieceType) => void,
   onTurnEnd: () => void,
@@ -27,6 +28,7 @@ export default function Board(props: {
     enabled,
     isFlipped,
     flipPieces,
+    prevMove,
     onMove,
     onPromotion,
     onTurnEnd
@@ -77,6 +79,7 @@ export default function Board(props: {
           <BoardBackground />
           {getPieces()}
           {getVisuals()}
+          {getPreviousHighlights()}
           {getPromotionBanner()}
         </Box>
       </Box>
@@ -135,7 +138,7 @@ export default function Board(props: {
     if (from.value === null) return [];
 
     return [
-      ...[<Highlight key={-1} position={getPoint(from.value)} />],
+      ...[<ChosenHighlight key={-1} position={getPoint(from.value)} />],
       ...legalMoves.value.map((legalMove, i) =>
         <Dot key={i}
           position={getPoint(legalMove)}
@@ -148,6 +151,15 @@ export default function Board(props: {
         />
       ),
     ]
+  }
+
+  function getPreviousHighlights(): JSX.Element {
+    if (prevMove === null) return <></>;
+
+    return <>
+      <PreviousHighlight position={getPoint(prevMove.from)} />
+      <PreviousHighlight position={getPoint(prevMove.to)} />
+    </>;
   }
 
   function getPromotionBanner(): JSX.Element {

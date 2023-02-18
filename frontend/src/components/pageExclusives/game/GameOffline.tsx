@@ -6,7 +6,7 @@ import PlayerBanner from "frontend/src/components/pageExclusives/game/PlayerBann
 import FormatBanner from "frontend/src/components/pageExclusives/game/FormatBanner";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { useEffect, useRef, useState } from "react";
-import { pointsToAction, turnsToColor } from "shared/tools/board";
+import { actionToIndexes as actionToPoints, pointsToAction, turnsToColor } from "shared/tools/board";
 import { getGameStatus, generateStart, startAndTurnsToBoardLayout, step, pointToIndex, promote, getCapturedCountsWithoutPawns } from "shared/tools/boardLayout";
 import { boardLayoutToRep } from "shared/tools/rep";
 import { BoardLayout } from "shared/types/boardLayout";
@@ -241,7 +241,7 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
       isUntimed={game.timeframe === "untimed"}
       layout={layout.value}
       advantage={advantage * (isWhite ? 1 : -1)}
-      isTurned={flipPiecesAndBanners}
+      isFlipped={flipPiecesAndBanners}
     />;
 
     function getTimeLeft() {
@@ -277,12 +277,17 @@ export default function GameOffline(props: { timeframe: Timeframe }) {
   }
 
   function getBoard() {
+    const index = game.turns.length - stepsBack.value - 1;
+    const prevMove = index < 0 ? null :
+      actionToPoints(game.turns[index].action);
+
     return <Board
       enabled={!isGameOver}
       layout={layout.value}
       turnColor={isWhiteTurn ? PieceColor.White : PieceColor.Black}
       isFlipped={isFlipped.value}
       flipPieces={flipPiecesAndBanners}
+      prevMove={prevMove}
       onMove={onMove}
       onPromotion={onPromotion}
       onTurnEnd={onTurnEnd}

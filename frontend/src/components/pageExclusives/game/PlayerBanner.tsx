@@ -20,7 +20,7 @@ export default function PlayerBanner(props: {
   isUntimed: boolean,
   layout: BoardLayout,
   advantage: number,
-  isTurned: boolean,
+  isFlipped: boolean,
 }) {
   const {
     name,
@@ -35,7 +35,7 @@ export default function PlayerBanner(props: {
     isUntimed,
     layout,
     advantage,
-    isTurned: isFlipped,
+    isFlipped,
   } = props;
 
   const oppositeColor = getOppositeColor(color);
@@ -70,11 +70,11 @@ export default function PlayerBanner(props: {
           fontWeight: ratingMod === null ? `` : `bold`,
           color: ratingMod === null ? `black` : (ratingMod >= 0 ? `#00cc00` : `#ff0000`)
         }}>{
-          (rating === null ? '' : Math.floor(rating)) +
-            (ratingMod === null ? '' : 
+            (rating === null ? '' : Math.floor(rating)) +
+            (ratingMod === null ? '' :
               (ratingMod >= 0 ? ` + ${Math.floor(ratingMod)}` : ` − ${Math.floor(Math.abs(ratingMod))}`)
             )
-        }</Box>
+          }</Box>
       </Box>
       {
         isUntimed ? <></> :
@@ -96,7 +96,7 @@ export default function PlayerBanner(props: {
     let crntX = 0;
     for (const pieceCount of capturedCounts) {
       if (pieceCount.count === 0) continue;
-      for (let i = 0; i < pieceCount.count; i++) {        
+      for (let i = 0; i < pieceCount.count; i++) {
         pieces.push(<MiniPiece key={crntX}
           iconName={pieceDataToIconName({ type: pieceCount.type, color: oppositeColor })}
           x={crntX}
@@ -111,7 +111,7 @@ export default function PlayerBanner(props: {
       position: `relative`,
       height: `25px`,
       transform: isFlipped ? `rotate(0.5turn)` : `none`
-      }}>
+    }}>
       {pieces}
       <Box sx={{
         fontFamily: `robotoslab`,

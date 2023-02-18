@@ -14,3 +14,15 @@ export function pointsToAction(from: Point, to: Point) {
     to.y * BOARD_SIDE ** 3
   );
 }
+
+export function actionToIndexes(action: number) {
+  const from: Point = {
+    x: action % BOARD_SIDE,
+    y: Math.floor(action % BOARD_SIDE ** 2 / BOARD_SIDE),
+  };
+  const to = {
+    x: Math.floor(action / BOARD_SIDE ** 2) % BOARD_SIDE,
+    y: Math.floor(action / BOARD_SIDE ** 3)
+  };
+  return { from: from, to: to };
+}
