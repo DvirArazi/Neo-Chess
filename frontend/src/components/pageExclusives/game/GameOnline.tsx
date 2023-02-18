@@ -126,8 +126,9 @@ export default function GameOnline(props: { data: GameViewData }) {
   }
 
   function getBoard() {
-    const prevMove = game.turns.length - 1 < 0 ? null :
-      actionToIndexes(game.turns[game.turns.length - 1].action);
+    const index = game.turns.length - stepsBack.value - 1;
+    const prevMove = index < 0 ? null :
+      actionToIndexes(game.turns[index].action);
 
     return <Board
       enabled={
