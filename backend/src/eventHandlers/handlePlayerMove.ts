@@ -101,8 +101,6 @@ export default function handlePlayerMoved(p: HandlerParams) {
     const newTimeoutId =
       game.turns.length < 1 || newStatus.catagory !== GameStatusCatagory.Ongoing ? null :
         Number(setTimeout(async () => {
-          Terminal.warning('time is out');
-
           const winColor = turnsToColor(game.turns);
 
           await p.gamesCollection.updateOne(
