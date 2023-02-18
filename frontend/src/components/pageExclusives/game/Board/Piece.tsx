@@ -111,6 +111,9 @@ export default function Piece(props: {
         ":active": {
           zIndex: `20`,
         },
+        ":not(active)": {
+          zIndex: `10`,
+        }
       }}
     >
       <Box

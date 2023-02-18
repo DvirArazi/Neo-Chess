@@ -61,9 +61,11 @@ export default function PlayerBanner(props: {
       justifyContent: `space-between`,
       alignItems: `center`,
       minHeight: `30px`,
-      transform: isFlipped ? `rotate(0.5turn)` : `none`
     }}>
-      <Box sx={{ textAlign: `left` }}>
+      <Box sx={{
+        textAlign: `left`,
+        transform: isFlipped ? `rotate(0.5turn)` : `none`,
+      }}>
         <Box sx={{ fontSize: `16px`, fontWeight: `600` }}>{name}</Box>
         <Box sx={{
           fontSize: `14px`,
@@ -78,12 +80,14 @@ export default function PlayerBanner(props: {
       </Box>
       {
         isUntimed ? <></> :
-          <Clock
-            timeLeftMil={timeLeftMs}
-            isTicking={isTicking}
-            initDateTimeMil={initDateTimeMs}
-            isWide={isWide}
-          />
+          <Box sx={{transform: isFlipped ? `rotate(0.5turn)` : `none`}}>
+            <Clock
+              timeLeftMil={timeLeftMs}
+              isTicking={isTicking}
+              initDateTimeMil={initDateTimeMs}
+              isWide={isWide}
+            />
+          </Box>
       }
     </Box>;
   }
@@ -108,9 +112,10 @@ export default function PlayerBanner(props: {
       crntX += 12;
     }
     return <Box sx={{
+      width: `${crntX+30}px`,
       position: `relative`,
       height: `25px`,
-      transform: isFlipped ? `rotate(0.5turn)` : `none`
+      transform: isFlipped ? `rotate(0.5turn)` : `none`,
     }}>
       {pieces}
       <Box sx={{
