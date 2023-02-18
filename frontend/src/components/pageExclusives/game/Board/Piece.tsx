@@ -7,6 +7,7 @@ import Icon from "frontend/src/components/Icon";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { pieceDataToIconName } from "shared/tools/piece";
 import { BOARD_SIDE, SQUARE_SIZE } from "shared/tools/boardLayout";
+import { isMobile } from "react-device-detect";
 
 export default function Piece(props: {
   data: PieceData,
@@ -38,12 +39,6 @@ export default function Piece(props: {
   };
 
   return (
-    // <Box sx={{
-    //   background: `blue`,
-    //   // transform: `rotate(0.0turn)`,
-    //   // willChange: `transform`,
-    //   // transition: `${slide ? `transform 0.3s` : `none`}`,
-    // }}>
     <Draggable nodeRef={draggableRef}
       disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
@@ -68,53 +63,84 @@ export default function Piece(props: {
         onEnd(gPos);
       }}
     >
-      <Box ref={draggableRef}
+      {!isMobile ? getInnerPC() : getInnerMobile()}
+    </Draggable>
+  );
+
+  function getInnerPC() {
+    return <Box ref={draggableRef}
+      sx={{
+        position: `absolute`,
+        left: `${relPos.x}%`,
+        top: `${relPos.y}%`,
+        width: `${SQUARE_SIZE}%`,
+        height: `${SQUARE_SIZE}%`,
+        zIndex: `10`,
+        willChange: `transform`,
+        transition: `left 0.3s, top 0.3s ease-out`,
+        ":hover": {
+          cursor: `${isEnabled ? `pointer` : `default`}`,
+        },
+        ":active": {
+          zIndex: `20`,
+        },
+      }}
+    >
+      <Box sx={{
+        transform: `rotate(${flipTurns.value}turn)`,
+        willChange: `transform`,
+        transition: `transform 0.3s`,
+      }}>
+        <Icon name={pieceDataToIconName(data)} />
+      </Box>
+    </Box>
+  }
+
+  function getInnerMobile() {
+    return <Box ref={draggableRef}
+      sx={{
+        position: `absolute`,
+        // left: `${relPos.x}%`,
+        // top: `${relPos.y}%`,
+        width: `${SQUARE_SIZE}%`,
+        height: `${SQUARE_SIZE}%`,
+        zIndex: `10`,
+        ":hover": {
+          cursor: `${isEnabled ? `pointer` : `default`}`,
+        },
+        ":active": {
+          zIndex: `20`,
+        },
+      }}
+    >
+      <Box
         sx={{
-          position: `absolute`,
-          // left: `${relPos.x}%`,
-          // top: `${relPos.y}%`,
-          width: `${SQUARE_SIZE}%`,
-          height: `${SQUARE_SIZE}%`,
-          zIndex: `10`,
-          ":hover": {
-            cursor: `${isEnabled ? `pointer` : `default`}`,
-          },
-          ":active": {
-            zIndex: `20`,
-          },
+          transform: `translate3d(${relPos.x * 8}%, ${relPos.y * 8}%, 0)`,
+          willChange: `transform`,
+          transition: slide ? `transform 0.3s ease-out` : `none`,
         }}
       >
-        <Box
-          sx={{
-            // position: `absolute`,
-            transform: `translate(${relPos.x*8}%, ${relPos.y*8}%)`,
-            willChange: `transform`,
-            transition: `transform 0.3s`,
-          }}
-        >
-          <Box sx={{
-            transform: `rotate(${flipTurns.value}turn)`,
-            willChange: `transform`,
-            transition: `transform 0.3s`,
-          }}>
-            <Icon name={pieceDataToIconName(data)} />
-          </Box>
+        <Box sx={{
+          transform: `rotate(${flipTurns.value}turn)`,
+          willChange: `transform`,
+          transition: `transform 0.3s ease-out`,
+        }}>
+          <Icon name={pieceDataToIconName(data)} />
         </Box>
       </Box>
-    </Draggable >
-    // </Box>
-  );
+    </Box>
+  }
 }
 
 function getGlobalPos(e: DraggableEvent): Point | null {
   const mouseE = e as React.MouseEvent<HTMLDivElement, MouseEvent>;
   if (mouseE.clientX !== undefined && mouseE.clientY !== undefined) {
-    return {x: mouseE.clientX, y: mouseE.clientY};
+    return { x: mouseE.clientX, y: mouseE.clientY };
   }
 
   const touchE = (e as React.TouchEvent<HTMLDivElement>).changedTouches[0];
   if (touchE.clientX !== undefined && touchE.clientY !== undefined) {
-    return {x: touchE.clientX, y: touchE.clientY};
+    return { x: touchE.clientX, y: touchE.clientY };
   }
 
   return null
