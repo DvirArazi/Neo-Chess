@@ -173,6 +173,9 @@ export default function Board(props: {
     if (moves.ok) {
       from.set(mouseSquarePos);
       legalMoves.set(moves.value);
+    } else {
+      from.set(null);
+      legalMoves.set([]);
     }
   }
 
