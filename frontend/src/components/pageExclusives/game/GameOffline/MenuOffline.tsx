@@ -1,5 +1,5 @@
 import { Box, Divider, List, ListItemButton, ListItemText, Switch } from "@mui/material";
-import Icon from "frontend/src/components/Icon";
+import Icon, { preloadIcon } from "frontend/src/components/Icon";
 import ModalFrame from "frontend/src/components/ModalFrame";
 import MenuOption from "frontend/src/components/pageExclusives/game/MenuOption";
 import MenuTitle from "frontend/src/components/pageExclusives/game/MenuTitle";
@@ -15,12 +15,15 @@ export function MenuOffline(props: {
 }) {
   const { isOpen, status, isFlipped, onStartANewGame } = props;
 
+  preloadIcon("plus");
+  preloadIcon("flip");
+
   return <ModalFrame isOpen={isOpen} keepMounted={false}>
     <MenuTitle status={status} />
     <List sx={{ padding: 0 }}>
       <MenuOption
         text='Start a new game'
-        iconPath='plus'
+        iconName='plus'
         action={onStartANewGame}
       />
       <Divider />

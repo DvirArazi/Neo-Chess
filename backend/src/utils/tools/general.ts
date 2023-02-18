@@ -47,9 +47,6 @@ export async function leave(p: HandlerParams, userId: string) {
   deleteGameRequestOnDB(p, user);
   deleteOutInvitationForFriend(p, user);
 
-  Terminal.warning('leaving');
-  Terminal.warning(user.socketIds.join(', '));
-
   p.usersCollection.updateOne(
     { _id: user._id },
     { $set: { gameRequestId: null, outInvitation: null } },

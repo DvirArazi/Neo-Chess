@@ -6,6 +6,7 @@ import MenuTitle from "frontend/src/components/pageExclusives/game/MenuTitle";
 import Stateful from "frontend/src/utils/tools/stateful";
 import { GameStatus, GameStatusCatagory } from "shared/types/game";
 import { isMobile } from "react-device-detect";
+import { preloadIcon } from "frontend/src/components/Icon";
 
 export function MenuOnline(props: {
   isOpen: Stateful<boolean>,
@@ -30,6 +31,13 @@ export function MenuOnline(props: {
 
   const isSnackbarOpen = new Stateful(false);
 
+  preloadIcon("takeback");
+  preloadIcon("draw");
+  preloadIcon("resign");
+  preloadIcon("rematch");
+  preloadIcon("person");
+  preloadIcon("share");
+
   return <ModalFrame isOpen={isOpen} keepMounted={false}>
     {
       status.catagory === GameStatusCatagory.Ongoing ?
@@ -47,19 +55,19 @@ export function MenuOnline(props: {
       <MenuOption
         isEnabled={isTakebackEnabled}
         text='Propose a takeback'
-        iconPath='takeback'
+        iconName='takeback'
         action={onTakebackClick}
       />
       <Divider />
       <MenuOption
         text='Offer a draw'
-        iconPath='draw'
+        iconName='draw'
         action={onDrawClick}
       />
       <Divider />
       <MenuOption
         text='Resign'
-        iconPath='resign'
+        iconName='resign'
         action={onResignClick}
       />
       <Divider />
@@ -73,13 +81,13 @@ export function MenuOnline(props: {
       <List sx={{ padding: 0 }}>
         <MenuOption
           text='Offer a rematch'
-          iconPath='rematch'
+          iconName='rematch'
           action={onRematchClick}
         />
         <Divider />
         <MenuOption
           text='New opponent'
-          iconPath='person'
+          iconName='person'
           action={onNewOpponentClick}
         />
         <Divider />
@@ -91,14 +99,14 @@ export function MenuOnline(props: {
   function getShareOption() {
     return <MenuOption
       text='Share'
-      iconPath='share'
+      iconName='share'
       action={async () => {
         if (isMobile) {
           await navigator.share({
             title: "Neo-Chess",
             url: window.location.href
           })
-     } else {
+        } else {
           navigator.clipboard.writeText(
             window.location.href
           );

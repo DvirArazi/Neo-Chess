@@ -46,6 +46,10 @@ export default function Icon(props: {
   />
 }
 
+export function preloadIcon(name: IconName) {
+  loadSvg(`/svgs/${iconNameToPath(name)}.svg`);
+}
+
 async function loadSvg(url: string): Promise<string> {
   const svg = SVG_CACHE[url];
 

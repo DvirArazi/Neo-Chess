@@ -4,11 +4,11 @@ import { IconName } from "frontend/src/utils/types/iconName";
 
 export default function MenuOption(props: {
   text: string,
-  iconPath: IconName,
+  iconName: IconName,
   isEnabled?: boolean
   action: () => void,
 }) {
-  const { text, iconPath, action } = props;
+  const { text, iconName, action } = props;
   const isEnabled = props.isEnabled ?? true;
 
   return <ListItemButton
@@ -20,7 +20,7 @@ export default function MenuOption(props: {
         display: `flex`,
         justifyContent: `center`,
       }}>
-        <Icon name={iconPath} side={25} />
+        <Icon name={iconName} side={25} />
         <Box sx={{ padding: `5px` }}></Box>
         <Box>{text}</Box>
       </Box>

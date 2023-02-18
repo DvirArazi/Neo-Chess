@@ -87,9 +87,6 @@ export default function App({ Component, pageProps }: AppProps) {
             <meta name="referrer" content="no-referrer-when-downgrade" />
             <link rel="icon" href="/favicon.ico" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            {/* <meta name="viewport" content="width=device-width, user-scalable=no" /> */}
-            {/* <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=3"/>
-            <meta name="viewport" content="width=device-width, user-scalable=no"></meta> */}
           </Head>
           <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID!}>
             <Layout>

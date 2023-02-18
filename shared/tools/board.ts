@@ -15,7 +15,7 @@ export function pointsToAction(from: Point, to: Point) {
   );
 }
 
-export function actionToIndexes(action: number) {
+export function actionToIndexes(action: number): {from: Point, to: Point} {
   const from: Point = {
     x: action % BOARD_SIDE,
     y: Math.floor(action % BOARD_SIDE ** 2 / BOARD_SIDE),

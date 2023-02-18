@@ -351,7 +351,7 @@ export default function GameOnline(props: { data: GameViewData }) {
 
   function getTakebackSnackbar() {
     return <AlertSnackbar
-      isOpen={isDrawOfferSnackbarOpen}
+      isOpen={isTakebackSnackbarOpen}
       severity={"info"}
       message={'Takeback request sent'}
     />
