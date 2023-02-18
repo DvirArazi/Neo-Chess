@@ -32,8 +32,6 @@ app.prepare().then(() => {
     pingInterval: 1000
   });
 
-  const publicFolder = path.join(process.cwd(), '/client/public/');
-
   if (process.env.NODE_ENV === "production") {
     expressApp.use(helmet({
       hsts: {
@@ -49,6 +47,8 @@ app.prepare().then(() => {
       return next();
     });
   }
+
+  const publicFolder = path.join(process.cwd(), '/client/public/');
   expressApp.use(express.static(publicFolder));
 
   handleSocket(webSocketServer);
