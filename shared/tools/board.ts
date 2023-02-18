@@ -20,7 +20,7 @@ export function actionToIndexes(action: number) {
     x: action % BOARD_SIDE,
     y: Math.floor(action % BOARD_SIDE ** 2 / BOARD_SIDE),
   };
-  const to = {
+  const to: Point = {
     x: Math.floor(action / BOARD_SIDE ** 2) % BOARD_SIDE,
     y: Math.floor(action / BOARD_SIDE ** 3)
   };

@@ -63,11 +63,11 @@ export default function Piece(props: {
         onEnd(gPos);
       }}
     >
-      {!isMobile ? getInnerPC() : getInnerMobile()}
+      {!isMobile ? getInnerPc() : getInnerMobile()}
     </Draggable>
   );
 
-  function getInnerPC() {
+  function getInnerPc() {
     return <Box ref={draggableRef}
       sx={{
         position: `absolute`,
@@ -98,27 +98,28 @@ export default function Piece(props: {
 
   function getInnerMobile() {
     return <Box ref={draggableRef}
+      onTouchStart={()=>{
+        if (draggableRef.current === null) return;
+        draggableRef.current.style.zIndex = `20`;
+      }}
+      onTouchEnd={()=>{
+        if (draggableRef.current === null) return;
+        draggableRef.current.style.zIndex = `10`;
+      }}
       sx={{
         position: `absolute`,
-        // left: `${relPos.x}%`,
-        // top: `${relPos.y}%`,
         width: `${SQUARE_SIZE}%`,
         height: `${SQUARE_SIZE}%`,
         zIndex: `10`,
-        ":hover": {
-          cursor: `${isEnabled ? `pointer` : `default`}`,
-        },
         ":active": {
           zIndex: `20`,
         },
-        ":not(active)": {
-          zIndex: `10`,
-        }
+        left: `-50%`,
       }}
     >
       <Box
         sx={{
-          transform: `translate3d(${relPos.x * 8}%, ${relPos.y * 8}%, 0)`,
+          transform: `translate3d(${(relPos.x+50) * 8}%, ${relPos.y * 8}%, 0)`,
           willChange: `transform`,
           transition: slide ? `transform 0.3s ease-out` : `none`,
         }}
