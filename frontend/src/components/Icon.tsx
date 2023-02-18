@@ -2,8 +2,12 @@ import { Box, SvgIcon } from "@mui/material";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 
 import { IconName, iconNameToPath } from "frontend/src/utils/types/iconName";
+import { resolve } from "path";
 
-const SVG_CACHE: { [url: string]: string } = {};
+export const SVG_CACHE: Record<string, string | undefined> = {};
+export const LOCKS: string[] = [];
+// let mipmip: { key: string, value: string }[] = [];
+// let count_delete = 0;
 
 export default function Icon(props: {
   name: IconName,
@@ -43,12 +47,20 @@ export default function Icon(props: {
 }
 
 async function loadSvg(url: string): Promise<string> {
-  if (SVG_CACHE[url] !== undefined) {
-    return Promise.resolve(SVG_CACHE[url]);
+  const svg = SVG_CACHE[url];
+
+  if (svg !== undefined) return Promise.resolve(svg);
+
+  if (!LOCKS.includes(url)) {
+    LOCKS.push(url);
+
+    const res = await fetch(url);
+    const newSvg = await res.text();
+    SVG_CACHE[url] = newSvg;
+    LOCKS.splice(LOCKS.indexOf(url), 1);
+    return newSvg;
   }
 
-  const res = await fetch(url);
-  const svg = await res.text();
-  SVG_CACHE[url] = svg;
-  return svg;
+  await new Promise(r=>setTimeout(r, 10));
+  return await loadSvg(url);
 }

@@ -90,7 +90,6 @@ export default function PlayerBanner(props: {
 
     const capturedCounts = getCapturedCountsWithPawns(layout, oppositeColor);
 
-    console.log(`===${name}===`)
     let crntX = 0;
     for (const pieceCount of capturedCounts) {
       if (pieceCount.count === 0) continue;
