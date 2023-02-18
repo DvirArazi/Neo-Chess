@@ -32,12 +32,18 @@ export default function Piece(props: {
     }
   }, [isFlipped]);
 
-  const fracPosition: Point = {
+  const relPos: Point = {
     x: index % BOARD_SIDE * SQUARE_SIZE,
     y: Math.floor(index / BOARD_SIDE) * SQUARE_SIZE,
   };
 
   return (
+    // <Box sx={{
+    //   background: `blue`,
+    //   // transform: `rotate(0.0turn)`,
+    //   // willChange: `transform`,
+    //   // transition: `${slide ? `transform 0.3s` : `none`}`,
+    // }}>
     <Draggable nodeRef={draggableRef}
       disabled={!isEnabled}
       position={{ x: 0, y: 0 }}
@@ -65,8 +71,8 @@ export default function Piece(props: {
       <Box ref={draggableRef}
         sx={{
           position: `absolute`,
-          left: `${fracPosition.x}%`,
-          top: `${fracPosition.y}%`,
+          // left: `${relPos.x}%`,
+          // top: `${relPos.y}%`,
           width: `${SQUARE_SIZE}%`,
           height: `${SQUARE_SIZE}%`,
           zIndex: `10`,
@@ -76,24 +82,27 @@ export default function Piece(props: {
           ":active": {
             zIndex: `20`,
           },
-          transform: `translateZ(0)`,
-          willChange: `left, top`,
-          transition: `${slide ? `left 0.3s, top 0.3s` : `none`}`,
         }}
       >
         <Box
           sx={{
-            position: `absolute`,
-            width: `100%`,
-            height: `100%`,
-            transform: `rotate(${flipTurns.value}turn)`,
-            transition: `transform 0.3s`
+            // position: `absolute`,
+            transform: `translate(${relPos.x*8}%, ${relPos.y*8}%)`,
+            willChange: `transform`,
+            transition: `transform 0.3s`,
           }}
         >
-          <Icon name={pieceDataToIconName(data)} />
+          <Box sx={{
+            transform: `rotate(${flipTurns.value}turn)`,
+            willChange: `transform`,
+            transition: `transform 0.3s`,
+          }}>
+            <Icon name={pieceDataToIconName(data)} />
+          </Box>
         </Box>
       </Box>
     </Draggable >
+    // </Box>
   );
 }
 
