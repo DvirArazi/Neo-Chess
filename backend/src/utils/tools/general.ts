@@ -28,14 +28,27 @@ export function emitToUser<Ev extends EventNames<ServerToClientEvents>>(
 }
 
 export async function leave(p: HandlerParams, userId: string) {
-
   const user = await p.usersCollection.findOne({ _id: new ObjectId(userId) });
   if (user === null) return;
+
+  const disconnectedSocketIds: string[] = [];
+  for (const id of user.socketIds) {
+    if (p.webSocketServer.of('/').sockets.get(id) === undefined) {
+      disconnectedSocketIds.push(id);
+    }
+  }
+  p.usersCollection.updateOne(
+    { _id: user._id },
+    {$pull: {socketIds: {$in: disconnectedSocketIds}}},
+  );
 
   if (user.socketIds.length !== 0) return;
 
   deleteGameRequestOnDB(p, user);
   deleteOutInvitationForFriend(p, user);
+
+  Terminal.warning('leaving');
+  Terminal.warning(user.socketIds.join(', '));
 
   p.usersCollection.updateOne(
     { _id: user._id },
