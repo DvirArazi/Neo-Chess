@@ -22,6 +22,9 @@ export type IconName =
   "friends" |
   "history" |
   "infinity" |
+  "info" |
+  "info2" |
+  "info3" |
   "logo" |
   "menu" |
   "navigateLeft" |
@@ -65,6 +68,9 @@ export function iconNameToPath(name: IconName) {
     case "friends": return "friends";
     case "history": return "history";
     case "infinity": return "infinity";
+    case "info": return "info";
+    case "info2": return "info2";
+    case "info3": return "info3";
     case "logo": return "logo";
     case "menu": return "menu";
     case "navigateLeft": return "navigate_left";

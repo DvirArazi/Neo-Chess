@@ -35,8 +35,17 @@ export default function TopBar() {
         }}
       >
         <Icon name="logo" side={30} />
-        <Box sx={{ padding: `5px` }} />
-        {WINDOW_WIDTH > 550 ? 'NEO-CHESS' : <></>}
+        <Box sx={{ padding: `2px` }} />
+        {WINDOW_WIDTH > 550 ? <Box sx={{padding: `0 3px 0 5px`}}>{'NEO-CHESS'}</Box> : <></>}
+        <Box 
+          onClick={(e)=>{
+            e.stopPropagation();
+            router.push('/info');
+          }}
+          sx={{transform: `translateY(-7px)`}}
+        >
+          <Icon name="info" side={15} />
+        </Box>
       </Box>
       <Box sx={{
         ...barSx,
