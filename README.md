@@ -1,5 +1,5 @@
 # Neo-Chess
-A web app for playing the [Neo-Chess](https://drive.google.com/file/d/10pV7-9lJQFRZTzzAW7kAqcoKpfg2OiMj/view?usp=drivesdk) chess variant.
+A web app for playing the [Neo-Chess](https://neo-chess.herokuapp.com) chess variant.
 * Frontend written in TypeScript with React in Next.js
 * Backend written in TypeScript with Express in Node.js
 * Fully typed real-time communication using Socket.io.
