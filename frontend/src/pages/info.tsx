@@ -1,9 +1,10 @@
 import { Box, Link } from "@mui/material";
+import { isMobile } from "react-device-detect";
 
 export default function Info() {
   return <Box sx={{
     fontFamily: `robotoslab`,
-    padding: `0 60px`,
+    padding: !isMobile ? `0 60px` : `0 20px`,
     display: `flex`,
     justifyContent: `center`,
     textAlign: `left`,

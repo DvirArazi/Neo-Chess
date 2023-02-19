@@ -36,7 +36,10 @@ export default function TopBar() {
       >
         <Icon name="logo" side={30} />
         <Box sx={{ padding: `2px` }} />
-        {WINDOW_WIDTH > 550 ? <Box sx={{padding: `0 3px 0 5px`}}>{'NEO-CHESS'}</Box> : <></>}
+        {
+          WINDOW_WIDTH < 550 ? <></> :
+            <Box sx={{padding: `0 3px 0 5px`}}>{'NEO-CHESS'}</Box>
+        }
         <Box 
           onClick={(e)=>{
             e.stopPropagation();
