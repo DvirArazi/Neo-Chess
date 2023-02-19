@@ -27,7 +27,6 @@ export function handleSignOut(p: HandlerParams) {
     leave(p, userBefore._id.toString());
 
     p.userId = undefined;
-    Terminal.warning('set userId to undefined');
 
     p.socket.emit("signedOut");
   });
