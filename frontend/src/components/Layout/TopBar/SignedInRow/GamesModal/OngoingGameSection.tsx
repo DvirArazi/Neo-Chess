@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import GameThumbnail from "frontend/src/components/GameThumbnail";
 import { ModalEmpty, ModalTitle } from "frontend/src/components/Layout/TopBar/SignedInRow/ModalStuff";
 import { GameTd } from "shared/types/general";
@@ -7,7 +8,11 @@ export default function OngoingGamesSection(props: { ongoingGamesTd: GameTd[] })
 
   return <>
     <ModalTitle title={'Ongoing Games'} />
-    {getOngoingGames()}
+    <Box sx={{
+      alignItems: "center"
+    }}>
+      {getOngoingGames()}
+    </Box>
   </>
 
   function getOngoingGames() {

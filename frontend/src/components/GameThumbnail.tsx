@@ -143,7 +143,7 @@ export default function GameThumbnail(props: { data: GameTd }) {
               position: `absolute`,
               left: `${pos % BOARD_SIDE * 100 / BOARD_SIDE}%`,
               top: `${Math.floor(pos / BOARD_SIDE) * 100 / BOARD_SIDE}%`,
-              transform: `translateY(-3px)`,
+              // transform: `translateY(-3px)`,
               width: `${100 / BOARD_SIDE}%`
             }}
           >

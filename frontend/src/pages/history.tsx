@@ -48,8 +48,8 @@ export default function history() {
           alignItems="center"
           justifyContent="center"
         >{
-            gamesTd.value.map(gameTd =>
-              <Grid key={gameTd.path} sx={{ maxWidth: `500px` }}>
+            gamesTd.value.map((gameTd, i) =>
+              <Grid key={i} sx={{ maxWidth: `500px` }}>
                 <GameThumbnail data={gameTd} />
               </Grid>
             )
