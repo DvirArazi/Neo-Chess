@@ -3,7 +3,6 @@ A web app for playing the [Neo-Chess](https://drive.google.com/file/d/10pV7-9lJQ
 * Frontend written in TypeScript with React in Next.js
 * Backend written in TypeScript with Express in Node.js
 * Fully typed real-time communication using Socket.io.
-* The app uses sign in with Google for safe authentication and remembers the user using cookies for future sessions.
 * Database with MongoDB Atlas.
 
 ## Play
@@ -11,6 +10,7 @@ The game is deployed and available to play at https://neo-chess.herokuapp.com
 
 ## Features
 The app includes:
+* Sign in with Google for safe authentication, the site remembers the user for future sessions
 * Online play via game requests and friend invitations 
 * Local over the board play
 * Casual and Rated options, with the Elo rating system
