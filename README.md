@@ -1,0 +1,29 @@
+# Neo-Chess
+A web app for playing the [Neo-Chess](https://drive.google.com/file/d/10pV7-9lJQFRZTzzAW7kAqcoKpfg2OiMj/view?usp=drivesdk) chess variant.
+* Frontend written in TypeScript with React in Next.js
+* Backend written in TypeScript with Node.js and Express
+* Fully typed real-time communication using Socket.io.
+* The app uses sign in with Google for safe authentication and remembers the user using cookies for future sessions.
+* Database with MongoDB Atlas.
+
+## Play
+The game is deployed and available to play at https://neo-chess.herokuapp.com
+
+## Features
+The app includes:
+* Online play via game requests and friend invitations 
+* Local over the board play
+* Casual and Rated options, with the Elo rating system
+* Bullet, blitz, rapid, and classical Time Formats, in addition to an untimed format
+* Custome timeframe option
+* Friend list and search
+* Game history page
+* Responsive design with different game layouts for PC and mobile
+* Takebacks support
+* Game sharing via url
+* Reactive game thumbnails
+* Alerts for game progress, invitations and friend requests
+* & more
+
+## Info
+For info about the variant visit the [info page](https://neo-chess.herokuapp.com/info)
