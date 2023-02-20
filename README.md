@@ -13,7 +13,7 @@ The app includes:
 * Sign in with Google for safe authentication, the site remembers the user for future sessions
 * Online play via game requests and friend invitations 
 * Local over the board play
-* Casual and Rated options, with the Elo rating system
+* Casual and Rated options, with rating based on the Elo system
 * Bullet, blitz, rapid, and classical Time Formats, in addition to an untimed format
 * Custome timeframe option
 * Friend list and search
