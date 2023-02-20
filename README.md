@@ -23,7 +23,7 @@ The app includes:
 * Game sharing via URL
 * Alerts for game progress, invitations and friend requests
 * Multiple games can be played simultaneously
-* Features menu containing all ongoing games with board thumbnails that update in real-time
+* Features a menu detailing all ongoing games with board thumbnails that update in real-time
 * & more
 
 ## Info
