@@ -20,7 +20,7 @@ The app includes:
 * Game history page
 * Responsive design with different game layouts for PC and mobile
 * Takebacks support
-* Game sharing via url
+* Game sharing via URL
 * Reactive game thumbnails
 * Alerts for game progress, invitations and friend requests
 * Multiple games can be played simultaneously
