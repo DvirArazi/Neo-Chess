@@ -21,7 +21,6 @@ The app includes:
 * Responsive design with different game layouts for PC and mobile
 * Takebacks support
 * Game sharing via URL
-* Reactive game thumbnails
 * Alerts for game progress, invitations and friend requests
 * Multiple games can be played simultaneously
 * Features menu containing all ongoing games with board thumbnails that update in real-time
