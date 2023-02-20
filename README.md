@@ -24,6 +24,7 @@ The app includes:
 * Reactive game thumbnails
 * Alerts for game progress, invitations and friend requests
 * Multiple games can be played simultaneously
+* Features menu containing all ongoing games with board thumbnails that update in real-time
 * & more
 
 ## Info
