@@ -23,6 +23,7 @@ The app includes:
 * Game sharing via url
 * Reactive game thumbnails
 * Alerts for game progress, invitations and friend requests
+* Multiple games can be played simultaneously
 * & more
 
 ## Info
