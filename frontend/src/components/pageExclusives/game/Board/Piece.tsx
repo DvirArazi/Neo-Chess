@@ -58,7 +58,7 @@ export default function Piece(props: {
         if (gPos === null) return;
 
         const timePassed = new Date().getTime() - mouseDownTime.value;
-        if (timePassed < 300) return;
+        if (timePassed < 100) return;
 
         onEnd(gPos);
       }}
