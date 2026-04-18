@@ -9,9 +9,7 @@
     "dev:client": "npm --workspace client run dev",
     "dev:server": "npm --workspace server run dev",
     "build:client": "npm --workspace client run build",
-    "build:server": "npm --workspace server run build"
-  },
-  "devDependencies": {
-    "@types/pg": "^8.20.0"
+    "build:server": "npm --workspace server run build",
+    "build": "npm run build:client && npm run build:server"
   }
 }
