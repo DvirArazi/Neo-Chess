@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import http from "node:http";
 import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Server } from "socket.io";
 import type {
   ClientToServerEvents,
@@ -61,6 +63,17 @@ io.on("connection", (socket) => {
       fenLikeState: `${from}-${to}`,
     });
   });
+});
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistPath = path.resolve(__dirname, "../../../client/dist");
+
+app.use(express.static(clientDistPath));
+
+app.get("/{*splat}", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(clientDistPath, "index.html"));
 });
 
 const port = Number(process.env.PORT) || 3000;
