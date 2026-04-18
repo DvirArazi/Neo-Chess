@@ -64,7 +64,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const clientDistPath = path.resolve(process.cwd(), "client/dist");
+const clientDistPath = path.resolve(process.cwd(), "../client/dist");
 
 app.use(express.static(clientDistPath));
 
