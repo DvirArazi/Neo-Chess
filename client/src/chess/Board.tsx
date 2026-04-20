@@ -2,13 +2,13 @@ import {
   type PointerEvent,
   type PointerEventHandler,
   useEffect,
-  useEffectEvent,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { getPieceImages, type PieceImages } from "./pieceAssets";
 import type { MoveInput, Square } from "../types";
-import type { BoardState } from "./types";
+import type { BoardState, Piece } from "./types";
 import { BOARD_SIZE } from "./setup";
 import { getLegalMoves } from "../../../shared/chess/moveGeneration";
 
@@ -17,21 +17,69 @@ type CanvasPoint = {
   y: number;
 };
 
+type BoardMetrics = {
+  cssSize: number;
+  tileSize: number;
+  dpr: number;
+  pixelSize: number;
+};
+
 type InteractionState = {
   turn: BoardState["turn"];
   selectedFrom: Square | null;
   legalMoves: Square[];
-  dragPointerPos: CanvasPoint | null;
+};
+
+type StaticLayerSnapshot = {
+  boardState: BoardState;
+  prevMove: MoveInput | null;
+  selectedFrom: Square | null;
+  legalMoves: Square[];
+  isDragging: boolean;
+  animatedMove: MoveInput | null;
+  cssSize: number;
+  pixelSize: number;
+};
+
+type PendingMoveAnimation = {
+  move: MoveInput;
+  piece: Piece;
+};
+
+type ActiveMoveAnimation = PendingMoveAnimation & {
+  startedAtMs: number | null;
+  durationMs: number;
 };
 
 const EMPTY_SQUARES: Square[] = [];
+const MAX_BOARD_DPR = 3;
+const CLICK_MOVE_ANIMATION_MS = 120;
 
 function squaresEqual(a: Square, b: Square): boolean {
   return a.x === b.x && a.y === b.y;
 }
 
+function optionalSquaresEqual(a: Square | null, b: Square | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return squaresEqual(a, b);
+}
+
+function optionalMovesEqual(a: MoveInput | null, b: MoveInput | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    optionalSquaresEqual(a.from, b.from) &&
+    optionalSquaresEqual(a.to, b.to)
+  );
+}
+
 function hasMove(moves: Square[], target: Square): boolean {
   return moves.some((move) => squaresEqual(move, target));
+}
+
+function easeOutCubic(t: number): number {
+  return 1 - (1 - t) ** 3;
 }
 
 function toBoardPointerData(
@@ -56,44 +104,80 @@ function toBoardPointerData(
   return { pointerPos, tileIndex };
 }
 
-function drawBoard(
-  canvas: HTMLCanvasElement,
+function getBoardMetrics(canvas: HTMLCanvasElement): BoardMetrics {
+  const cssSize = canvas.getBoundingClientRect().width;
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_BOARD_DPR);
+
+  return {
+    cssSize,
+    tileSize: cssSize / BOARD_SIZE,
+    dpr,
+    pixelSize: Math.round(cssSize * dpr),
+  };
+}
+
+function resizeCanvas(canvas: HTMLCanvasElement, metrics: BoardMetrics): void {
+  if (
+    canvas.width === metrics.pixelSize &&
+    canvas.height === metrics.pixelSize
+  ) {
+    return;
+  }
+
+  canvas.width = metrics.pixelSize;
+  canvas.height = metrics.pixelSize;
+}
+
+function prepareContext(
   context: CanvasRenderingContext2D,
+  metrics: BoardMetrics,
+): void {
+  context.setTransform(metrics.dpr, 0, 0, metrics.dpr, 0, 0);
+  context.clearRect(0, 0, metrics.cssSize, metrics.cssSize);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+}
+
+function drawStaticBoardLayer(
+  context: CanvasRenderingContext2D,
+  metrics: BoardMetrics,
   boardState: BoardState,
   pieceImages: PieceImages,
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
-  dragPointerPos: CanvasPoint | null,
+  isDragging: boolean,
+  animatedMove: MoveInput | null,
   circles: Square[],
-) {
-  const rect = canvas.getBoundingClientRect();
-  const cssSize = rect.width;
+): void {
+  prepareContext(context, metrics);
 
-  const dpr = window.devicePixelRatio || 1;
-  const pixelSize = Math.round(cssSize * dpr);
-
-  canvas.width = pixelSize;
-  canvas.height = pixelSize;
-
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  const tileSize = cssSize / BOARD_SIZE;
-  const draggedFrom = dragPointerPos ? selectedFrom : null;
+  const draggedFrom = isDragging ? selectedFrom : null;
   const floatingPiece = draggedFrom
     ? boardState.board[draggedFrom.y]?.[draggedFrom.x] ?? null
     : null;
 
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-
   for (let tileY = 0; tileY < BOARD_SIZE; tileY++) {
     for (let tileX = 0; tileX < BOARD_SIZE; tileX++) {
-      const posX = tileX * tileSize;
-      const posY = tileY * tileSize;
+      const posX = tileX * metrics.tileSize;
+      const posY = tileY * metrics.tileSize;
 
       context.fillStyle = (tileX + tileY) % 2 === 0 ? "#f0d9b5" : "#b58863";
-      context.fillRect(posX, posY, tileSize, tileSize);
+      context.fillRect(posX, posY, metrics.tileSize, metrics.tileSize);
     }
+  }
+
+  if (selectedFrom) {
+    context.save();
+    context.fillStyle = "rgba(96, 96, 96, 0.34)";
+
+    const centerX = (selectedFrom.x + 0.5) * metrics.tileSize;
+    const centerY = (selectedFrom.y + 0.5) * metrics.tileSize;
+    const radius = metrics.tileSize * 0.34;
+
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
   }
 
   if (prevMove) {
@@ -101,9 +185,9 @@ function drawBoard(
     context.fillStyle = "rgba(255, 221, 87, 0.62)";
 
     for (const tile of [prevMove.from, prevMove.to]) {
-      const centerX = (tile.x + 0.5) * tileSize;
-      const centerY = (tile.y + 0.5) * tileSize;
-      const radius = tileSize * 0.38;
+      const centerX = (tile.x + 0.5) * metrics.tileSize;
+      const centerY = (tile.y + 0.5) * metrics.tileSize;
+      const radius = metrics.tileSize * 0.38;
 
       context.beginPath();
       context.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -123,12 +207,18 @@ function drawBoard(
       ) {
         continue;
       }
+      if (
+        animatedMove && tileX === animatedMove.to.x &&
+        tileY === animatedMove.to.y
+      ) {
+        continue;
+      }
 
       const image = pieceImages[piece.color][piece.type];
-      const posX = tileX * tileSize;
-      const posY = tileY * tileSize;
+      const posX = tileX * metrics.tileSize;
+      const posY = tileY * metrics.tileSize;
 
-      context.drawImage(image, posX, posY, tileSize, tileSize);
+      context.drawImage(image, posX, posY, metrics.tileSize, metrics.tileSize);
     }
   }
 
@@ -136,9 +226,9 @@ function drawBoard(
   context.fillStyle = "rgba(16, 16, 16, 0.22)";
 
   for (const circle of circles) {
-    const centerX = (circle.x + 0.5) * tileSize;
-    const centerY = (circle.y + 0.5) * tileSize;
-    const radius = tileSize * 0.18;
+    const centerX = (circle.x + 0.5) * metrics.tileSize;
+    const centerY = (circle.y + 0.5) * metrics.tileSize;
+    const radius = metrics.tileSize * 0.18;
 
     context.beginPath();
     context.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -147,39 +237,92 @@ function drawBoard(
 
   context.restore();
 
-  if (!draggedFrom || !dragPointerPos || !floatingPiece) return;
+  if (!draggedFrom || !floatingPiece) return;
 
   const pieceImage = pieceImages[floatingPiece.color][floatingPiece.type];
-  const ghostPosX = draggedFrom.x * tileSize;
-  const ghostPosY = draggedFrom.y * tileSize;
+  const ghostPosX = draggedFrom.x * metrics.tileSize;
+  const ghostPosY = draggedFrom.y * metrics.tileSize;
 
   context.save();
   context.globalAlpha = 0.35;
-  context.drawImage(pieceImage, ghostPosX, ghostPosY, tileSize, tileSize);
+  context.drawImage(
+    pieceImage,
+    ghostPosX,
+    ghostPosY,
+    metrics.tileSize,
+    metrics.tileSize,
+  );
   context.restore();
+}
 
-  const offset = tileSize / 2;
+function drawFloatingPiece(
+  context: CanvasRenderingContext2D,
+  metrics: BoardMetrics,
+  boardState: BoardState,
+  pieceImages: PieceImages,
+  selectedFrom: Square,
+  dragPointerPos: CanvasPoint,
+): void {
+  const floatingPiece = boardState.board[selectedFrom.y]?.[selectedFrom.x] ?? null;
+  if (!floatingPiece) return;
+
+  const pieceImage = pieceImages[floatingPiece.color][floatingPiece.type];
+  const offset = metrics.tileSize / 2;
   context.drawImage(
     pieceImage,
     dragPointerPos.x - offset,
     dragPointerPos.y - offset,
-    tileSize,
-    tileSize,
+    metrics.tileSize,
+    metrics.tileSize,
   );
 }
 
-function getCurrentInteractionState(
-  interaction: InteractionState,
-  turn: BoardState["turn"],
-): InteractionState {
-  if (interaction.turn === turn) return interaction;
+function drawAnimatedPiece(
+  context: CanvasRenderingContext2D,
+  metrics: BoardMetrics,
+  pieceImages: PieceImages,
+  animation: ActiveMoveAnimation,
+  progress: number,
+): void {
+  const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
+  const currentX = animation.move.from.x + (
+    animation.move.to.x - animation.move.from.x
+  ) * progress;
+  const currentY = animation.move.from.y + (
+    animation.move.to.y - animation.move.from.y
+  ) * progress;
 
-  return {
-    turn,
-    selectedFrom: null,
-    legalMoves: [],
-    dragPointerPos: null,
-  };
+  context.drawImage(
+    pieceImage,
+    currentX * metrics.tileSize,
+    currentY * metrics.tileSize,
+    metrics.tileSize,
+    metrics.tileSize,
+  );
+}
+
+function isStaticLayerCurrent(
+  snapshot: StaticLayerSnapshot | null,
+  boardState: BoardState,
+  prevMove: MoveInput | null,
+  selectedFrom: Square | null,
+  legalMoves: Square[],
+  isDragging: boolean,
+  animatedMove: MoveInput | null,
+  metrics: BoardMetrics,
+): boolean {
+  if (!snapshot) return false;
+
+  return (
+    snapshot.boardState === boardState &&
+    snapshot.prevMove === prevMove &&
+    optionalSquaresEqual(snapshot.selectedFrom, selectedFrom) &&
+    snapshot.legalMoves === legalMoves &&
+    snapshot.isDragging === isDragging &&
+    optionalMovesEqual(snapshot.animatedMove, animatedMove) &&
+    snapshot.cssSize === metrics.cssSize &&
+    snapshot.pixelSize === metrics.pixelSize
+  );
 }
 
 export function Board(
@@ -192,136 +335,371 @@ export function Board(
     turn: props.boardState.turn,
     selectedFrom: null,
     legalMoves: [],
-    dragPointerPos: null,
   }));
   const [prevMove, setPrevMove] = useState<MoveInput | null>(null);
 
+  const interactionRef = useRef<InteractionState>({
+    turn: props.boardState.turn,
+    selectedFrom: null,
+    legalMoves: [],
+  });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const boardMetricsRef = useRef<BoardMetrics | null>(null);
+  const dragPointerPosRef = useRef<CanvasPoint | null>(null);
   const dragStartPointerRef = useRef<CanvasPoint | null>(null);
-  const moveCommittedRef = useRef(false);
+  const frameRequestRef = useRef<number | null>(null);
+  const staticLayerCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const staticLayerContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const staticLayerSnapshotRef = useRef<StaticLayerSnapshot | null>(null);
+  const pendingMoveAnimationRef = useRef<PendingMoveAnimation | null>(null);
+  const activeMoveAnimationRef = useRef<ActiveMoveAnimation | null>(null);
+  const runDrawRef = useRef<(frameTimeMs?: number) => void>(() => {});
+  const scheduleDrawRef = useRef(() => {});
 
   const hasCurrentInteraction = interaction.turn === props.boardState.turn;
   const selectedFrom = hasCurrentInteraction ? interaction.selectedFrom : null;
   const legalMoves = hasCurrentInteraction
     ? interaction.legalMoves
     : EMPTY_SQUARES;
-  const dragPointerPos = hasCurrentInteraction
-    ? interaction.dragPointerPos
-    : null;
 
-  const draw = useEffectEvent(() => {
+  function setInteractionState(nextInteraction: InteractionState) {
+    interactionRef.current = nextInteraction;
+    setInteraction(nextInteraction);
+  }
+
+  function getActiveInteraction(): InteractionState {
+    const currentInteraction = interactionRef.current;
+    if (currentInteraction.turn === props.boardState.turn) {
+      return currentInteraction;
+    }
+
+    return {
+      turn: props.boardState.turn,
+      selectedFrom: null,
+      legalMoves: [],
+    };
+  }
+
+  const cancelScheduledDraw = () => {
+    if (frameRequestRef.current === null) return;
+    cancelAnimationFrame(frameRequestRef.current);
+    frameRequestRef.current = null;
+  };
+
+  const runUpdateCanvasMetrics = (): boolean => {
     const canvas = canvasRef.current;
     const context = contextRef.current;
-    if (!canvas || !context) return;
+    const staticLayerCanvas = staticLayerCanvasRef.current;
+    const staticLayerContext = staticLayerContextRef.current;
+    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) {
+      return false;
+    }
 
-    drawBoard(
-      canvas,
-      context,
-      props.boardState,
-      getPieceImages(),
-      prevMove,
-      selectedFrom,
-      dragPointerPos,
-      legalMoves,
+    const metrics = getBoardMetrics(canvas);
+    if (metrics.cssSize === 0 || metrics.pixelSize === 0) {
+      boardMetricsRef.current = null;
+      return false;
+    }
+    boardMetricsRef.current = metrics;
+
+    resizeCanvas(canvas, metrics);
+    resizeCanvas(staticLayerCanvas, metrics);
+    prepareContext(context, metrics);
+    prepareContext(staticLayerContext, metrics);
+    return true;
+  };
+
+  function scheduleDraw() {
+    if (frameRequestRef.current !== null) return;
+
+    frameRequestRef.current = requestAnimationFrame((frameTimeMs) => {
+      frameRequestRef.current = null;
+      runDraw(frameTimeMs);
+    });
+  }
+
+  const runDraw = (frameTimeMs?: number) => {
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
+    const staticLayerCanvas = staticLayerCanvasRef.current;
+    const staticLayerContext = staticLayerContextRef.current;
+    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) {
+      return;
+    }
+    if (!runUpdateCanvasMetrics()) {
+      scheduleDraw();
+      return;
+    }
+    const metrics = boardMetricsRef.current;
+    if (!metrics) return;
+
+    const boardState = props.boardState;
+    const pieceImages = getPieceImages();
+    const dragPointerPos = dragPointerPosRef.current;
+    const currentInteraction = getActiveInteraction();
+    const currentSelectedFrom = currentInteraction.selectedFrom;
+    const currentLegalMoves = currentInteraction.legalMoves;
+    const isDragging = currentSelectedFrom !== null && dragPointerPos !== null;
+    const pendingAnimation = pendingMoveAnimationRef.current;
+
+    if (!activeMoveAnimationRef.current && pendingAnimation) {
+      const destinationPiece =
+        boardState.board[pendingAnimation.move.to.y]?.[pendingAnimation.move.to.x] ??
+        null;
+
+      if (
+        destinationPiece &&
+        destinationPiece.color === pendingAnimation.piece.color &&
+        destinationPiece.type === pendingAnimation.piece.type
+      ) {
+        activeMoveAnimationRef.current = {
+          ...pendingAnimation,
+          startedAtMs: frameTimeMs ?? null,
+          durationMs: CLICK_MOVE_ANIMATION_MS,
+        };
+        pendingMoveAnimationRef.current = null;
+      }
+    }
+
+    let activeAnimation = activeMoveAnimationRef.current;
+    let animationProgress = 0;
+    if (activeAnimation) {
+      if (activeAnimation.startedAtMs === null && frameTimeMs !== undefined) {
+        activeAnimation = {
+          ...activeAnimation,
+          startedAtMs: frameTimeMs,
+        };
+        activeMoveAnimationRef.current = activeAnimation;
+      }
+
+      const rawProgress = (
+        activeAnimation.startedAtMs === null || frameTimeMs === undefined
+      )
+        ? 0
+        : (frameTimeMs - activeAnimation.startedAtMs) / activeAnimation.durationMs;
+
+      if (rawProgress >= 1) {
+        activeMoveAnimationRef.current = null;
+        activeAnimation = null;
+        staticLayerSnapshotRef.current = null;
+      } else {
+        animationProgress = easeOutCubic(rawProgress);
+      }
+    }
+
+    const animatedMove = activeAnimation?.move ?? null;
+
+    if (
+      !isStaticLayerCurrent(
+        staticLayerSnapshotRef.current,
+        boardState,
+        prevMove,
+        currentSelectedFrom,
+        currentLegalMoves,
+        isDragging,
+        animatedMove,
+        metrics,
+      )
+    ) {
+      drawStaticBoardLayer(
+        staticLayerContext,
+        metrics,
+        boardState,
+        pieceImages,
+        prevMove,
+        currentSelectedFrom,
+        isDragging,
+        animatedMove,
+        currentLegalMoves,
+      );
+
+      staticLayerSnapshotRef.current = {
+        boardState,
+        prevMove,
+        selectedFrom: currentSelectedFrom,
+        legalMoves: currentLegalMoves,
+        isDragging,
+        animatedMove,
+        cssSize: metrics.cssSize,
+        pixelSize: metrics.pixelSize,
+      };
+    }
+
+    prepareContext(context, metrics);
+    context.drawImage(
+      staticLayerCanvas,
+      0,
+      0,
+      staticLayerCanvas.width,
+      staticLayerCanvas.height,
+      0,
+      0,
+      metrics.cssSize,
+      metrics.cssSize,
     );
+
+    if (currentSelectedFrom && dragPointerPos) {
+      drawFloatingPiece(
+        context,
+        metrics,
+        boardState,
+        pieceImages,
+        currentSelectedFrom,
+        dragPointerPos,
+      );
+    }
+
+    if (activeAnimation) {
+      drawAnimatedPiece(
+        context,
+        metrics,
+        pieceImages,
+        activeAnimation,
+        animationProgress,
+      );
+      scheduleDraw();
+    }
+  };
+
+  useLayoutEffect(() => {
+    runDrawRef.current = runDraw;
+    scheduleDrawRef.current = scheduleDraw;
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    contextRef.current = context;
-    draw();
+    const staticLayerCanvas = document.createElement("canvas");
+    const staticLayerContext = staticLayerCanvas.getContext("2d");
+    if (!staticLayerContext) return;
 
+    contextRef.current = context;
+    staticLayerCanvasRef.current = staticLayerCanvas;
+    staticLayerContextRef.current = staticLayerContext;
     const handleResize = () => {
-      draw();
+      if (pendingMoveAnimationRef.current || activeMoveAnimationRef.current) {
+        scheduleDrawRef.current();
+        return;
+      }
+      runDrawRef.current();
     };
+
+    runDrawRef.current();
+    const initialFrameId = requestAnimationFrame(handleResize);
 
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(canvas);
     window.addEventListener("resize", handleResize);
 
     return () => {
+      cancelAnimationFrame(initialFrameId);
+      cancelScheduledDraw();
       if (contextRef.current === context) {
         contextRef.current = null;
       }
+      if (staticLayerContextRef.current === staticLayerContext) {
+        staticLayerContextRef.current = null;
+      }
+      if (staticLayerCanvasRef.current === staticLayerCanvas) {
+        staticLayerCanvasRef.current = null;
+      }
+      boardMetricsRef.current = null;
+      staticLayerSnapshotRef.current = null;
+      pendingMoveAnimationRef.current = null;
+      activeMoveAnimationRef.current = null;
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  useEffect(() => {
-    draw();
-  }, [props.boardState, prevMove, selectedFrom, dragPointerPos, legalMoves]);
+  useLayoutEffect(() => {
+    if (pendingMoveAnimationRef.current || activeMoveAnimationRef.current) {
+      scheduleDrawRef.current();
+      return;
+    }
+    runDrawRef.current();
+  }, [props.boardState, prevMove, selectedFrom, legalMoves]);
 
   useEffect(() => {
+    cancelScheduledDraw();
+    dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
-    moveCommittedRef.current = false;
-  }, [props.boardState.turn]);
-
-  const clearInteractionState = () => {
-    setInteraction({
+    interactionRef.current = {
       turn: props.boardState.turn,
       selectedFrom: null,
       legalMoves: [],
-      dragPointerPos: null,
+    };
+  }, [props.boardState.turn]);
+
+  const clearInteractionState = () => {
+    cancelScheduledDraw();
+    dragPointerPosRef.current = null;
+    setInteractionState({
+      turn: props.boardState.turn,
+      selectedFrom: null,
+      legalMoves: [],
     });
     dragStartPointerRef.current = null;
   };
 
-  const executeLegalMove = (from: Square, to: Square) => {
+  const executeLegalMove = (from: Square, to: Square, shouldAnimate: boolean) => {
     const move = { from, to };
-    moveCommittedRef.current = true;
+    const movingPiece = props.boardState.board[from.y]?.[from.x] ?? null;
+
+    cancelScheduledDraw();
+    activeMoveAnimationRef.current = null;
+    pendingMoveAnimationRef.current = shouldAnimate && movingPiece
+      ? { move, piece: movingPiece }
+      : null;
+    staticLayerSnapshotRef.current = null;
     clearInteractionState();
     setPrevMove(move);
     props.onMoveAttempt(move);
   };
 
   const handlePointerDown: PointerEventHandler<HTMLCanvasElement> = (e) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
+    cancelScheduledDraw();
 
     const { pointerPos, tileIndex } = toBoardPointerData(e);
-
-    if (selectedFrom && hasMove(legalMoves, tileIndex)) {
-      executeLegalMove(selectedFrom, tileIndex);
-      return;
-    }
-
     const piece = props.boardState.board[tileIndex.y][tileIndex.x];
     if (!piece || piece.color !== props.boardState.turn) {
-      clearInteractionState();
+      dragStartPointerRef.current = null;
       return;
     }
 
     const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
-    setInteraction({
+    dragPointerPosRef.current = null;
+    setInteractionState({
       turn: props.boardState.turn,
       selectedFrom: tileIndex,
       legalMoves: nextLegalMoves,
-      dragPointerPos: null,
     });
     dragStartPointerRef.current = pointerPos;
+    runDraw();
   };
 
   const handlePointerMove: PointerEventHandler<HTMLCanvasElement> = (e) => {
     const dragStartPointer = dragStartPointerRef.current;
-    if (!dragStartPointer) return;
+    if (!dragStartPointer || !getActiveInteraction().selectedFrom) return;
 
     const { pointerPos } = toBoardPointerData(e);
     const dx = pointerPos.x - dragStartPointer.x;
     const dy = pointerPos.y - dragStartPointer.y;
     const isDragging = Math.hypot(dx, dy) > 6;
 
-    if (!dragPointerPos && !isDragging) return;
+    if (!dragPointerPosRef.current && !isDragging) return;
 
-    setInteraction((current) => ({
-      ...getCurrentInteractionState(current, props.boardState.turn),
-      dragPointerPos: pointerPos,
-    }));
+    if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    dragPointerPosRef.current = pointerPos;
+    scheduleDraw();
   };
 
   const handlePointerUp: PointerEventHandler<HTMLCanvasElement> = (e) => {
@@ -329,48 +707,48 @@ export function Board(
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
 
-    if (moveCommittedRef.current) {
-      moveCommittedRef.current = false;
-      return;
-    }
-
     const { tileIndex } = toBoardPointerData(e);
-    const sourceTile = selectedFrom;
+    const currentInteraction = getActiveInteraction();
+    const sourceTile = currentInteraction.selectedFrom;
+    const wasDragging = dragPointerPosRef.current !== null;
 
-    setInteraction((current) => ({
-      ...getCurrentInteractionState(current, props.boardState.turn),
-      dragPointerPos: null,
-    }));
+    dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
 
-    if (!sourceTile) return;
-
-    const nextLegalMoves = getLegalMoves(sourceTile, props.boardState);
-    if (hasMove(nextLegalMoves, tileIndex)) {
-      executeLegalMove(sourceTile, tileIndex);
+    if (!sourceTile) {
+      if (wasDragging) scheduleDraw();
       return;
     }
 
-    if (!selectedFrom || !squaresEqual(selectedFrom, sourceTile)) {
-      setInteraction({
-        turn: props.boardState.turn,
-        selectedFrom: sourceTile,
-        legalMoves: nextLegalMoves,
-        dragPointerPos: null,
-      });
+    if (hasMove(currentInteraction.legalMoves, tileIndex)) {
+      executeLegalMove(sourceTile, tileIndex, !wasDragging);
+      return;
     }
+
+    const piece = props.boardState.board[tileIndex.y][tileIndex.x];
+    if (piece && piece.color === props.boardState.turn) {
+      const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
+      setInteractionState({
+        turn: props.boardState.turn,
+        selectedFrom: tileIndex,
+        legalMoves: nextLegalMoves,
+      });
+      runDraw();
+      return;
+    }
+
+    clearInteractionState();
+    if (wasDragging) runDraw();
   };
 
   const handlePointerCancel: PointerEventHandler<HTMLCanvasElement> = (e) => {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
-    setInteraction((current) => ({
-      ...getCurrentInteractionState(current, props.boardState.turn),
-      dragPointerPos: null,
-    }));
+    const wasDragging = dragPointerPosRef.current !== null;
+    dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
-    moveCommittedRef.current = false;
+    if (wasDragging) runDraw();
   };
 
   return (
