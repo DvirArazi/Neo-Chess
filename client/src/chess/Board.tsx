@@ -170,7 +170,7 @@ function drawStaticBoardLayer(
 
   if (prevMove) {
     context.save();
-    context.fillStyle = "rgba(255, 221, 87, 0.62)";
+    context.fillStyle = "rgba(255, 221, 87, 0.5)";
 
     for (const tile of [prevMove.from, prevMove.to]) {
       const centerX = (tile.x + 0.5) * metrics.tileSize;
@@ -184,6 +184,20 @@ function drawStaticBoardLayer(
 
     context.restore();
   }
+
+  context.save();
+  context.fillStyle = "rgba(16, 16, 16, 0.13)";
+
+  if (selectedFrom) {
+    const centerX = (selectedFrom.x + 0.5) * metrics.tileSize;
+    const centerY = (selectedFrom.y + 0.5) * metrics.tileSize;
+    const radius = metrics.tileSize * 0.38;
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.restore();
 
   for (let tileY = 0; tileY < BOARD_SIZE; tileY++) {
     for (let tileX = 0; tileX < BOARD_SIZE; tileX++) {
@@ -251,7 +265,8 @@ function drawFloatingPiece(
   selectedFrom: Square,
   dragPointerPos: CanvasPoint,
 ): void {
-  const floatingPiece = boardState.board[selectedFrom.y]?.[selectedFrom.x] ?? null;
+  const floatingPiece = boardState.board[selectedFrom.y]?.[selectedFrom.x] ??
+    null;
   if (!floatingPiece) return;
 
   const pieceImage = pieceImages[floatingPiece.color][floatingPiece.type];
@@ -274,11 +289,11 @@ function drawAnimatedPiece(
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const currentX = animation.move.from.x + (
-    animation.move.to.x - animation.move.from.x
-  ) * progress;
+        animation.move.to.x - animation.move.from.x
+      ) * progress;
   const currentY = animation.move.from.y + (
-    animation.move.to.y - animation.move.from.y
-  ) * progress;
+        animation.move.to.y - animation.move.from.y
+      ) * progress;
 
   context.drawImage(
     pieceImage,
@@ -356,7 +371,9 @@ export function Board(
     const context = contextRef.current;
     const staticLayerCanvas = staticLayerCanvasRef.current;
     const staticLayerContext = staticLayerContextRef.current;
-    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) return;
+    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) {
+      return;
+    }
 
     const metrics = getBoardMetrics(canvas);
     boardMetricsRef.current = metrics;
@@ -372,7 +389,10 @@ export function Board(
     const metrics = boardMetricsRef.current;
     const staticLayerCanvas = staticLayerCanvasRef.current;
     const staticLayerContext = staticLayerContextRef.current;
-    if (!canvas || !context || !metrics || !staticLayerCanvas || !staticLayerContext) {
+    if (
+      !canvas || !context || !metrics || !staticLayerCanvas ||
+      !staticLayerContext
+    ) {
       return;
     }
 
@@ -384,8 +404,8 @@ export function Board(
     const pendingAnimation = pendingMoveAnimationRef.current;
 
     if (!activeMoveAnimationRef.current && pendingAnimation) {
-      const destinationPiece =
-        boardState.board[pendingAnimation.move.to.y]?.[pendingAnimation.move.to.x] ??
+      const destinationPiece = boardState.board[pendingAnimation.move.to.y]
+        ?.[pendingAnimation.move.to.x] ??
         null;
 
       if (
@@ -616,7 +636,7 @@ export function Board(
     }
 
     const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
-    dragPointerPosRef.current = null;
+    dragPointerPosRef.current = pointerPos;
     setInteraction({
       turn: props.boardState.turn,
       selectedFrom: tileIndex,
@@ -627,20 +647,24 @@ export function Board(
 
   const handlePointerMove: PointerEventHandler<HTMLCanvasElement> = (e) => {
     const dragStartPointer = dragStartPointerRef.current;
-    if (!dragStartPointer) return;
+    if (!dragStartPointer) {
+      const { tileIndex } = toBoardPointerData(e);
+      const piece = props.boardState.board[tileIndex.y]?.[tileIndex.x] ?? null;
+      e.currentTarget.style.cursor = piece && piece.color == props.boardState.turn
+        ? "pointer"
+        : "default";
+      return;
+    }
+    e.currentTarget.style.cursor = "pointer";
 
     const { pointerPos } = toBoardPointerData(e);
-    const dx = pointerPos.x - dragStartPointer.x;
-    const dy = pointerPos.y - dragStartPointer.y;
-    const isDragging = Math.hypot(dx, dy) > 6;
-
-    if (!dragPointerPosRef.current && !isDragging) return;
-
     dragPointerPosRef.current = pointerPos;
     scheduleDraw();
   };
 
   const handlePointerUp: PointerEventHandler<HTMLCanvasElement> = (e) => {
+    e.currentTarget.style.cursor = "default";
+
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
