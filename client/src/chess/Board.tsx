@@ -2,6 +2,7 @@ import {
   type PointerEvent,
   type PointerEventHandler,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -47,12 +48,12 @@ type PendingMoveAnimation = {
 };
 
 type ActiveMoveAnimation = PendingMoveAnimation & {
-  startedAtMs: number | null;
+  startedAtMs: number;
   durationMs: number;
 };
 
 const EMPTY_SQUARES: Square[] = [];
-const MAX_BOARD_DPR = 3;
+const MAX_BOARD_DPR = 2;
 const CLICK_MOVE_ANIMATION_MS = 120;
 
 function squaresEqual(a: Square, b: Square): boolean {
@@ -68,6 +69,7 @@ function optionalSquaresEqual(a: Square | null, b: Square | null): boolean {
 function optionalMovesEqual(a: MoveInput | null, b: MoveInput | null): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
+
   return (
     optionalSquaresEqual(a.from, b.from) &&
     optionalSquaresEqual(a.to, b.to)
@@ -135,7 +137,7 @@ function prepareContext(
   context.setTransform(metrics.dpr, 0, 0, metrics.dpr, 0, 0);
   context.clearRect(0, 0, metrics.cssSize, metrics.cssSize);
   context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
+  context.imageSmoothingQuality = "medium";
 }
 
 function drawStaticBoardLayer(
@@ -164,20 +166,6 @@ function drawStaticBoardLayer(
       context.fillStyle = (tileX + tileY) % 2 === 0 ? "#f0d9b5" : "#b58863";
       context.fillRect(posX, posY, metrics.tileSize, metrics.tileSize);
     }
-  }
-
-  if (selectedFrom) {
-    context.save();
-    context.fillStyle = "rgba(96, 96, 96, 0.34)";
-
-    const centerX = (selectedFrom.x + 0.5) * metrics.tileSize;
-    const centerY = (selectedFrom.y + 0.5) * metrics.tileSize;
-    const radius = metrics.tileSize * 0.34;
-
-    context.beginPath();
-    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
   }
 
   if (prevMove) {
@@ -338,24 +326,18 @@ export function Board(
   }));
   const [prevMove, setPrevMove] = useState<MoveInput | null>(null);
 
-  const interactionRef = useRef<InteractionState>({
-    turn: props.boardState.turn,
-    selectedFrom: null,
-    legalMoves: [],
-  });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const boardMetricsRef = useRef<BoardMetrics | null>(null);
   const dragPointerPosRef = useRef<CanvasPoint | null>(null);
   const dragStartPointerRef = useRef<CanvasPoint | null>(null);
   const frameRequestRef = useRef<number | null>(null);
+  const moveCommittedRef = useRef(false);
   const staticLayerCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const staticLayerContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const staticLayerSnapshotRef = useRef<StaticLayerSnapshot | null>(null);
   const pendingMoveAnimationRef = useRef<PendingMoveAnimation | null>(null);
   const activeMoveAnimationRef = useRef<ActiveMoveAnimation | null>(null);
-  const runDrawRef = useRef<(frameTimeMs?: number) => void>(() => {});
-  const scheduleDrawRef = useRef(() => {});
 
   const hasCurrentInteraction = interaction.turn === props.boardState.turn;
   const selectedFrom = hasCurrentInteraction ? interaction.selectedFrom : null;
@@ -363,84 +345,42 @@ export function Board(
     ? interaction.legalMoves
     : EMPTY_SQUARES;
 
-  function setInteractionState(nextInteraction: InteractionState) {
-    interactionRef.current = nextInteraction;
-    setInteraction(nextInteraction);
-  }
-
-  function getActiveInteraction(): InteractionState {
-    const currentInteraction = interactionRef.current;
-    if (currentInteraction.turn === props.boardState.turn) {
-      return currentInteraction;
-    }
-
-    return {
-      turn: props.boardState.turn,
-      selectedFrom: null,
-      legalMoves: [],
-    };
-  }
-
   const cancelScheduledDraw = () => {
     if (frameRequestRef.current === null) return;
     cancelAnimationFrame(frameRequestRef.current);
     frameRequestRef.current = null;
   };
 
-  const runUpdateCanvasMetrics = (): boolean => {
+  const runUpdateCanvasMetrics = () => {
     const canvas = canvasRef.current;
     const context = contextRef.current;
     const staticLayerCanvas = staticLayerCanvasRef.current;
     const staticLayerContext = staticLayerContextRef.current;
-    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) {
-      return false;
-    }
+    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) return;
 
     const metrics = getBoardMetrics(canvas);
-    if (metrics.cssSize === 0 || metrics.pixelSize === 0) {
-      boardMetricsRef.current = null;
-      return false;
-    }
     boardMetricsRef.current = metrics;
 
     resizeCanvas(canvas, metrics);
     resizeCanvas(staticLayerCanvas, metrics);
-    prepareContext(context, metrics);
-    prepareContext(staticLayerContext, metrics);
-    return true;
+    staticLayerSnapshotRef.current = null;
   };
 
-  function scheduleDraw() {
-    if (frameRequestRef.current !== null) return;
-
-    frameRequestRef.current = requestAnimationFrame((frameTimeMs) => {
-      frameRequestRef.current = null;
-      runDraw(frameTimeMs);
-    });
-  }
-
-  const runDraw = (frameTimeMs?: number) => {
+  function runDraw(frameTimeMs?: number) {
     const canvas = canvasRef.current;
     const context = contextRef.current;
+    const metrics = boardMetricsRef.current;
     const staticLayerCanvas = staticLayerCanvasRef.current;
     const staticLayerContext = staticLayerContextRef.current;
-    if (!canvas || !context || !staticLayerCanvas || !staticLayerContext) {
+    if (!canvas || !context || !metrics || !staticLayerCanvas || !staticLayerContext) {
       return;
     }
-    if (!runUpdateCanvasMetrics()) {
-      scheduleDraw();
-      return;
-    }
-    const metrics = boardMetricsRef.current;
-    if (!metrics) return;
 
     const boardState = props.boardState;
     const pieceImages = getPieceImages();
     const dragPointerPos = dragPointerPosRef.current;
-    const currentInteraction = getActiveInteraction();
-    const currentSelectedFrom = currentInteraction.selectedFrom;
-    const currentLegalMoves = currentInteraction.legalMoves;
-    const isDragging = currentSelectedFrom !== null && dragPointerPos !== null;
+    const isDragging = selectedFrom !== null && dragPointerPos !== null;
+    const nowMs = frameTimeMs ?? performance.now();
     const pendingAnimation = pendingMoveAnimationRef.current;
 
     if (!activeMoveAnimationRef.current && pendingAnimation) {
@@ -455,7 +395,7 @@ export function Board(
       ) {
         activeMoveAnimationRef.current = {
           ...pendingAnimation,
-          startedAtMs: frameTimeMs ?? null,
+          startedAtMs: nowMs,
           durationMs: CLICK_MOVE_ANIMATION_MS,
         };
         pendingMoveAnimationRef.current = null;
@@ -465,19 +405,9 @@ export function Board(
     let activeAnimation = activeMoveAnimationRef.current;
     let animationProgress = 0;
     if (activeAnimation) {
-      if (activeAnimation.startedAtMs === null && frameTimeMs !== undefined) {
-        activeAnimation = {
-          ...activeAnimation,
-          startedAtMs: frameTimeMs,
-        };
-        activeMoveAnimationRef.current = activeAnimation;
-      }
-
       const rawProgress = (
-        activeAnimation.startedAtMs === null || frameTimeMs === undefined
-      )
-        ? 0
-        : (frameTimeMs - activeAnimation.startedAtMs) / activeAnimation.durationMs;
+        nowMs - activeAnimation.startedAtMs
+      ) / activeAnimation.durationMs;
 
       if (rawProgress >= 1) {
         activeMoveAnimationRef.current = null;
@@ -495,8 +425,8 @@ export function Board(
         staticLayerSnapshotRef.current,
         boardState,
         prevMove,
-        currentSelectedFrom,
-        currentLegalMoves,
+        selectedFrom,
+        legalMoves,
         isDragging,
         animatedMove,
         metrics,
@@ -508,17 +438,17 @@ export function Board(
         boardState,
         pieceImages,
         prevMove,
-        currentSelectedFrom,
+        selectedFrom,
         isDragging,
         animatedMove,
-        currentLegalMoves,
+        legalMoves,
       );
 
       staticLayerSnapshotRef.current = {
         boardState,
         prevMove,
-        selectedFrom: currentSelectedFrom,
-        legalMoves: currentLegalMoves,
+        selectedFrom,
+        legalMoves,
         isDragging,
         animatedMove,
         cssSize: metrics.cssSize,
@@ -539,13 +469,13 @@ export function Board(
       metrics.cssSize,
     );
 
-    if (currentSelectedFrom && dragPointerPos) {
+    if (selectedFrom && dragPointerPos) {
       drawFloatingPiece(
         context,
         metrics,
         boardState,
         pieceImages,
-        currentSelectedFrom,
+        selectedFrom,
         dragPointerPos,
       );
     }
@@ -560,12 +490,24 @@ export function Board(
       );
       scheduleDraw();
     }
-  };
+  }
 
-  useLayoutEffect(() => {
-    runDrawRef.current = runDraw;
-    scheduleDrawRef.current = scheduleDraw;
+  const updateCanvasMetrics = useEffectEvent(() => {
+    runUpdateCanvasMetrics();
   });
+
+  const draw = useEffectEvent(() => {
+    runDraw();
+  });
+
+  function scheduleDraw() {
+    if (frameRequestRef.current !== null) return;
+
+    frameRequestRef.current = requestAnimationFrame((frameTimeMs) => {
+      frameRequestRef.current = null;
+      runDraw(frameTimeMs);
+    });
+  }
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -581,23 +523,19 @@ export function Board(
     contextRef.current = context;
     staticLayerCanvasRef.current = staticLayerCanvas;
     staticLayerContextRef.current = staticLayerContext;
-    const handleResize = () => {
-      if (pendingMoveAnimationRef.current || activeMoveAnimationRef.current) {
-        scheduleDrawRef.current();
-        return;
-      }
-      runDrawRef.current();
-    };
+    updateCanvasMetrics();
+    draw();
 
-    runDrawRef.current();
-    const initialFrameId = requestAnimationFrame(handleResize);
+    const handleResize = () => {
+      updateCanvasMetrics();
+      draw();
+    };
 
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(canvas);
     window.addEventListener("resize", handleResize);
 
     return () => {
-      cancelAnimationFrame(initialFrameId);
       cancelScheduledDraw();
       if (contextRef.current === context) {
         contextRef.current = null;
@@ -617,29 +555,23 @@ export function Board(
     };
   }, []);
 
-  useLayoutEffect(() => {
-    if (pendingMoveAnimationRef.current || activeMoveAnimationRef.current) {
-      scheduleDrawRef.current();
-      return;
-    }
-    runDrawRef.current();
+  useEffect(() => {
+    draw();
   }, [props.boardState, prevMove, selectedFrom, legalMoves]);
 
   useEffect(() => {
-    cancelScheduledDraw();
+    if (!pendingMoveAnimationRef.current && !activeMoveAnimationRef.current) {
+      cancelScheduledDraw();
+    }
     dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
-    interactionRef.current = {
-      turn: props.boardState.turn,
-      selectedFrom: null,
-      legalMoves: [],
-    };
+    moveCommittedRef.current = false;
   }, [props.boardState.turn]);
 
   const clearInteractionState = () => {
     cancelScheduledDraw();
     dragPointerPosRef.current = null;
-    setInteractionState({
+    setInteraction({
       turn: props.boardState.turn,
       selectedFrom: null,
       legalMoves: [],
@@ -647,45 +579,55 @@ export function Board(
     dragStartPointerRef.current = null;
   };
 
-  const executeLegalMove = (from: Square, to: Square, shouldAnimate: boolean) => {
+  const executeLegalMove = (
+    from: Square,
+    to: Square,
+    shouldAnimate: boolean,
+  ) => {
     const move = { from, to };
     const movingPiece = props.boardState.board[from.y]?.[from.x] ?? null;
-
     cancelScheduledDraw();
     activeMoveAnimationRef.current = null;
     pendingMoveAnimationRef.current = shouldAnimate && movingPiece
       ? { move, piece: movingPiece }
       : null;
     staticLayerSnapshotRef.current = null;
+    moveCommittedRef.current = true;
     clearInteractionState();
     setPrevMove(move);
     props.onMoveAttempt(move);
   };
 
   const handlePointerDown: PointerEventHandler<HTMLCanvasElement> = (e) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
     cancelScheduledDraw();
 
     const { pointerPos, tileIndex } = toBoardPointerData(e);
+
+    if (selectedFrom && hasMove(legalMoves, tileIndex)) {
+      executeLegalMove(selectedFrom, tileIndex, true);
+      return;
+    }
+
     const piece = props.boardState.board[tileIndex.y][tileIndex.x];
     if (!piece || piece.color !== props.boardState.turn) {
-      dragStartPointerRef.current = null;
+      clearInteractionState();
       return;
     }
 
     const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
     dragPointerPosRef.current = null;
-    setInteractionState({
+    setInteraction({
       turn: props.boardState.turn,
       selectedFrom: tileIndex,
       legalMoves: nextLegalMoves,
     });
     dragStartPointerRef.current = pointerPos;
-    runDraw();
   };
 
   const handlePointerMove: PointerEventHandler<HTMLCanvasElement> = (e) => {
     const dragStartPointer = dragStartPointerRef.current;
-    if (!dragStartPointer || !getActiveInteraction().selectedFrom) return;
+    if (!dragStartPointer) return;
 
     const { pointerPos } = toBoardPointerData(e);
     const dx = pointerPos.x - dragStartPointer.x;
@@ -693,10 +635,6 @@ export function Board(
     const isDragging = Math.hypot(dx, dy) > 6;
 
     if (!dragPointerPosRef.current && !isDragging) return;
-
-    if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    }
 
     dragPointerPosRef.current = pointerPos;
     scheduleDraw();
@@ -707,9 +645,13 @@ export function Board(
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
 
+    if (moveCommittedRef.current) {
+      moveCommittedRef.current = false;
+      return;
+    }
+
     const { tileIndex } = toBoardPointerData(e);
-    const currentInteraction = getActiveInteraction();
-    const sourceTile = currentInteraction.selectedFrom;
+    const sourceTile = selectedFrom;
     const wasDragging = dragPointerPosRef.current !== null;
 
     dragPointerPosRef.current = null;
@@ -720,25 +662,12 @@ export function Board(
       return;
     }
 
-    if (hasMove(currentInteraction.legalMoves, tileIndex)) {
-      executeLegalMove(sourceTile, tileIndex, !wasDragging);
+    if (hasMove(legalMoves, tileIndex)) {
+      executeLegalMove(sourceTile, tileIndex, false);
       return;
     }
 
-    const piece = props.boardState.board[tileIndex.y][tileIndex.x];
-    if (piece && piece.color === props.boardState.turn) {
-      const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
-      setInteractionState({
-        turn: props.boardState.turn,
-        selectedFrom: tileIndex,
-        legalMoves: nextLegalMoves,
-      });
-      runDraw();
-      return;
-    }
-
-    clearInteractionState();
-    if (wasDragging) runDraw();
+    if (wasDragging) scheduleDraw();
   };
 
   const handlePointerCancel: PointerEventHandler<HTMLCanvasElement> = (e) => {
@@ -748,7 +677,8 @@ export function Board(
     const wasDragging = dragPointerPosRef.current !== null;
     dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
-    if (wasDragging) runDraw();
+    moveCommittedRef.current = false;
+    if (wasDragging) scheduleDraw();
   };
 
   return (
