@@ -1,5 +1,5 @@
 export type {
-  BoardState,
+  GameState,
   MoveInput,
   PieceBoard,
   Piece,

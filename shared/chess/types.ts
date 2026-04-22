@@ -26,7 +26,7 @@ export type Piece = {
 
 export type PieceBoard = (Piece | null)[][];
 
-export type BoardState = {
+export type GameState = {
   board: PieceBoard;
   turn: PieceColor;
   enPassantTarget: Square | null;
