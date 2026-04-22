@@ -646,18 +646,17 @@ export function Board(
   };
 
   const handlePointerMove: PointerEventHandler<HTMLCanvasElement> = (e) => {
+    const { pointerPos, tileIndex } = toBoardPointerData(e);
+
     const dragStartPointer = dragStartPointerRef.current;
     if (!dragStartPointer) {
-      const { tileIndex } = toBoardPointerData(e);
       const piece = props.boardState.board[tileIndex.y]?.[tileIndex.x] ?? null;
-      e.currentTarget.style.cursor = piece && piece.color == props.boardState.turn
-        ? "pointer"
-        : "default";
+      e.currentTarget.style.cursor =
+        piece && piece.color == props.boardState.turn ? "pointer" : "default";
       return;
     }
     e.currentTarget.style.cursor = "pointer";
 
-    const { pointerPos } = toBoardPointerData(e);
     dragPointerPosRef.current = pointerPos;
     scheduleDraw();
   };
