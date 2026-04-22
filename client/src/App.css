@@ -1,12 +1,231 @@
+@font-face {
+  font-family: "Roboto Slab";
+  src: url("./assets/fonts/RobotoSlab-VariableFont_wght.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  color: #fbf4e8;
+  font-family: system-ui, sans-serif;
+  background: linear-gradient(180deg, #b3916d 0%, #9a7b5d 100%);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  height: 100%;
+}
+
 body {
   margin: 0;
   overflow: hidden;
+  background: linear-gradient(180deg, #bb946b 0%, #967658 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  padding:
+    max(12px, env(safe-area-inset-top)) 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 241, 217, 0.2);
+  background: linear-gradient(180deg, rgba(172, 134, 97, 0.82), rgba(154, 120, 89, 0.78));
+  backdrop-filter: blur(12px);
+}
+
+.app-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-brand__icon {
+  width: 50px;
+  height: 50px;
+  display: block;
+}
+
+.app-brand__name {
+  font-family: "Roboto Slab", serif;
+  color: #fffaf1;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.app-header__account-button {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 244, 224, 0.28);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #efdfc4 0%, #e0c39c 100%);
+  color: #3b291b;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.local-game {
+  flex: 1;
+  min-height: 0;
+  /* padding: 12px 0 max(12px, env(safe-area-inset-bottom)); */
+  display: flex;
+  align-items: center;
+}
+
+.local-game__mobile-shell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.local-game__board-shell {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  position: relative;
+  z-index: 1;
+  /* margin: 20px 0; */
+  /* box-shadow: 0 0px 24px rgba(255, 255, 255, 0.28); */
+  /* 0 12px 24px rgba(255, 255, 255, 0.28); */
+}
+
+.player-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  margin: 15px;
+  border-radius: 24px;
+  border: 2px solid rgba(255, 244, 223, 0.24);
+  background: rgba(176, 139, 102, 0.86);
+  backdrop-filter: blur(10px);
+}
+
+.player-card--active {
+  border-color: rgba(237, 207, 147, 0.66);
+  box-shadow: 0 6px 14px rgba(99, 68, 37, 0.06);
+}
+
+.player-card__avatar {
+  width: 60px;
+  height: 60px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 4px solid rgba(255, 247, 233, 0.24);
+  background: rgba(255, 248, 238, 0.14);
+}
+
+.player-card__identity {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.player-card__name-row {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.player-card__name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #fff8ee;
+}
+
+.player-card__captures {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 0px;
+  overflow: hidden;
+}
+
+.player-card__capture-stack {
+  display: flex;
+  align-items: center;
+  margin-left: -4px;
+}
+
+.player-card__capture-stack:first-child {
+  margin-left: 0;
+}
+
+.player-card__capture-piece {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex: 0 0 auto;
+  margin-left: -11px;
+  /* filter: drop-shadow(0 0 30px rgba(255, 255, 255, 1)); */
+}
+
+.player-card__capture-stack .player-card__capture-piece:first-child {
+  margin-left: 0;
+}
+
+.player-card__captures-placeholder {
+  display: none;
+}
+
+.player-card__material-lead {
+  margin-left: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ebf4d1;
+}
+
+.player-card__clock {
+  min-width: 76px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3e8d7 0%, #e7d6bc 100%);
+  color: #3c2a1b;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-card--active .player-card__clock {
+  background: linear-gradient(135deg, #ead4aa 0%, #ddbf98 100%);
 }
 
 .board-canvas {
   display: block;
-  width: min(100vw, 100vh, 640px);
+  width: 100%;
   max-width: 100%;
   aspect-ratio: 1 / 1;
+  border-top: 3px solid #d9b48c;
+  border-bottom: 3px solid #ab8460;
+  border-radius: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 247, 231, 0.16),
+    inset 0 -1px 0 rgba(73, 48, 28, 0.12);
   touch-action: none;
 }

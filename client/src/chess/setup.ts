@@ -1,8 +1,8 @@
-import type { BoardState, PieceBoard, PieceType } from "./types";
+import type { GameState, PieceBoard, PieceType } from "./types";
 
 export const BOARD_SIZE = 8;
 
-export function createInitialBoard(): BoardState {
+export function createInitialBoard(): GameState {
   const board: PieceBoard = Array.from(
     { length: BOARD_SIZE },
     () => Array.from({ length: BOARD_SIZE }, () => null),

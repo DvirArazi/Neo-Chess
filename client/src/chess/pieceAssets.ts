@@ -1,16 +1,16 @@
 import type { PieceColor, PieceType } from "./types";
-import blackBishop from "/src/assets/pieces/black-bishop.svg";
-import blackKing from "/src/assets/pieces/black-king.svg";
-import blackKnight from "/src/assets/pieces/black-knight.svg";
-import blackPawn from "/src/assets/pieces/black-pawn.svg";
-import blackQueen from "/src/assets/pieces/black-queen.svg";
-import blackRook from "/src/assets/pieces/black-rook.svg";
-import whiteBishop from "/src/assets/pieces/white-bishop.svg";
-import whiteKing from "/src/assets/pieces/white-king.svg";
-import whiteKnight from "/src/assets/pieces/white-knight.svg";
-import whitePawn from "/src/assets/pieces/white-pawn.svg";
-import whiteQueen from "/src/assets/pieces/white-queen.svg";
-import whiteRook from "/src/assets/pieces/white-rook.svg";
+import blackBishop from "../assets/images/pieces/black-bishop.svg";
+import blackKing from "../assets/images/pieces/black-king.svg";
+import blackKnight from "../assets/images/pieces/black-knight.svg";
+import blackPawn from "../assets/images/pieces/black-pawn.svg";
+import blackQueen from "../assets/images/pieces/black-queen.svg";
+import blackRook from "../assets/images/pieces/black-rook.svg";
+import whiteBishop from "../assets/images/pieces/white-bishop.svg";
+import whiteKing from "../assets/images/pieces/white-king.svg";
+import whiteKnight from "../assets/images/pieces/white-knight.svg";
+import whitePawn from "../assets/images/pieces/white-pawn.svg";
+import whiteQueen from "../assets/images/pieces/white-queen.svg";
+import whiteRook from "../assets/images/pieces/white-rook.svg";
 
 export type PieceImage = HTMLImageElement;
 export type PieceImages = Record<PieceColor, Record<PieceType, PieceImage>>;

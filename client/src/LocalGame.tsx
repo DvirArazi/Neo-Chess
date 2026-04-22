@@ -1,20 +1,34 @@
 import { useState } from "react";
 import { createInitialBoard } from "./chess/setup";
-import { Board } from "./chess/Board";
+import type { MoveInput } from "./chess/types";
 import { applyMove } from "../../shared/chess/moveGeneration";
-import type { MoveInput } from "./types";
+import { Game } from "./Game";
+import whiteProfileImage from "./assets/images/localProfile/white.png";
+import blackProfileImage from "./assets/images/localProfile/black.png";
 
 function LocalGame() {
-  const [boardState, setBoardState] = useState(createInitialBoard);
+  const [gameState, setGameState] = useState(createInitialBoard);
 
   const handleMoveAttempt = (move: MoveInput) => {
-    setBoardState((prevBoardState) => applyMove(prevBoardState, move));
+    setGameState((prevGameState) => applyMove(prevGameState, move));
   };
 
   return (
-    <Board
-      boardState={boardState}
+    <Game
+      gameState={gameState}
       onMoveAttempt={handleMoveAttempt}
+      players={{
+        black: {
+          name: "Black",
+          clock: "10:00",
+          imageSrc: blackProfileImage,
+        },
+        white: {
+          name: "White",
+          clock: "10:00",
+          imageSrc: whiteProfileImage,
+        },
+      }}
     />
   );
 }

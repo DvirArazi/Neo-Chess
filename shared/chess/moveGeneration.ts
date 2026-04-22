@@ -1,4 +1,4 @@
-import type { BoardState, MoveInput, Piece, Square } from "./types";
+import type { GameState, MoveInput, Piece, Square } from "./types";
 
 const BOARD_SIZE = 8;
 
@@ -20,7 +20,7 @@ function pointsEqual(a: Square, b: Square): boolean {
 
 function addSlidingMoves(
   from: Square,
-  state: BoardState,
+  state: GameState,
   piece: Piece,
   directions: Offset[],
   moves: Square[],
@@ -46,7 +46,7 @@ function addSlidingMoves(
   }
 }
 
-function findKing(state: BoardState, color: Piece["color"]): Square | null {
+function findKing(state: GameState, color: Piece["color"]): Square | null {
   for (let y = 0; y < BOARD_SIZE; y++) {
     for (let x = 0; x < BOARD_SIZE; x++) {
       const piece = state.board[y][x];
@@ -59,7 +59,7 @@ function findKing(state: BoardState, color: Piece["color"]): Square | null {
 }
 
 function isTileAttackedBy(
-  state: BoardState,
+  state: GameState,
   tile: Square,
   attackerColor: Piece["color"],
 ): boolean {
@@ -156,7 +156,7 @@ function isTileAttackedBy(
   return false;
 }
 
-function isKingInCheck(state: BoardState, color: Piece["color"]): boolean {
+function isKingInCheck(state: GameState, color: Piece["color"]): boolean {
   const kingTile = findKing(state, color);
   if (!kingTile) return false;
 
@@ -164,7 +164,7 @@ function isKingInCheck(state: BoardState, color: Piece["color"]): boolean {
   return isTileAttackedBy(state, kingTile, attackerColor);
 }
 
-export function getPseudoLegalMoves(from: Square, state: BoardState): Square[] {
+export function getPseudoLegalMoves(from: Square, state: GameState): Square[] {
   if (!isInBounds(from)) return [];
 
   const piece = state.board[from.y]?.[from.x];
@@ -299,7 +299,7 @@ export function getPseudoLegalMoves(from: Square, state: BoardState): Square[] {
   return moves;
 }
 
-export function applyMove(state: BoardState, move: MoveInput): BoardState {
+export function applyMove(state: GameState, move: MoveInput): GameState {
   const { from, to } = move;
   const movingPiece = state.board[from.y]?.[from.x];
   if (!movingPiece) return state;
@@ -334,7 +334,7 @@ export function applyMove(state: BoardState, move: MoveInput): BoardState {
   };
 }
 
-export function getLegalMoves(from: Square, state: BoardState): Square[] {
+export function getLegalMoves(from: Square, state: GameState): Square[] {
   if (!isInBounds(from)) return [];
 
   const movingPiece = state.board[from.y]?.[from.x];

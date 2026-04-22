@@ -9,7 +9,7 @@ import {
 } from "react";
 import { getPieceImages, type PieceImages } from "./pieceAssets";
 import type { MoveInput, Square } from "../types";
-import type { BoardState, Piece } from "./types";
+import type { GameState, Piece } from "./types";
 import { BOARD_SIZE } from "./setup";
 import { getLegalMoves } from "../../../shared/chess/moveGeneration";
 
@@ -26,13 +26,13 @@ type BoardMetrics = {
 };
 
 type InteractionState = {
-  turn: BoardState["turn"];
+  turn: GameState["turn"];
   selectedFrom: Square | null;
   legalMoves: Square[];
 };
 
 type StaticLayerSnapshot = {
-  boardState: BoardState;
+  gameState: GameState;
   prevMove: MoveInput | null;
   selectedFrom: Square | null;
   legalMoves: Square[];
@@ -143,7 +143,7 @@ function prepareContext(
 function drawStaticBoardLayer(
   context: CanvasRenderingContext2D,
   metrics: BoardMetrics,
-  boardState: BoardState,
+  gameState: GameState,
   pieceImages: PieceImages,
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
@@ -155,7 +155,7 @@ function drawStaticBoardLayer(
 
   const draggedFrom = isDragging ? selectedFrom : null;
   const floatingPiece = draggedFrom
-    ? boardState.board[draggedFrom.y]?.[draggedFrom.x] ?? null
+    ? gameState.board[draggedFrom.y]?.[draggedFrom.x] ?? null
     : null;
 
   for (let tileY = 0; tileY < BOARD_SIZE; tileY++) {
@@ -170,7 +170,7 @@ function drawStaticBoardLayer(
 
   if (prevMove) {
     context.save();
-    context.fillStyle = "rgba(255, 221, 87, 0.5)";
+    context.fillStyle = "rgba(255, 221, 87, 0.2)";
 
     for (const tile of [prevMove.from, prevMove.to]) {
       const centerX = (tile.x + 0.5) * metrics.tileSize;
@@ -201,7 +201,7 @@ function drawStaticBoardLayer(
 
   for (let tileY = 0; tileY < BOARD_SIZE; tileY++) {
     for (let tileX = 0; tileX < BOARD_SIZE; tileX++) {
-      const piece = boardState.board[tileY][tileX];
+      const piece = gameState.board[tileY][tileX];
       if (!piece) continue;
       if (
         draggedFrom && tileX === draggedFrom.x &&
@@ -260,12 +260,12 @@ function drawStaticBoardLayer(
 function drawFloatingPiece(
   context: CanvasRenderingContext2D,
   metrics: BoardMetrics,
-  boardState: BoardState,
+  gameState: GameState,
   pieceImages: PieceImages,
   selectedFrom: Square,
   dragPointerPos: CanvasPoint,
 ): void {
-  const floatingPiece = boardState.board[selectedFrom.y]?.[selectedFrom.x] ??
+  const floatingPiece = gameState.board[selectedFrom.y]?.[selectedFrom.x] ??
     null;
   if (!floatingPiece) return;
 
@@ -306,7 +306,7 @@ function drawAnimatedPiece(
 
 function isStaticLayerCurrent(
   snapshot: StaticLayerSnapshot | null,
-  boardState: BoardState,
+  gameState: GameState,
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
   legalMoves: Square[],
@@ -317,7 +317,7 @@ function isStaticLayerCurrent(
   if (!snapshot) return false;
 
   return (
-    snapshot.boardState === boardState &&
+    snapshot.gameState === gameState &&
     snapshot.prevMove === prevMove &&
     optionalSquaresEqual(snapshot.selectedFrom, selectedFrom) &&
     snapshot.legalMoves === legalMoves &&
@@ -330,12 +330,12 @@ function isStaticLayerCurrent(
 
 export function Board(
   props: {
-    boardState: BoardState;
+    gameState: GameState;
     onMoveAttempt: (move: MoveInput) => void;
   },
 ) {
   const [interaction, setInteraction] = useState<InteractionState>(() => ({
-    turn: props.boardState.turn,
+    turn: props.gameState.turn,
     selectedFrom: null,
     legalMoves: [],
   }));
@@ -354,7 +354,7 @@ export function Board(
   const pendingMoveAnimationRef = useRef<PendingMoveAnimation | null>(null);
   const activeMoveAnimationRef = useRef<ActiveMoveAnimation | null>(null);
 
-  const hasCurrentInteraction = interaction.turn === props.boardState.turn;
+  const hasCurrentInteraction = interaction.turn === props.gameState.turn;
   const selectedFrom = hasCurrentInteraction ? interaction.selectedFrom : null;
   const legalMoves = hasCurrentInteraction
     ? interaction.legalMoves
@@ -396,7 +396,7 @@ export function Board(
       return;
     }
 
-    const boardState = props.boardState;
+    const gameState = props.gameState;
     const pieceImages = getPieceImages();
     const dragPointerPos = dragPointerPosRef.current;
     const isDragging = selectedFrom !== null && dragPointerPos !== null;
@@ -404,7 +404,7 @@ export function Board(
     const pendingAnimation = pendingMoveAnimationRef.current;
 
     if (!activeMoveAnimationRef.current && pendingAnimation) {
-      const destinationPiece = boardState.board[pendingAnimation.move.to.y]
+      const destinationPiece = gameState.board[pendingAnimation.move.to.y]
         ?.[pendingAnimation.move.to.x] ??
         null;
 
@@ -443,7 +443,7 @@ export function Board(
     if (
       !isStaticLayerCurrent(
         staticLayerSnapshotRef.current,
-        boardState,
+        gameState,
         prevMove,
         selectedFrom,
         legalMoves,
@@ -455,7 +455,7 @@ export function Board(
       drawStaticBoardLayer(
         staticLayerContext,
         metrics,
-        boardState,
+        gameState,
         pieceImages,
         prevMove,
         selectedFrom,
@@ -465,7 +465,7 @@ export function Board(
       );
 
       staticLayerSnapshotRef.current = {
-        boardState,
+        gameState,
         prevMove,
         selectedFrom,
         legalMoves,
@@ -493,7 +493,7 @@ export function Board(
       drawFloatingPiece(
         context,
         metrics,
-        boardState,
+        gameState,
         pieceImages,
         selectedFrom,
         dragPointerPos,
@@ -577,7 +577,7 @@ export function Board(
 
   useEffect(() => {
     draw();
-  }, [props.boardState, prevMove, selectedFrom, legalMoves]);
+  }, [props.gameState, prevMove, selectedFrom, legalMoves]);
 
   useEffect(() => {
     if (!pendingMoveAnimationRef.current && !activeMoveAnimationRef.current) {
@@ -586,13 +586,13 @@ export function Board(
     dragPointerPosRef.current = null;
     dragStartPointerRef.current = null;
     moveCommittedRef.current = false;
-  }, [props.boardState.turn]);
+  }, [props.gameState.turn]);
 
   const clearInteractionState = () => {
     cancelScheduledDraw();
     dragPointerPosRef.current = null;
     setInteraction({
-      turn: props.boardState.turn,
+      turn: props.gameState.turn,
       selectedFrom: null,
       legalMoves: [],
     });
@@ -605,7 +605,7 @@ export function Board(
     shouldAnimate: boolean,
   ) => {
     const move = { from, to };
-    const movingPiece = props.boardState.board[from.y]?.[from.x] ?? null;
+    const movingPiece = props.gameState.board[from.y]?.[from.x] ?? null;
     cancelScheduledDraw();
     activeMoveAnimationRef.current = null;
     pendingMoveAnimationRef.current = shouldAnimate && movingPiece
@@ -629,16 +629,16 @@ export function Board(
       return;
     }
 
-    const piece = props.boardState.board[tileIndex.y][tileIndex.x];
-    if (!piece || piece.color !== props.boardState.turn) {
+    const piece = props.gameState.board[tileIndex.y][tileIndex.x];
+    if (!piece || piece.color !== props.gameState.turn) {
       clearInteractionState();
       return;
     }
 
-    const nextLegalMoves = getLegalMoves(tileIndex, props.boardState);
+    const nextLegalMoves = getLegalMoves(tileIndex, props.gameState);
     dragPointerPosRef.current = pointerPos;
     setInteraction({
-      turn: props.boardState.turn,
+      turn: props.gameState.turn,
       selectedFrom: tileIndex,
       legalMoves: nextLegalMoves,
     });
@@ -650,9 +650,9 @@ export function Board(
 
     const dragStartPointer = dragStartPointerRef.current;
     if (!dragStartPointer) {
-      const piece = props.boardState.board[tileIndex.y]?.[tileIndex.x] ?? null;
+      const piece = props.gameState.board[tileIndex.y]?.[tileIndex.x] ?? null;
       e.currentTarget.style.cursor =
-        piece && piece.color == props.boardState.turn ? "pointer" : "default";
+        piece && piece.color == props.gameState.turn ? "pointer" : "default";
       return;
     }
     e.currentTarget.style.cursor = "pointer";
