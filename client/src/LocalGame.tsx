@@ -144,6 +144,7 @@ function LocalGame() {
   const currentBottomColor = historyIndex % 2 === 0
     ? bottomColorAtStart
     : oppositeColor(bottomColorAtStart);
+  const boardRotated = currentBottomColor === "black";
   const piecesRotated = currentBottomColor === "black";
   const topColor = flipMode === "flip-lock"
     ? oppositeColor(currentBottomColor)
@@ -348,6 +349,7 @@ function LocalGame() {
         shouldAnimateReset={shouldAnimateReset}
         topColor={topColor}
         bottomColor={bottomColor}
+        boardRotated={boardRotated}
         piecesRotated={piecesRotated}
         topPlayerRotated={topPlayerRotated}
         onMoveAttempt={handleMoveAttempt}

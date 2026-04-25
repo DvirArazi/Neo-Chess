@@ -41,11 +41,13 @@ body {
 .app-header {
   padding:
     max(12px, env(safe-area-inset-top)) 18px 12px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   background: #2b2b27;
+  z-index: 3;
 }
 
 .app-brand {
@@ -110,6 +112,7 @@ body {
   position: relative;
   width: 100%;
   min-height: calc(100vw + 208px);
+  isolation: isolate;
 }
 
 .local-game__player-slot {
@@ -118,7 +121,7 @@ body {
   right: 0;
   top: 0;
   transition: transform 280ms ease;
-  z-index: 2;
+  z-index: 0;
 }
 
 .local-game__player-slot--top {
@@ -248,8 +251,13 @@ body {
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(0deg);
+  transition: transform 280ms ease;
   z-index: 1;
+}
+
+.local-game__board-shell--rotated {
+  transform: translateX(-50%) rotate(180deg);
 }
 
 .player-card {
