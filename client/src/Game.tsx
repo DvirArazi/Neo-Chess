@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Board } from "./chess/Board";
 import type { GameState, MoveInput, PieceColor, PieceType } from "./chess/types";
 import {
@@ -15,8 +16,12 @@ type PlayerInfo = {
 
 type GameProps = {
   gameState: GameState;
+  prevMove: MoveInput | null;
+  transitionMove: MoveInput | null;
+  shouldAnimateReset: boolean;
   onMoveAttempt: (move: MoveInput) => void;
   players: Record<PieceColor, PlayerInfo>;
+  controls?: ReactNode;
 };
 
 const STARTING_PIECE_COUNTS: Record<PieceType, number> = {
@@ -122,6 +127,9 @@ export function Game(props: GameProps) {
         <div className="local-game__board-shell">
           <Board
             gameState={props.gameState}
+            prevMove={props.prevMove}
+            transitionMove={props.transitionMove}
+            shouldAnimateReset={props.shouldAnimateReset}
             onMoveAttempt={props.onMoveAttempt}
           />
         </div>
@@ -134,6 +142,8 @@ export function Game(props: GameProps) {
           capturedMaterial={capturedMaterial.white}
           isActive={props.gameState.turn === "white"}
         />
+
+        {props.controls}
       </div>
     </main>
   );
