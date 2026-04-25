@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import "./App.css";
 import LocalGame from "./LocalGame";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
+import accountIcon from "./assets/images/account.svg";
 
 export function App() {
   useEffect(() => {
@@ -26,9 +27,9 @@ export function App() {
           <span className="app-brand__name">Neo Chess</span>
         </div>
 
-        <button type="button" className="app-header__account-button">
-          Account
-        </button>
+        <a href="#" className="app-header__account-link" aria-label="Account">
+          <img className="app-header__account-icon" src={accountIcon} alt="" />
+        </a>
       </header>
 
       <div className="app-content">

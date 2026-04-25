@@ -7,6 +7,17 @@ type Offset = {
   y: number;
 };
 
+export type BoardGameOutcome =
+  | {
+    result: "win";
+    winner: Piece["color"];
+    reason: "checkmate";
+  }
+  | {
+    result: "draw";
+    reason: "stalemate";
+  };
+
 function isInBounds(tile: Square): boolean {
   return (
     tile.x >= 0 && tile.x < BOARD_SIZE &&
@@ -347,4 +358,32 @@ export function getLegalMoves(from: Square, state: GameState): Square[] {
     const nextState = applyMove(state, { from, to });
     return !isKingInCheck(nextState, movingPiece.color);
   });
+}
+
+export function getBoardGameOutcome(
+  state: GameState,
+): BoardGameOutcome | null {
+  for (let y = 0; y < BOARD_SIZE; y += 1) {
+    for (let x = 0; x < BOARD_SIZE; x += 1) {
+      const piece = state.board[y][x];
+      if (!piece || piece.color !== state.turn) continue;
+
+      if (getLegalMoves({ x, y }, state).length > 0) {
+        return null;
+      }
+    }
+  }
+
+  if (isKingInCheck(state, state.turn)) {
+    return {
+      result: "win",
+      winner: state.turn === "white" ? "black" : "white",
+      reason: "checkmate",
+    };
+  }
+
+  return {
+    result: "draw",
+    reason: "stalemate",
+  };
 }
