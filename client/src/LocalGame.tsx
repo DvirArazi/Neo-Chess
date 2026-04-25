@@ -110,7 +110,6 @@ function LocalGame() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
-  const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
@@ -231,7 +230,6 @@ function LocalGame() {
     clockAnchorRef.current = nowMs;
     setHistoryIndex(historyIndex + 1);
     setTransitionMove(move);
-    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
   };
 
@@ -247,13 +245,11 @@ function LocalGame() {
     setHistoryIndex(0);
     setIsPaused(false);
     setTransitionMove(null);
-    setShouldAnimateReset(true);
     setIsPopupDismissed(false);
   };
 
   const handleTogglePause = () => {
     cancelPendingNavigation();
-    setShouldAnimateReset(false);
 
     if (isPaused) {
       const nowMs = Date.now();
@@ -276,7 +272,6 @@ function LocalGame() {
     if (currentHistoryIndex === 0) return;
 
     const move = moves[currentHistoryIndex - 1];
-    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
     scheduleHistoryNavigation(currentHistoryIndex - 1, {
       from: move.to,
@@ -288,7 +283,6 @@ function LocalGame() {
     const currentHistoryIndex = pendingHistoryIndexRef.current ?? historyIndex;
     if (currentHistoryIndex >= history.length - 1) return;
 
-    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
     scheduleHistoryNavigation(
       currentHistoryIndex + 1,
@@ -299,7 +293,6 @@ function LocalGame() {
   const handleJumpToCurrentPosition = () => {
     cancelPendingNavigation();
     const nowMs = Date.now();
-    setShouldAnimateReset(false);
     setHistoryIndex(history.length - 1);
     setClockSnapshot(clockHistory[history.length - 1]);
     setClockTickMs(nowMs);
@@ -314,7 +307,6 @@ function LocalGame() {
         gameState={gameState}
         prevMove={displayedMove}
         transitionMove={transitionMove}
-        shouldAnimateReset={shouldAnimateReset}
         onMoveAttempt={handleMoveAttempt}
         controls={
           <ActionsBar

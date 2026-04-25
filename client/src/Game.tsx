@@ -18,7 +18,6 @@ type GameProps = {
   gameState: GameState;
   prevMove: MoveInput | null;
   transitionMove: MoveInput | null;
-  shouldAnimateReset: boolean;
   onMoveAttempt: (move: MoveInput) => void;
   players: Record<PieceColor, PlayerInfo>;
   controls?: ReactNode;
@@ -129,7 +128,6 @@ export function Game(props: GameProps) {
             gameState={props.gameState}
             prevMove={props.prevMove}
             transitionMove={props.transitionMove}
-            shouldAnimateReset={props.shouldAnimateReset}
             onMoveAttempt={props.onMoveAttempt}
           />
         </div>
