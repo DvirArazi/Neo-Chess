@@ -38,12 +38,20 @@ type StaticLayerSnapshot = {
   legalMoves: Square[];
   isDragging: boolean;
   animatedMoves: MoveInput[];
+  animatedPopIns: Square[];
   cssSize: number;
   pixelSize: number;
 };
 
 type ActiveMoveAnimation = {
   move: MoveInput;
+  piece: Piece;
+  startedAtMs: number;
+  durationMs: number;
+};
+
+type ActivePopAnimation = {
+  square: Square;
   piece: Piece;
   startedAtMs: number;
   durationMs: number;
@@ -79,12 +87,115 @@ function moveListsEqual(a: MoveInput[], b: MoveInput[]): boolean {
   return true;
 }
 
+function squareListsEqual(a: Square[], b: Square[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+
+  for (let index = 0; index < a.length; index += 1) {
+    if (!squaresEqual(a[index], b[index])) return false;
+  }
+
+  return true;
+}
+
 function hasMove(moves: Square[], target: Square): boolean {
   return moves.some((move) => squaresEqual(move, target));
 }
 
 function getPointerDistance(a: CanvasPoint, b: CanvasPoint): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function getPieceKey(piece: Piece): string {
+  return `${piece.color}:${piece.type}`;
+}
+
+function compareSquares(a: Square, b: Square): number {
+  if (a.y !== b.y) return a.y - b.y;
+  return a.x - b.x;
+}
+
+function collectResetAnimations(
+  previousGameState: GameState,
+  nextGameState: GameState,
+): {
+  movedPieces: Array<{ move: MoveInput; piece: Piece }>;
+  poppedPieces: Array<{ square: Square; piece: Piece }>;
+} {
+  const previousPiecesByKey = new Map<string, Square[]>();
+  const nextPiecesByKey = new Map<string, Square[]>();
+  const pieceByKey = new Map<string, Piece>();
+
+  for (let y = 0; y < BOARD_SIZE; y += 1) {
+    for (let x = 0; x < BOARD_SIZE; x += 1) {
+      const previousPiece = previousGameState.board[y][x];
+      if (previousPiece) {
+        const key = getPieceKey(previousPiece);
+        const squares = previousPiecesByKey.get(key) ?? [];
+        squares.push({ x, y });
+        previousPiecesByKey.set(key, squares);
+        pieceByKey.set(key, previousPiece);
+      }
+
+      const nextPiece = nextGameState.board[y][x];
+      if (nextPiece) {
+        const key = getPieceKey(nextPiece);
+        const squares = nextPiecesByKey.get(key) ?? [];
+        squares.push({ x, y });
+        nextPiecesByKey.set(key, squares);
+        pieceByKey.set(key, nextPiece);
+      }
+    }
+  }
+
+  const movedPieces: Array<{ move: MoveInput; piece: Piece }> = [];
+  const poppedPieces: Array<{ square: Square; piece: Piece }> = [];
+
+  for (const key of new Set([...previousPiecesByKey.keys(), ...nextPiecesByKey.keys()])) {
+    const piece = pieceByKey.get(key);
+    if (!piece) continue;
+
+    const previousSquares = [...(previousPiecesByKey.get(key) ?? [])].sort(compareSquares);
+    const nextSquares = [...(nextPiecesByKey.get(key) ?? [])].sort(compareSquares);
+
+    const stationarySquares = new Set<string>();
+    for (const previousSquare of previousSquares) {
+      const match = nextSquares.find((nextSquare) => squaresEqual(previousSquare, nextSquare));
+      if (match) {
+        stationarySquares.add(`${previousSquare.x},${previousSquare.y}`);
+      }
+    }
+
+    const remainingPreviousSquares = previousSquares.filter((square) =>
+      !stationarySquares.has(`${square.x},${square.y}`)
+    );
+    const remainingNextSquares = nextSquares.filter((square) =>
+      !stationarySquares.has(`${square.x},${square.y}`)
+    );
+    const movedCount = Math.min(
+      remainingPreviousSquares.length,
+      remainingNextSquares.length,
+    );
+
+    for (let index = 0; index < movedCount; index += 1) {
+      movedPieces.push({
+        move: {
+          from: remainingPreviousSquares[index],
+          to: remainingNextSquares[index],
+        },
+        piece,
+      });
+    }
+
+    for (let index = movedCount; index < remainingNextSquares.length; index += 1) {
+      poppedPieces.push({
+        square: remainingNextSquares[index],
+        piece,
+      });
+    }
+  }
+
+  return { movedPieces, poppedPieces };
 }
 
 function easeOutCubic(t: number): number {
@@ -95,7 +206,8 @@ function toBoardPointerData(
   e: PointerEvent<HTMLCanvasElement>,
 ): { pointerPos: CanvasPoint; tileIndex: Square } {
   const rect = e.currentTarget.getBoundingClientRect();
-  const tileSize = rect.width / BOARD_SIZE;
+  const cssSize = rect.width;
+  const tileSize = cssSize / BOARD_SIZE;
   const pointerPos = {
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
@@ -111,6 +223,26 @@ function toBoardPointerData(
     ),
   };
   return { pointerPos, tileIndex };
+}
+
+function drawPieceImage(
+  context: CanvasRenderingContext2D,
+  image: CanvasImageSource,
+  x: number,
+  y: number,
+  size: number,
+  isRotated: boolean,
+): void {
+  if (!isRotated) {
+    context.drawImage(image, x, y, size, size);
+    return;
+  }
+
+  context.save();
+  context.translate(x + (size / 2), y + (size / 2));
+  context.rotate(Math.PI);
+  context.drawImage(image, -size / 2, -size / 2, size, size);
+  context.restore();
 }
 
 function getBoardMetrics(canvas: HTMLCanvasElement): BoardMetrics {
@@ -155,7 +287,9 @@ function drawStaticBoardLayer(
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
   isDragging: boolean,
+  piecesRotated: boolean,
   animatedMoves: MoveInput[],
+  animatedPopIns: Square[],
   circles: Square[],
 ): void {
   prepareContext(context, metrics);
@@ -219,12 +353,22 @@ function drawStaticBoardLayer(
       if (animatedMoves.some((move) => tileX === move.to.x && tileY === move.to.y)) {
         continue;
       }
+      if (animatedPopIns.some((square) => tileX === square.x && tileY === square.y)) {
+        continue;
+      }
 
       const image = pieceImages[piece.color][piece.type];
       const posX = tileX * metrics.tileSize;
       const posY = tileY * metrics.tileSize;
 
-      context.drawImage(image, posX, posY, metrics.tileSize, metrics.tileSize);
+      drawPieceImage(
+        context,
+        image,
+        posX,
+        posY,
+        metrics.tileSize,
+        piecesRotated,
+      );
     }
   }
 
@@ -251,12 +395,13 @@ function drawStaticBoardLayer(
 
   context.save();
   context.globalAlpha = 0.35;
-  context.drawImage(
+  drawPieceImage(
+    context,
     pieceImage,
     ghostPosX,
     ghostPosY,
     metrics.tileSize,
-    metrics.tileSize,
+    piecesRotated,
   );
   context.restore();
 }
@@ -268,6 +413,7 @@ function drawFloatingPiece(
   pieceImages: PieceImages,
   selectedFrom: Square,
   dragPointerPos: CanvasPoint,
+  piecesRotated: boolean,
 ): void {
   const floatingPiece = gameState.board[selectedFrom.y]?.[selectedFrom.x] ??
     null;
@@ -275,12 +421,13 @@ function drawFloatingPiece(
 
   const pieceImage = pieceImages[floatingPiece.color][floatingPiece.type];
   const offset = metrics.tileSize / 2;
-  context.drawImage(
+  drawPieceImage(
+    context,
     pieceImage,
     dragPointerPos.x - offset,
     dragPointerPos.y - offset,
     metrics.tileSize,
-    metrics.tileSize,
+    piecesRotated,
   );
 }
 
@@ -290,6 +437,7 @@ function drawAnimatedPiece(
   pieceImages: PieceImages,
   animation: ActiveMoveAnimation,
   progress: number,
+  piecesRotated: boolean,
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const currentX = animation.move.from.x + (
@@ -299,13 +447,40 @@ function drawAnimatedPiece(
         animation.move.to.y - animation.move.from.y
       ) * progress;
 
-  context.drawImage(
+  drawPieceImage(
+    context,
     pieceImage,
     currentX * metrics.tileSize,
     currentY * metrics.tileSize,
     metrics.tileSize,
-    metrics.tileSize,
+    piecesRotated,
   );
+}
+
+function drawPoppingPiece(
+  context: CanvasRenderingContext2D,
+  metrics: BoardMetrics,
+  pieceImages: PieceImages,
+  animation: ActivePopAnimation,
+  progress: number,
+  piecesRotated: boolean,
+): void {
+  const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
+  const scale = 0.6 + (0.4 * progress);
+  const size = metrics.tileSize * scale;
+  const offset = (metrics.tileSize - size) / 2;
+
+  context.save();
+  context.globalAlpha = progress;
+  drawPieceImage(
+    context,
+    pieceImage,
+    (animation.square.x * metrics.tileSize) + offset,
+    (animation.square.y * metrics.tileSize) + offset,
+    size,
+    piecesRotated,
+  );
+  context.restore();
 }
 
 function isStaticLayerCurrent(
@@ -316,6 +491,7 @@ function isStaticLayerCurrent(
   legalMoves: Square[],
   isDragging: boolean,
   animatedMoves: MoveInput[],
+  animatedPopIns: Square[],
   metrics: BoardMetrics,
 ): boolean {
   if (!snapshot) return false;
@@ -327,6 +503,7 @@ function isStaticLayerCurrent(
     snapshot.legalMoves === legalMoves &&
     snapshot.isDragging === isDragging &&
     moveListsEqual(snapshot.animatedMoves, animatedMoves) &&
+    squareListsEqual(snapshot.animatedPopIns, animatedPopIns) &&
     snapshot.cssSize === metrics.cssSize &&
     snapshot.pixelSize === metrics.pixelSize
   );
@@ -337,6 +514,8 @@ export function Board(
     gameState: GameState;
     prevMove: MoveInput | null;
     transitionMove: MoveInput | null;
+    shouldAnimateReset: boolean;
+    piecesRotated: boolean;
     onMoveAttempt: (move: MoveInput) => void;
   },
 ) {
@@ -356,7 +535,9 @@ export function Board(
   const staticLayerContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const staticLayerSnapshotRef = useRef<StaticLayerSnapshot | null>(null);
   const activeMoveAnimationsRef = useRef<ActiveMoveAnimation[]>([]);
+  const activePopAnimationsRef = useRef<ActivePopAnimation[]>([]);
   const previousGameStateRef = useRef<GameState | null>(null);
+  const previousTransitionMoveRef = useRef<MoveInput | null>(null);
   const skipNextMoveAnimationRef = useRef(false);
 
   const hasCurrentInteraction = interaction.turn === props.gameState.turn;
@@ -416,7 +597,18 @@ export function Board(
       staticLayerSnapshotRef.current = null;
     }
 
+    const activePopAnimations = activePopAnimationsRef.current.filter((animation) => {
+      const rawProgress = (nowMs - animation.startedAtMs) / animation.durationMs;
+      return rawProgress < 1;
+    });
+
+    if (activePopAnimations.length !== activePopAnimationsRef.current.length) {
+      activePopAnimationsRef.current = activePopAnimations;
+      staticLayerSnapshotRef.current = null;
+    }
+
     const animatedMoves = activeAnimations.map((animation) => animation.move);
+    const animatedPopIns = activePopAnimations.map((animation) => animation.square);
 
     if (
       !isStaticLayerCurrent(
@@ -427,6 +619,7 @@ export function Board(
         legalMoves,
         isDragging,
         animatedMoves,
+        animatedPopIns,
         metrics,
       )
     ) {
@@ -438,7 +631,9 @@ export function Board(
         props.prevMove,
         selectedFrom,
         isDragging,
+        props.piecesRotated,
         animatedMoves,
+        animatedPopIns,
         legalMoves,
       );
 
@@ -449,6 +644,7 @@ export function Board(
         legalMoves,
         isDragging,
         animatedMoves,
+        animatedPopIns,
         cssSize: metrics.cssSize,
         pixelSize: metrics.pixelSize,
       };
@@ -475,6 +671,7 @@ export function Board(
         pieceImages,
         selectedFrom,
         dragPointerPos,
+        props.piecesRotated,
       );
     }
 
@@ -490,10 +687,27 @@ export function Board(
         pieceImages,
         activeAnimation,
         animationProgress,
+        props.piecesRotated,
       );
     }
 
-    if (activeAnimations.length > 0) {
+    for (const activeAnimation of activePopAnimations) {
+      const rawProgress = (
+        nowMs - activeAnimation.startedAtMs
+      ) / activeAnimation.durationMs;
+      const animationProgress = easeOutCubic(rawProgress);
+
+      drawPoppingPiece(
+        context,
+        metrics,
+        pieceImages,
+        activeAnimation,
+        animationProgress,
+        props.piecesRotated,
+      );
+    }
+
+    if (activeAnimations.length > 0 || activePopAnimations.length > 0) {
       scheduleDraw();
     }
   }
@@ -555,6 +769,7 @@ export function Board(
       boardMetricsRef.current = null;
       staticLayerSnapshotRef.current = null;
       activeMoveAnimationsRef.current = [];
+      activePopAnimationsRef.current = [];
       previousGameStateRef.current = null;
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
@@ -566,16 +781,23 @@ export function Board(
     const gameStateChanged = Boolean(
       previousGameState && previousGameState !== props.gameState,
     );
-    const shouldSettleCurrentPosition = props.transitionMove === null &&
-      activeMoveAnimationsRef.current.length > 0;
+    const shouldSettleCurrentPosition =
+      previousTransitionMoveRef.current !== null &&
+      props.transitionMove === null &&
+      (
+        activeMoveAnimationsRef.current.length > 0 ||
+        activePopAnimationsRef.current.length > 0
+      );
 
     if (gameStateChanged || shouldSettleCurrentPosition) {
       cancelScheduledDraw();
       activeMoveAnimationsRef.current = [];
+      activePopAnimationsRef.current = [];
       staticLayerSnapshotRef.current = null;
     }
 
     previousGameStateRef.current = props.gameState;
+    previousTransitionMoveRef.current = props.transitionMove;
 
     if (gameStateChanged && previousGameState) {
       if (skipNextMoveAnimationRef.current) {
@@ -595,8 +817,23 @@ export function Board(
             durationMs: CLICK_MOVE_ANIMATION_MS,
           }]
           : [];
+        activePopAnimationsRef.current = [];
+      } else if (props.shouldAnimateReset) {
+        const resetAnimations = collectResetAnimations(previousGameState, props.gameState);
+        const startedAtMs = performance.now();
+        activeMoveAnimationsRef.current = resetAnimations.movedPieces.map((entry) => ({
+          ...entry,
+          startedAtMs,
+          durationMs: CLICK_MOVE_ANIMATION_MS,
+        }));
+        activePopAnimationsRef.current = resetAnimations.poppedPieces.map((entry) => ({
+          ...entry,
+          startedAtMs,
+          durationMs: CLICK_MOVE_ANIMATION_MS,
+        }));
       } else {
         activeMoveAnimationsRef.current = [];
+        activePopAnimationsRef.current = [];
       }
     }
 
@@ -605,12 +842,16 @@ export function Board(
     props.gameState,
     props.prevMove,
     props.transitionMove,
+    props.shouldAnimateReset,
     selectedFrom,
     legalMoves,
   ]);
 
   useEffect(() => {
-    if (activeMoveAnimationsRef.current.length === 0) {
+    if (
+      activeMoveAnimationsRef.current.length === 0 &&
+      activePopAnimationsRef.current.length === 0
+    ) {
       cancelScheduledDraw();
     }
     dragPointerPosRef.current = null;
@@ -642,6 +883,7 @@ export function Board(
     const move = { from, to };
     cancelScheduledDraw();
     activeMoveAnimationsRef.current = [];
+    activePopAnimationsRef.current = [];
     skipNextMoveAnimationRef.current = !shouldAnimateTransition;
     staticLayerSnapshotRef.current = null;
     moveCommittedRef.current = true;

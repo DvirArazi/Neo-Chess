@@ -11,7 +11,13 @@ type ActionsBarProps = {
 
 export function ActionsBar(props: ActionsBarProps) {
   return (
-    <nav className="playback-controls" aria-label="Game controls">
+    <nav
+      className="playback-controls"
+      aria-label="Game controls"
+      style={{
+        gridTemplateColumns: `repeat(${props.actions.length}, minmax(0, 1fr))`,
+      }}
+    >
       {props.actions.map((action) => (
         <button
           key={action.label}

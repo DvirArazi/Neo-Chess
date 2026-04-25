@@ -106,6 +106,37 @@ body {
   gap: 0;
 }
 
+.local-game__arena {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vw + 208px);
+}
+
+.local-game__player-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  transition: transform 280ms ease;
+  z-index: 2;
+}
+
+.local-game__player-slot--top {
+  transform: translateY(0);
+}
+
+.local-game__player-slot--bottom {
+  transform: translateY(calc(100vw + 112px));
+}
+
+.local-game__player-slot-content {
+  transition: transform 280ms ease;
+}
+
+.local-game__player-slot-content--rotated {
+  transform: rotate(180deg);
+}
+
 .playback-controls {
   position: fixed;
   left: 0;
@@ -113,7 +144,6 @@ body {
   bottom: 0;
   padding: 8px 16px max(16px, env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
   gap: 8px;
   background: #242420;
@@ -213,9 +243,12 @@ body {
 }
 
 .local-game__board-shell {
+  position: absolute;
+  top: 96px;
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
 }
 
@@ -225,6 +258,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 14px 14px;
+  margin: 0;
   border-radius: 24px;
   border: 0;
   background: transparent;
