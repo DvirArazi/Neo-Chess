@@ -18,6 +18,11 @@ type GameProps = {
   gameState: GameState;
   prevMove: MoveInput | null;
   transitionMove: MoveInput | null;
+  shouldAnimateReset: boolean;
+  topColor: PieceColor;
+  bottomColor: PieceColor;
+  piecesRotated: boolean;
+  topPlayerRotated: boolean;
   onMoveAttempt: (move: MoveInput) => void;
   players: Record<PieceColor, PlayerInfo>;
   controls?: ReactNode;
@@ -114,32 +119,55 @@ export function Game(props: GameProps) {
   return (
     <main className="local-game">
       <div className="local-game__mobile-shell">
-        <PlayerCard
-          color="black"
-          name={props.players.black.name}
-          clock={props.players.black.clock}
-          imageSrc={props.players.black.imageSrc}
-          capturedMaterial={capturedMaterial.black}
-          isActive={props.gameState.turn === "black"}
-        />
+        <div className="local-game__arena">
+          {(["black", "white"] as PieceColor[]).map((color) => {
+            const isTop = props.topColor === color;
+            return (
+              <div
+                key={color}
+                className={[
+                  "local-game__player-slot",
+                  isTop
+                    ? "local-game__player-slot--top"
+                    : "local-game__player-slot--bottom",
+                ].join(" ")}
+              >
+                <div
+                  className={[
+                    "local-game__player-slot-content",
+                    isTop && props.topPlayerRotated
+                      ? "local-game__player-slot-content--rotated"
+                      : "",
+                  ].filter(Boolean).join(" ")}
+                >
+                  <PlayerCard
+                    color={color}
+                    name={props.players[color].name}
+                    clock={props.players[color].clock}
+                    imageSrc={props.players[color].imageSrc}
+                    capturedMaterial={capturedMaterial[color]}
+                    isActive={props.gameState.turn === color}
+                  />
+                </div>
+              </div>
+            );
+          })}
 
-        <div className="local-game__board-shell">
-          <Board
-            gameState={props.gameState}
-            prevMove={props.prevMove}
-            transitionMove={props.transitionMove}
-            onMoveAttempt={props.onMoveAttempt}
-          />
+          <div
+            className={[
+              "local-game__board-shell",
+            ].filter(Boolean).join(" ")}
+          >
+            <Board
+              gameState={props.gameState}
+              prevMove={props.prevMove}
+              transitionMove={props.transitionMove}
+              shouldAnimateReset={props.shouldAnimateReset}
+              piecesRotated={props.piecesRotated}
+              onMoveAttempt={props.onMoveAttempt}
+            />
+          </div>
         </div>
-
-        <PlayerCard
-          color="white"
-          name={props.players.white.name}
-          clock={props.players.white.clock}
-          imageSrc={props.players.white.imageSrc}
-          capturedMaterial={capturedMaterial.white}
-          isActive={props.gameState.turn === "white"}
-        />
 
         {props.controls}
       </div>

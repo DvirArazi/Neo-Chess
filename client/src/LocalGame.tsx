@@ -17,12 +17,15 @@ import playIcon from "./assets/images/play.svg";
 import backIcon from "./assets/images/backwards.svg";
 import nextIcon from "./assets/images/forwards.svg";
 import currentPositionIcon from "./assets/images/double_forwards.svg";
+import flipIcon from "./assets/images/mobile_rotate_lock.svg";
+import flipLockIcon from "./assets/images/mobile_rotate.svg";
 
 type ClockSnapshot = Record<PieceColor, number>;
 type GameOutcomeMessage = {
   title: string;
   detail: string;
 };
+type FlipMode = "flip" | "flip-lock";
 
 const INITIAL_CLOCK_MS = 10 * 60 * 1000;
 const CLOCK_TICK_MS = 250;
@@ -55,6 +58,10 @@ function formatClock(clockMs: number): string {
 
 function formatColorName(color: PieceColor): string {
   return color === "white" ? "White" : "Black";
+}
+
+function oppositeColor(color: PieceColor): PieceColor {
+  return color === "white" ? "black" : "white";
 }
 
 function getTimeoutOutcome(clocks: ClockSnapshot): GameOutcomeMessage | null {
@@ -110,7 +117,12 @@ function LocalGame() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
+  const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
+  const [flipMode, setFlipMode] = useState<FlipMode>("flip-lock");
+  const [bottomColorAtStart, setBottomColorAtStart] = useState<PieceColor>(() =>
+    Math.random() < 0.5 ? "white" : "black"
+  );
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
   const clockAnchorRef = useRef<number | null>(Date.now());
@@ -129,6 +141,17 @@ function LocalGame() {
   const gameOutcome = getTimeoutOutcome(displayedClocks) ??
     getBoardOutcomeMessage(getBoardGameOutcome(gameState));
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
+  const currentBottomColor = historyIndex % 2 === 0
+    ? bottomColorAtStart
+    : oppositeColor(bottomColorAtStart);
+  const piecesRotated = currentBottomColor === "black";
+  const topColor = flipMode === "flip-lock"
+    ? oppositeColor(currentBottomColor)
+    : oppositeColor(bottomColorAtStart);
+  const bottomColor = flipMode === "flip-lock"
+    ? currentBottomColor
+    : bottomColorAtStart;
+  const topPlayerRotated = flipMode === "flip";
 
   useEffect(() => {
     return () => {
@@ -203,7 +226,7 @@ function LocalGame() {
   };
 
   const handleMoveAttempt = (move: MoveInput) => {
-    if (isPaused || gameOutcome) return;
+    if (gameOutcome) return;
     cancelPendingNavigation();
 
     const nowMs = Date.now();
@@ -229,13 +252,16 @@ function LocalGame() {
     setClockTickMs(nowMs);
     clockAnchorRef.current = nowMs;
     setHistoryIndex(historyIndex + 1);
+    setIsPaused(false);
     setTransitionMove(move);
+    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
   };
 
   const handleRestart = () => {
     cancelPendingNavigation();
     const nowMs = Date.now();
+    const nextBottomColor = Math.random() < 0.5 ? "white" : "black";
     setHistory([createInitialBoard()]);
     setMoves([]);
     setClockHistory([INITIAL_CLOCKS]);
@@ -244,12 +270,15 @@ function LocalGame() {
     clockAnchorRef.current = nowMs;
     setHistoryIndex(0);
     setIsPaused(false);
+    setBottomColorAtStart(nextBottomColor);
     setTransitionMove(null);
+    setShouldAnimateReset(true);
     setIsPopupDismissed(false);
   };
 
   const handleTogglePause = () => {
     cancelPendingNavigation();
+    setShouldAnimateReset(false);
 
     if (isPaused) {
       const nowMs = Date.now();
@@ -272,6 +301,7 @@ function LocalGame() {
     if (currentHistoryIndex === 0) return;
 
     const move = moves[currentHistoryIndex - 1];
+    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
     scheduleHistoryNavigation(currentHistoryIndex - 1, {
       from: move.to,
@@ -283,6 +313,7 @@ function LocalGame() {
     const currentHistoryIndex = pendingHistoryIndexRef.current ?? historyIndex;
     if (currentHistoryIndex >= history.length - 1) return;
 
+    setShouldAnimateReset(false);
     setIsPopupDismissed(false);
     scheduleHistoryNavigation(
       currentHistoryIndex + 1,
@@ -293,6 +324,7 @@ function LocalGame() {
   const handleJumpToCurrentPosition = () => {
     cancelPendingNavigation();
     const nowMs = Date.now();
+    setShouldAnimateReset(false);
     setHistoryIndex(history.length - 1);
     setClockSnapshot(clockHistory[history.length - 1]);
     setClockTickMs(nowMs);
@@ -301,12 +333,23 @@ function LocalGame() {
     setIsPopupDismissed(false);
   };
 
+  const handleToggleFlipMode = () => {
+    setFlipMode((previousMode) =>
+      previousMode === "flip-lock" ? "flip" : "flip-lock"
+    );
+  };
+
   return (
     <>
       <Game
         gameState={gameState}
         prevMove={displayedMove}
         transitionMove={transitionMove}
+        shouldAnimateReset={shouldAnimateReset}
+        topColor={topColor}
+        bottomColor={bottomColor}
+        piecesRotated={piecesRotated}
+        topPlayerRotated={topPlayerRotated}
         onMoveAttempt={handleMoveAttempt}
         controls={
           <ActionsBar
@@ -315,6 +358,11 @@ function LocalGame() {
                 iconSrc: replayIcon,
                 label: "Restart",
                 onClick: handleRestart,
+              },
+              {
+                iconSrc: flipMode === "flip-lock" ? flipLockIcon : flipIcon,
+                label: flipMode === "flip-lock" ? "Flip lock" : "Flip",
+                onClick: handleToggleFlipMode,
               },
               {
                 iconSrc: isPaused ? playIcon : pauseIcon,
