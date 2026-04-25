@@ -39,6 +39,7 @@ type StaticLayerSnapshot = {
   isDragging: boolean;
   animatedMoves: MoveInput[];
   animatedPopIns: Square[];
+  pieceRotationRadians: number;
   cssSize: number;
   pixelSize: number;
 };
@@ -57,9 +58,17 @@ type ActivePopAnimation = {
   durationMs: number;
 };
 
+type ActiveOrientationAnimation = {
+  fromRadians: number;
+  toRadians: number;
+  startedAtMs: number;
+  durationMs: number;
+};
+
 const EMPTY_SQUARES: Square[] = [];
 const MAX_BOARD_DPR = 2;
 const CLICK_MOVE_ANIMATION_MS = 120;
+const PIECE_ROTATION_ANIMATION_MS = 220;
 const DRAG_SNAP_DISTANCE_PX = 6;
 
 function squaresEqual(a: Square, b: Square): boolean {
@@ -204,14 +213,21 @@ function easeOutCubic(t: number): number {
 
 function toBoardPointerData(
   e: PointerEvent<HTMLCanvasElement>,
+  isBoardRotated: boolean,
 ): { pointerPos: CanvasPoint; tileIndex: Square } {
   const rect = e.currentTarget.getBoundingClientRect();
   const cssSize = rect.width;
   const tileSize = cssSize / BOARD_SIZE;
-  const pointerPos = {
+  const rawPointerPos = {
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
   };
+  const pointerPos = isBoardRotated
+    ? {
+      x: cssSize - rawPointerPos.x,
+      y: cssSize - rawPointerPos.y,
+    }
+    : rawPointerPos;
   const tileIndex = {
     x: Math.min(
       BOARD_SIZE - 1,
@@ -231,16 +247,16 @@ function drawPieceImage(
   x: number,
   y: number,
   size: number,
-  isRotated: boolean,
+  rotationRadians: number,
 ): void {
-  if (!isRotated) {
+  if (rotationRadians === 0) {
     context.drawImage(image, x, y, size, size);
     return;
   }
 
   context.save();
   context.translate(x + (size / 2), y + (size / 2));
-  context.rotate(Math.PI);
+  context.rotate(rotationRadians);
   context.drawImage(image, -size / 2, -size / 2, size, size);
   context.restore();
 }
@@ -287,7 +303,7 @@ function drawStaticBoardLayer(
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
   isDragging: boolean,
-  piecesRotated: boolean,
+  pieceRotationRadians: number,
   animatedMoves: MoveInput[],
   animatedPopIns: Square[],
   circles: Square[],
@@ -367,7 +383,7 @@ function drawStaticBoardLayer(
         posX,
         posY,
         metrics.tileSize,
-        piecesRotated,
+        pieceRotationRadians,
       );
     }
   }
@@ -401,7 +417,7 @@ function drawStaticBoardLayer(
     ghostPosX,
     ghostPosY,
     metrics.tileSize,
-    piecesRotated,
+    pieceRotationRadians,
   );
   context.restore();
 }
@@ -413,7 +429,7 @@ function drawFloatingPiece(
   pieceImages: PieceImages,
   selectedFrom: Square,
   dragPointerPos: CanvasPoint,
-  piecesRotated: boolean,
+  pieceRotationRadians: number,
 ): void {
   const floatingPiece = gameState.board[selectedFrom.y]?.[selectedFrom.x] ??
     null;
@@ -427,7 +443,7 @@ function drawFloatingPiece(
     dragPointerPos.x - offset,
     dragPointerPos.y - offset,
     metrics.tileSize,
-    piecesRotated,
+    pieceRotationRadians,
   );
 }
 
@@ -437,7 +453,7 @@ function drawAnimatedPiece(
   pieceImages: PieceImages,
   animation: ActiveMoveAnimation,
   progress: number,
-  piecesRotated: boolean,
+  pieceRotationRadians: number,
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const currentX = animation.move.from.x + (
@@ -453,7 +469,7 @@ function drawAnimatedPiece(
     currentX * metrics.tileSize,
     currentY * metrics.tileSize,
     metrics.tileSize,
-    piecesRotated,
+    pieceRotationRadians,
   );
 }
 
@@ -463,7 +479,7 @@ function drawPoppingPiece(
   pieceImages: PieceImages,
   animation: ActivePopAnimation,
   progress: number,
-  piecesRotated: boolean,
+  pieceRotationRadians: number,
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const scale = 0.6 + (0.4 * progress);
@@ -478,7 +494,7 @@ function drawPoppingPiece(
     (animation.square.x * metrics.tileSize) + offset,
     (animation.square.y * metrics.tileSize) + offset,
     size,
-    piecesRotated,
+    pieceRotationRadians,
   );
   context.restore();
 }
@@ -492,6 +508,7 @@ function isStaticLayerCurrent(
   isDragging: boolean,
   animatedMoves: MoveInput[],
   animatedPopIns: Square[],
+  pieceRotationRadians: number,
   metrics: BoardMetrics,
 ): boolean {
   if (!snapshot) return false;
@@ -504,6 +521,7 @@ function isStaticLayerCurrent(
     snapshot.isDragging === isDragging &&
     moveListsEqual(snapshot.animatedMoves, animatedMoves) &&
     squareListsEqual(snapshot.animatedPopIns, animatedPopIns) &&
+    snapshot.pieceRotationRadians === pieceRotationRadians &&
     snapshot.cssSize === metrics.cssSize &&
     snapshot.pixelSize === metrics.pixelSize
   );
@@ -515,6 +533,7 @@ export function Board(
     prevMove: MoveInput | null;
     transitionMove: MoveInput | null;
     shouldAnimateReset: boolean;
+    isBoardRotated: boolean;
     piecesRotated: boolean;
     onMoveAttempt: (move: MoveInput) => void;
   },
@@ -536,8 +555,12 @@ export function Board(
   const staticLayerSnapshotRef = useRef<StaticLayerSnapshot | null>(null);
   const activeMoveAnimationsRef = useRef<ActiveMoveAnimation[]>([]);
   const activePopAnimationsRef = useRef<ActivePopAnimation[]>([]);
+  const activeOrientationAnimationRef = useRef<ActiveOrientationAnimation | null>(
+    null,
+  );
   const previousGameStateRef = useRef<GameState | null>(null);
   const previousTransitionMoveRef = useRef<MoveInput | null>(null);
+  const previousPiecesRotatedRef = useRef(props.piecesRotated);
   const skipNextMoveAnimationRef = useRef(false);
 
   const hasCurrentInteraction = interaction.turn === props.gameState.turn;
@@ -587,6 +610,7 @@ export function Board(
     const dragPointerPos = dragPointerPosRef.current;
     const isDragging = selectedFrom !== null && dragPointerPos !== null;
     const nowMs = frameTimeMs ?? performance.now();
+    let pieceRotationRadians = props.piecesRotated ? Math.PI : 0;
     const activeAnimations = activeMoveAnimationsRef.current.filter((animation) => {
       const rawProgress = (nowMs - animation.startedAtMs) / animation.durationMs;
       return rawProgress < 1;
@@ -607,6 +631,21 @@ export function Board(
       staticLayerSnapshotRef.current = null;
     }
 
+    const orientationAnimation = activeOrientationAnimationRef.current;
+    if (orientationAnimation) {
+      const rawProgress = (
+        nowMs - orientationAnimation.startedAtMs
+      ) / orientationAnimation.durationMs;
+
+      if (rawProgress >= 1) {
+        activeOrientationAnimationRef.current = null;
+      } else {
+        pieceRotationRadians = orientationAnimation.fromRadians + (
+          orientationAnimation.toRadians - orientationAnimation.fromRadians
+        ) * easeOutCubic(rawProgress);
+      }
+    }
+
     const animatedMoves = activeAnimations.map((animation) => animation.move);
     const animatedPopIns = activePopAnimations.map((animation) => animation.square);
 
@@ -620,6 +659,7 @@ export function Board(
         isDragging,
         animatedMoves,
         animatedPopIns,
+        pieceRotationRadians,
         metrics,
       )
     ) {
@@ -631,7 +671,7 @@ export function Board(
         props.prevMove,
         selectedFrom,
         isDragging,
-        props.piecesRotated,
+        pieceRotationRadians,
         animatedMoves,
         animatedPopIns,
         legalMoves,
@@ -645,6 +685,7 @@ export function Board(
         isDragging,
         animatedMoves,
         animatedPopIns,
+        pieceRotationRadians,
         cssSize: metrics.cssSize,
         pixelSize: metrics.pixelSize,
       };
@@ -671,7 +712,7 @@ export function Board(
         pieceImages,
         selectedFrom,
         dragPointerPos,
-        props.piecesRotated,
+        pieceRotationRadians,
       );
     }
 
@@ -687,7 +728,7 @@ export function Board(
         pieceImages,
         activeAnimation,
         animationProgress,
-        props.piecesRotated,
+        pieceRotationRadians,
       );
     }
 
@@ -703,11 +744,15 @@ export function Board(
         pieceImages,
         activeAnimation,
         animationProgress,
-        props.piecesRotated,
+        pieceRotationRadians,
       );
     }
 
-    if (activeAnimations.length > 0 || activePopAnimations.length > 0) {
+    if (
+      activeAnimations.length > 0 ||
+      activePopAnimations.length > 0 ||
+      activeOrientationAnimationRef.current
+    ) {
       scheduleDraw();
     }
   }
@@ -770,6 +815,7 @@ export function Board(
       staticLayerSnapshotRef.current = null;
       activeMoveAnimationsRef.current = [];
       activePopAnimationsRef.current = [];
+      activeOrientationAnimationRef.current = null;
       previousGameStateRef.current = null;
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
@@ -777,6 +823,17 @@ export function Board(
   }, []);
 
   useEffect(() => {
+    if (previousPiecesRotatedRef.current !== props.piecesRotated) {
+      activeOrientationAnimationRef.current = {
+        fromRadians: previousPiecesRotatedRef.current ? Math.PI : 0,
+        toRadians: props.piecesRotated ? Math.PI : 0,
+        startedAtMs: performance.now(),
+        durationMs: PIECE_ROTATION_ANIMATION_MS,
+      };
+      previousPiecesRotatedRef.current = props.piecesRotated;
+      staticLayerSnapshotRef.current = null;
+    }
+
     const previousGameState = previousGameStateRef.current;
     const gameStateChanged = Boolean(
       previousGameState && previousGameState !== props.gameState,
@@ -842,6 +899,7 @@ export function Board(
     props.gameState,
     props.prevMove,
     props.transitionMove,
+    props.piecesRotated,
     props.shouldAnimateReset,
     selectedFrom,
     legalMoves,
@@ -895,7 +953,10 @@ export function Board(
     e.currentTarget.setPointerCapture(e.pointerId);
     cancelScheduledDraw();
 
-    const { pointerPos, tileIndex } = toBoardPointerData(e);
+    const { pointerPos, tileIndex } = toBoardPointerData(
+      e,
+      props.isBoardRotated,
+    );
 
     if (selectedFrom && hasMove(legalMoves, tileIndex)) {
       executeLegalMove(selectedFrom, tileIndex, true);
@@ -919,7 +980,10 @@ export function Board(
   };
 
   const handlePointerMove: PointerEventHandler<HTMLCanvasElement> = (e) => {
-    const { pointerPos, tileIndex } = toBoardPointerData(e);
+    const { pointerPos, tileIndex } = toBoardPointerData(
+      e,
+      props.isBoardRotated,
+    );
 
     const dragStartPointer = dragStartPointerRef.current;
     if (!dragStartPointer) {
@@ -946,7 +1010,7 @@ export function Board(
       return;
     }
 
-    const { tileIndex } = toBoardPointerData(e);
+    const { tileIndex } = toBoardPointerData(e, props.isBoardRotated);
     const sourceTile = selectedFrom;
     const wasDragging = dragPointerPosRef.current !== null;
     const dragStartPointer = dragStartPointerRef.current;

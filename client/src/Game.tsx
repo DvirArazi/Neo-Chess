@@ -21,6 +21,7 @@ type GameProps = {
   shouldAnimateReset: boolean;
   topColor: PieceColor;
   bottomColor: PieceColor;
+  boardRotated: boolean;
   piecesRotated: boolean;
   topPlayerRotated: boolean;
   onMoveAttempt: (move: MoveInput) => void;
@@ -156,6 +157,7 @@ export function Game(props: GameProps) {
           <div
             className={[
               "local-game__board-shell",
+              props.boardRotated ? "local-game__board-shell--rotated" : "",
             ].filter(Boolean).join(" ")}
           >
             <Board
@@ -163,6 +165,7 @@ export function Game(props: GameProps) {
               prevMove={props.prevMove}
               transitionMove={props.transitionMove}
               shouldAnimateReset={props.shouldAnimateReset}
+              isBoardRotated={props.boardRotated}
               piecesRotated={props.piecesRotated}
               onMoveAttempt={props.onMoveAttempt}
             />
