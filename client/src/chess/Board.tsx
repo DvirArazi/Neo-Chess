@@ -9,7 +9,7 @@ import {
 } from "react";
 import { getPieceImages, type PieceImages } from "./pieceAssets";
 import type { MoveInput, Square } from "../types";
-import type { GameState, Piece } from "./types";
+import type { GameState, Piece, PieceColor } from "./types";
 import { BOARD_SIZE } from "../../../shared/chess/setup";
 import { getLegalMoves } from "../../../shared/chess/moveGeneration";
 
@@ -39,7 +39,7 @@ type StaticLayerSnapshot = {
   isDragging: boolean;
   animatedMoves: MoveInput[];
   animatedPopIns: Square[];
-  pieceRotationRadians: number;
+  pieceRotationRadiansByColor: Record<PieceColor, number>;
   cssSize: number;
   pixelSize: number;
 };
@@ -70,6 +70,7 @@ const MAX_BOARD_DPR = 2;
 const CLICK_MOVE_ANIMATION_MS = 120;
 const PIECE_ROTATION_ANIMATION_MS = 220;
 const DRAG_SNAP_DISTANCE_PX = 6;
+const PIECE_COLORS: PieceColor[] = ["black", "white"];
 
 function squaresEqual(a: Square, b: Square): boolean {
   return a.x === b.x && a.y === b.y;
@@ -105,6 +106,13 @@ function squareListsEqual(a: Square[], b: Square[]): boolean {
   }
 
   return true;
+}
+
+function pieceRotationMapsEqual(
+  a: Record<PieceColor, number>,
+  b: Record<PieceColor, number>,
+): boolean {
+  return a.black === b.black && a.white === b.white;
 }
 
 function hasMove(moves: Square[], target: Square): boolean {
@@ -211,6 +219,22 @@ function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3;
 }
 
+function getTargetPieceRotationRadians(isRotated: boolean): number {
+  return isRotated ? Math.PI : 0;
+}
+
+function getAnimatedRotationRadians(
+  animation: ActiveOrientationAnimation,
+  nowMs: number,
+): number {
+  const rawProgress = (nowMs - animation.startedAtMs) / animation.durationMs;
+  if (rawProgress >= 1) return animation.toRadians;
+
+  return animation.fromRadians + (
+    animation.toRadians - animation.fromRadians
+  ) * easeOutCubic(rawProgress);
+}
+
 function toBoardPointerData(
   e: PointerEvent<HTMLCanvasElement>,
   isBoardRotated: boolean,
@@ -303,7 +327,7 @@ function drawStaticBoardLayer(
   prevMove: MoveInput | null,
   selectedFrom: Square | null,
   isDragging: boolean,
-  pieceRotationRadians: number,
+  pieceRotationRadiansByColor: Record<PieceColor, number>,
   animatedMoves: MoveInput[],
   animatedPopIns: Square[],
   circles: Square[],
@@ -383,7 +407,7 @@ function drawStaticBoardLayer(
         posX,
         posY,
         metrics.tileSize,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor[piece.color],
       );
     }
   }
@@ -417,7 +441,7 @@ function drawStaticBoardLayer(
     ghostPosX,
     ghostPosY,
     metrics.tileSize,
-    pieceRotationRadians,
+    pieceRotationRadiansByColor[floatingPiece.color],
   );
   context.restore();
 }
@@ -429,7 +453,7 @@ function drawFloatingPiece(
   pieceImages: PieceImages,
   selectedFrom: Square,
   dragPointerPos: CanvasPoint,
-  pieceRotationRadians: number,
+  pieceRotationRadiansByColor: Record<PieceColor, number>,
 ): void {
   const floatingPiece = gameState.board[selectedFrom.y]?.[selectedFrom.x] ??
     null;
@@ -443,7 +467,7 @@ function drawFloatingPiece(
     dragPointerPos.x - offset,
     dragPointerPos.y - offset,
     metrics.tileSize,
-    pieceRotationRadians,
+    pieceRotationRadiansByColor[floatingPiece.color],
   );
 }
 
@@ -453,7 +477,7 @@ function drawAnimatedPiece(
   pieceImages: PieceImages,
   animation: ActiveMoveAnimation,
   progress: number,
-  pieceRotationRadians: number,
+  pieceRotationRadiansByColor: Record<PieceColor, number>,
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const currentX = animation.move.from.x + (
@@ -469,7 +493,7 @@ function drawAnimatedPiece(
     currentX * metrics.tileSize,
     currentY * metrics.tileSize,
     metrics.tileSize,
-    pieceRotationRadians,
+    pieceRotationRadiansByColor[animation.piece.color],
   );
 }
 
@@ -479,7 +503,7 @@ function drawPoppingPiece(
   pieceImages: PieceImages,
   animation: ActivePopAnimation,
   progress: number,
-  pieceRotationRadians: number,
+  pieceRotationRadiansByColor: Record<PieceColor, number>,
 ): void {
   const pieceImage = pieceImages[animation.piece.color][animation.piece.type];
   const scale = 0.6 + (0.4 * progress);
@@ -494,7 +518,7 @@ function drawPoppingPiece(
     (animation.square.x * metrics.tileSize) + offset,
     (animation.square.y * metrics.tileSize) + offset,
     size,
-    pieceRotationRadians,
+    pieceRotationRadiansByColor[animation.piece.color],
   );
   context.restore();
 }
@@ -508,7 +532,7 @@ function isStaticLayerCurrent(
   isDragging: boolean,
   animatedMoves: MoveInput[],
   animatedPopIns: Square[],
-  pieceRotationRadians: number,
+  pieceRotationRadiansByColor: Record<PieceColor, number>,
   metrics: BoardMetrics,
 ): boolean {
   if (!snapshot) return false;
@@ -521,7 +545,10 @@ function isStaticLayerCurrent(
     snapshot.isDragging === isDragging &&
     moveListsEqual(snapshot.animatedMoves, animatedMoves) &&
     squareListsEqual(snapshot.animatedPopIns, animatedPopIns) &&
-    snapshot.pieceRotationRadians === pieceRotationRadians &&
+    pieceRotationMapsEqual(
+      snapshot.pieceRotationRadiansByColor,
+      pieceRotationRadiansByColor,
+    ) &&
     snapshot.cssSize === metrics.cssSize &&
     snapshot.pixelSize === metrics.pixelSize
   );
@@ -534,7 +561,7 @@ export function Board(
     transitionMove: MoveInput | null;
     shouldAnimateReset: boolean;
     isBoardRotated: boolean;
-    piecesRotated: boolean;
+    pieceRotations: Record<PieceColor, boolean>;
     onMoveAttempt: (move: MoveInput) => void;
   },
 ) {
@@ -555,12 +582,16 @@ export function Board(
   const staticLayerSnapshotRef = useRef<StaticLayerSnapshot | null>(null);
   const activeMoveAnimationsRef = useRef<ActiveMoveAnimation[]>([]);
   const activePopAnimationsRef = useRef<ActivePopAnimation[]>([]);
-  const activeOrientationAnimationRef = useRef<ActiveOrientationAnimation | null>(
-    null,
+  const activeOrientationAnimationsRef = useRef<
+    Partial<Record<PieceColor, ActiveOrientationAnimation>>
+  >(
+    {},
   );
   const previousGameStateRef = useRef<GameState | null>(null);
   const previousTransitionMoveRef = useRef<MoveInput | null>(null);
-  const previousPiecesRotatedRef = useRef(props.piecesRotated);
+  const previousPieceRotationsRef = useRef<Record<PieceColor, boolean>>({
+    ...props.pieceRotations,
+  });
   const skipNextMoveAnimationRef = useRef(false);
 
   const hasCurrentInteraction = interaction.turn === props.gameState.turn;
@@ -610,7 +641,10 @@ export function Board(
     const dragPointerPos = dragPointerPosRef.current;
     const isDragging = selectedFrom !== null && dragPointerPos !== null;
     const nowMs = frameTimeMs ?? performance.now();
-    let pieceRotationRadians = props.piecesRotated ? Math.PI : 0;
+    const pieceRotationRadiansByColor: Record<PieceColor, number> = {
+      black: getTargetPieceRotationRadians(props.pieceRotations.black),
+      white: getTargetPieceRotationRadians(props.pieceRotations.white),
+    };
     const activeAnimations = activeMoveAnimationsRef.current.filter((animation) => {
       const rawProgress = (nowMs - animation.startedAtMs) / animation.durationMs;
       return rawProgress < 1;
@@ -631,19 +665,23 @@ export function Board(
       staticLayerSnapshotRef.current = null;
     }
 
-    const orientationAnimation = activeOrientationAnimationRef.current;
-    if (orientationAnimation) {
-      const rawProgress = (
-        nowMs - orientationAnimation.startedAtMs
-      ) / orientationAnimation.durationMs;
+    let hasActiveOrientationAnimations = false;
+    for (const color of PIECE_COLORS) {
+      const orientationAnimation = activeOrientationAnimationsRef.current[color];
+      if (!orientationAnimation) continue;
 
-      if (rawProgress >= 1) {
-        activeOrientationAnimationRef.current = null;
-      } else {
-        pieceRotationRadians = orientationAnimation.fromRadians + (
-          orientationAnimation.toRadians - orientationAnimation.fromRadians
-        ) * easeOutCubic(rawProgress);
+      if (nowMs - orientationAnimation.startedAtMs >= orientationAnimation.durationMs) {
+        delete activeOrientationAnimationsRef.current[color];
+        pieceRotationRadiansByColor[color] = orientationAnimation.toRadians;
+        staticLayerSnapshotRef.current = null;
+        continue;
       }
+
+      pieceRotationRadiansByColor[color] = getAnimatedRotationRadians(
+        orientationAnimation,
+        nowMs,
+      );
+      hasActiveOrientationAnimations = true;
     }
 
     const animatedMoves = activeAnimations.map((animation) => animation.move);
@@ -659,7 +697,7 @@ export function Board(
         isDragging,
         animatedMoves,
         animatedPopIns,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
         metrics,
       )
     ) {
@@ -671,7 +709,7 @@ export function Board(
         props.prevMove,
         selectedFrom,
         isDragging,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
         animatedMoves,
         animatedPopIns,
         legalMoves,
@@ -685,7 +723,7 @@ export function Board(
         isDragging,
         animatedMoves,
         animatedPopIns,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
         cssSize: metrics.cssSize,
         pixelSize: metrics.pixelSize,
       };
@@ -712,7 +750,7 @@ export function Board(
         pieceImages,
         selectedFrom,
         dragPointerPos,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
       );
     }
 
@@ -728,7 +766,7 @@ export function Board(
         pieceImages,
         activeAnimation,
         animationProgress,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
       );
     }
 
@@ -744,14 +782,14 @@ export function Board(
         pieceImages,
         activeAnimation,
         animationProgress,
-        pieceRotationRadians,
+        pieceRotationRadiansByColor,
       );
     }
 
     if (
       activeAnimations.length > 0 ||
       activePopAnimations.length > 0 ||
-      activeOrientationAnimationRef.current
+      hasActiveOrientationAnimations
     ) {
       scheduleDraw();
     }
@@ -815,7 +853,7 @@ export function Board(
       staticLayerSnapshotRef.current = null;
       activeMoveAnimationsRef.current = [];
       activePopAnimationsRef.current = [];
-      activeOrientationAnimationRef.current = null;
+      activeOrientationAnimationsRef.current = {};
       previousGameStateRef.current = null;
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
@@ -823,16 +861,25 @@ export function Board(
   }, []);
 
   useEffect(() => {
-    if (previousPiecesRotatedRef.current !== props.piecesRotated) {
-      activeOrientationAnimationRef.current = {
-        fromRadians: previousPiecesRotatedRef.current ? Math.PI : 0,
-        toRadians: props.piecesRotated ? Math.PI : 0,
-        startedAtMs: performance.now(),
+    const nowMs = performance.now();
+    for (const color of PIECE_COLORS) {
+      const previousRotation = previousPieceRotationsRef.current[color];
+      const nextRotation = props.pieceRotations[color];
+      if (previousRotation === nextRotation) continue;
+
+      const activeOrientationAnimation =
+        activeOrientationAnimationsRef.current[color];
+      activeOrientationAnimationsRef.current[color] = {
+        fromRadians: activeOrientationAnimation
+          ? getAnimatedRotationRadians(activeOrientationAnimation, nowMs)
+          : getTargetPieceRotationRadians(previousRotation),
+        toRadians: getTargetPieceRotationRadians(nextRotation),
+        startedAtMs: nowMs,
         durationMs: PIECE_ROTATION_ANIMATION_MS,
       };
-      previousPiecesRotatedRef.current = props.piecesRotated;
       staticLayerSnapshotRef.current = null;
     }
+    previousPieceRotationsRef.current = { ...props.pieceRotations };
 
     const previousGameState = previousGameStateRef.current;
     const gameStateChanged = Boolean(
@@ -899,7 +946,8 @@ export function Board(
     props.gameState,
     props.prevMove,
     props.transitionMove,
-    props.piecesRotated,
+    props.pieceRotations.black,
+    props.pieceRotations.white,
     props.shouldAnimateReset,
     selectedFrom,
     legalMoves,

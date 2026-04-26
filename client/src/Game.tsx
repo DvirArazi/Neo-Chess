@@ -22,8 +22,9 @@ type GameProps = {
   topColor: PieceColor;
   bottomColor: PieceColor;
   boardRotated: boolean;
-  piecesRotated: boolean;
+  pieceRotations: Record<PieceColor, boolean>;
   topPlayerRotated: boolean;
+  bottomPlayerRotated: boolean;
   onMoveAttempt: (move: MoveInput) => void;
   players: Record<PieceColor, PlayerInfo>;
   controls?: ReactNode;
@@ -139,6 +140,9 @@ export function Game(props: GameProps) {
                     isTop && props.topPlayerRotated
                       ? "local-game__player-slot-content--rotated"
                       : "",
+                    !isTop && props.bottomPlayerRotated
+                      ? "local-game__player-slot-content--rotated"
+                      : "",
                   ].filter(Boolean).join(" ")}
                 >
                   <PlayerCard
@@ -157,7 +161,9 @@ export function Game(props: GameProps) {
           <div
             className={[
               "local-game__board-shell",
-              props.boardRotated ? "local-game__board-shell--rotated" : "",
+              props.boardRotated
+                ? "local-game__board-shell--rotated"
+                : "",
             ].filter(Boolean).join(" ")}
           >
             <Board
@@ -166,7 +172,7 @@ export function Game(props: GameProps) {
               transitionMove={props.transitionMove}
               shouldAnimateReset={props.shouldAnimateReset}
               isBoardRotated={props.boardRotated}
-              piecesRotated={props.piecesRotated}
+              pieceRotations={props.pieceRotations}
               onMoveAttempt={props.onMoveAttempt}
             />
           </div>
