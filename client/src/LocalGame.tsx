@@ -17,22 +17,32 @@ import playIcon from "./assets/images/play.svg";
 import backIcon from "./assets/images/backwards.svg";
 import nextIcon from "./assets/images/forwards.svg";
 import currentPositionIcon from "./assets/images/double_forwards.svg";
-import flipIcon from "./assets/images/mobile_rotate_lock.svg";
-import flipLockIcon from "./assets/images/mobile_rotate.svg";
+import flipIcon from "./assets/images/flip_disabled.svg";
+import flipLockIcon from "./assets/images/flip.svg";
 
 type ClockSnapshot = Record<PieceColor, number>;
+export type LocalTimeControl = {
+  id: string;
+  label: string;
+  initialMs: number;
+  incrementMs: number;
+  isUnlimited?: boolean;
+};
+
 type GameOutcomeMessage = {
   title: string;
   detail: string;
 };
 type FlipMode = "flip" | "flip-lock";
 
-const INITIAL_CLOCK_MS = 10 * 60 * 1000;
 const CLOCK_TICK_MS = 250;
-const INITIAL_CLOCKS: ClockSnapshot = {
-  black: INITIAL_CLOCK_MS,
-  white: INITIAL_CLOCK_MS,
-};
+
+function createInitialClocks(initialMs: number): ClockSnapshot {
+  return {
+    black: initialMs,
+    white: initialMs,
+  };
+}
 
 function getDisplayedClocks(
   baseClocks: ClockSnapshot,
@@ -49,6 +59,8 @@ function getDisplayedClocks(
 }
 
 function formatClock(clockMs: number): string {
+  if (!Number.isFinite(clockMs)) return "∞";
+
   const totalSeconds = Math.ceil(Math.max(0, clockMs) / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -65,14 +77,14 @@ function oppositeColor(color: PieceColor): PieceColor {
 }
 
 function getTimeoutOutcome(clocks: ClockSnapshot): GameOutcomeMessage | null {
-  if (clocks.white === 0) {
+  if (Number.isFinite(clocks.white) && clocks.white === 0) {
     return {
       title: "Black wins",
       detail: "White ran out of time",
     };
   }
 
-  if (clocks.black === 0) {
+  if (Number.isFinite(clocks.black) && clocks.black === 0) {
     return {
       title: "White wins",
       detail: "Black ran out of time",
@@ -104,18 +116,34 @@ function getBoardOutcomeMessage(
   };
 }
 
-function LocalGame() {
+function applyIncrement(
+  clocks: ClockSnapshot,
+  color: PieceColor,
+  incrementMs: number,
+): ClockSnapshot {
+  if (incrementMs === 0 || !Number.isFinite(clocks[color])) {
+    return clocks;
+  }
+
+  return {
+    ...clocks,
+    [color]: clocks[color] + incrementMs,
+  };
+}
+
+function LocalGame(props: { timeControl: LocalTimeControl }) {
+  const initialClocks = createInitialClocks(props.timeControl.initialMs);
   const [history, setHistory] = useState([createInitialBoard()]);
   const [moves, setMoves] = useState<MoveInput[]>([]);
   const [clockHistory, setClockHistory] = useState<ClockSnapshot[]>([
-    INITIAL_CLOCKS,
+    initialClocks,
   ]);
   const [clockSnapshot, setClockSnapshot] = useState<ClockSnapshot>(
-    INITIAL_CLOCKS,
+    initialClocks,
   );
   const [clockTickMs, setClockTickMs] = useState(() => Date.now());
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
   const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
@@ -125,7 +153,7 @@ function LocalGame() {
   );
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
-  const clockAnchorRef = useRef<number | null>(Date.now());
+  const clockAnchorRef = useRef<number | null>(null);
 
   const gameState = history[historyIndex];
   const isViewingCurrentPosition = historyIndex === history.length - 1;
@@ -141,18 +169,20 @@ function LocalGame() {
   const gameOutcome = getTimeoutOutcome(displayedClocks) ??
     getBoardOutcomeMessage(getBoardGameOutcome(gameState));
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
-  const currentBottomColor = historyIndex % 2 === 0
-    ? bottomColorAtStart
-    : oppositeColor(bottomColorAtStart);
-  const boardRotated = currentBottomColor === "black";
-  const piecesRotated = currentBottomColor === "black";
-  const topColor = flipMode === "flip-lock"
-    ? oppositeColor(currentBottomColor)
-    : oppositeColor(bottomColorAtStart);
-  const bottomColor = flipMode === "flip-lock"
-    ? currentBottomColor
-    : bottomColorAtStart;
-  const topPlayerRotated = flipMode === "flip";
+  const topColor = oppositeColor(bottomColorAtStart);
+  const bottomColor = bottomColorAtStart;
+  const boardRotated = topColor === "white";
+  const isTopPlayersTurn = gameState.turn === topColor;
+  const modePieceRotations: Record<PieceColor, boolean> = {
+    black: flipMode === "flip" ? isTopPlayersTurn : topColor === "black",
+    white: flipMode === "flip" ? isTopPlayersTurn : topColor === "white",
+  };
+  const pieceRotations: Record<PieceColor, boolean> = {
+    black: boardRotated !== modePieceRotations.black,
+    white: boardRotated !== modePieceRotations.white,
+  };
+  const topPlayerRotated = flipMode === "flip-lock" || isTopPlayersTurn;
+  const bottomPlayerRotated = flipMode === "flip" && isTopPlayersTurn;
 
   useEffect(() => {
     return () => {
@@ -226,16 +256,89 @@ function LocalGame() {
     });
   };
 
+  const scheduleResetNavigation = (nextHistoryIndex: number) => {
+    cancelPendingNavigation();
+    pendingHistoryIndexRef.current = nextHistoryIndex;
+    setShouldAnimateReset(false);
+    setTransitionMove(null);
+
+    pendingNavigationFrameRef.current = requestAnimationFrame(() => {
+      const nowMs = Date.now();
+      pendingNavigationFrameRef.current = null;
+      pendingHistoryIndexRef.current = null;
+      setHistoryIndex(nextHistoryIndex);
+      setClockSnapshot(clockHistory[nextHistoryIndex]);
+      setClockTickMs(nowMs);
+      clockAnchorRef.current = isPaused ? null : nowMs;
+      setTransitionMove(null);
+      setShouldAnimateReset(true);
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (
+          target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT"
+        )
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        const currentHistoryIndex = pendingHistoryIndexRef.current ?? historyIndex;
+        if (currentHistoryIndex === 0) return;
+
+        const move = moves[currentHistoryIndex - 1];
+        setShouldAnimateReset(false);
+        setIsPopupDismissed(false);
+        scheduleHistoryNavigation(currentHistoryIndex - 1, {
+          from: move.to,
+          to: move.from,
+        });
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        const currentHistoryIndex = pendingHistoryIndexRef.current ?? historyIndex;
+        if (currentHistoryIndex >= history.length - 1) return;
+
+        setShouldAnimateReset(false);
+        setIsPopupDismissed(false);
+        scheduleHistoryNavigation(
+          currentHistoryIndex + 1,
+          moves[currentHistoryIndex],
+        );
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [historyIndex, history.length, moves]);
+
   const handleMoveAttempt = (move: MoveInput) => {
     if (gameOutcome) return;
     cancelPendingNavigation();
 
     const nowMs = Date.now();
-    const nextClockSnapshot = getCurrentDisplayedClockSnapshot(nowMs);
-    if (nextClockSnapshot[gameState.turn] === 0) return;
+    const elapsedClockSnapshot = getCurrentDisplayedClockSnapshot(nowMs);
+    if (elapsedClockSnapshot[gameState.turn] === 0) return;
 
     const nextGameState = applyMove(gameState, move);
     if (nextGameState === gameState) return;
+
+    const nextClockSnapshot = applyIncrement(
+      elapsedClockSnapshot,
+      gameState.turn,
+      props.timeControl.incrementMs,
+    );
 
     setHistory([
       ...history.slice(0, historyIndex + 1),
@@ -265,12 +368,12 @@ function LocalGame() {
     const nextBottomColor = Math.random() < 0.5 ? "white" : "black";
     setHistory([createInitialBoard()]);
     setMoves([]);
-    setClockHistory([INITIAL_CLOCKS]);
-    setClockSnapshot(INITIAL_CLOCKS);
+    setClockHistory([initialClocks]);
+    setClockSnapshot(initialClocks);
     setClockTickMs(nowMs);
-    clockAnchorRef.current = nowMs;
+    clockAnchorRef.current = null;
     setHistoryIndex(0);
-    setIsPaused(false);
+    setIsPaused(true);
     setBottomColorAtStart(nextBottomColor);
     setTransitionMove(null);
     setShouldAnimateReset(true);
@@ -323,14 +426,10 @@ function LocalGame() {
   };
 
   const handleJumpToCurrentPosition = () => {
-    cancelPendingNavigation();
-    const nowMs = Date.now();
-    setShouldAnimateReset(false);
-    setHistoryIndex(history.length - 1);
-    setClockSnapshot(clockHistory[history.length - 1]);
-    setClockTickMs(nowMs);
-    clockAnchorRef.current = isPaused ? null : nowMs;
-    setTransitionMove(null);
+    const currentHistoryIndex = pendingHistoryIndexRef.current ?? historyIndex;
+    if (currentHistoryIndex >= history.length - 1) return;
+
+    scheduleResetNavigation(history.length - 1);
     setIsPopupDismissed(false);
   };
 
@@ -350,8 +449,9 @@ function LocalGame() {
         topColor={topColor}
         bottomColor={bottomColor}
         boardRotated={boardRotated}
-        piecesRotated={piecesRotated}
+        pieceRotations={pieceRotations}
         topPlayerRotated={topPlayerRotated}
+        bottomPlayerRotated={bottomPlayerRotated}
         onMoveAttempt={handleMoveAttempt}
         controls={
           <ActionsBar
