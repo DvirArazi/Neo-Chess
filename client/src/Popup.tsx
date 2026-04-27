@@ -8,6 +8,7 @@ type PopupProps = {
   children: ReactNode;
   actions?: ReactNode;
   onClose?: () => void;
+  closeOnBackdropPress?: boolean;
 };
 
 export function Popup(props: PopupProps) {
@@ -52,32 +53,45 @@ export function Popup(props: PopupProps) {
   if (!shouldRender) return null;
 
   return (
-    <section
+    <div
       className={[
-        "popup",
+        "popup-backdrop",
         isVisible ? "popup--visible" : "popup--hidden",
       ].join(" ")}
-      role="dialog"
-      aria-modal="false"
-      aria-label={displayedContent.title}
+      onClick={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          props.closeOnBackdropPress &&
+          props.onClose
+        ) {
+          props.onClose();
+        }
+      }}
     >
-      {props.onClose
-        ? (
-          <button
-            type="button"
-            className="popup__close"
-            aria-label="Close popup"
-            onClick={props.onClose}
-          >
-            x
-          </button>
-        )
-        : null}
-      <h2 className="popup__title">{displayedContent.title}</h2>
-      <div className="popup__body">{displayedContent.children}</div>
-      {displayedContent.actions
-        ? <div className="popup__actions">{displayedContent.actions}</div>
-        : null}
-    </section>
+      <section
+        className="popup"
+        role="dialog"
+        aria-modal="false"
+        aria-label={displayedContent.title}
+      >
+        {props.onClose
+          ? (
+            <button
+              type="button"
+              className="popup__close"
+              aria-label="Close popup"
+              onClick={props.onClose}
+            >
+              x
+            </button>
+          )
+          : null}
+        <h2 className="popup__title">{displayedContent.title}</h2>
+        <div className="popup__body">{displayedContent.children}</div>
+        {displayedContent.actions
+          ? <div className="popup__actions">{displayedContent.actions}</div>
+          : null}
+      </section>
+    </div>
   );
 }

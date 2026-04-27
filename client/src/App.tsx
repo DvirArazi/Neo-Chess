@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import type { AuthenticatedUser } from "../../shared/socket";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
 import LocalGame, { type LocalTimeControl } from "./LocalGame";
 import { Popup } from "./Popup";
+import { clearSessionToken, setSessionToken, socket } from "./socket";
 import { TabPanel } from "./TabPanel";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
@@ -42,6 +44,20 @@ export function App() {
   const [homeTab, setHomeTab] = useState<HomeTab>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
+  const [authenticatedUser, setAuthenticatedUser] =
+    useState<AuthenticatedUser | null>(null);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginPasswordConfirmation, setLoginPasswordConfirmation] = useState("");
+  const [signUpUsername, setSignUpUsername] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
+  const [accountStatusTone, setAccountStatusTone] = useState<"error" | "success">(
+    "success",
+  );
+  const [activeAccountAction, setActiveAccountAction] = useState<
+    "logIn" | "signUp" | "logOut" | null
+  >(null);
 
   useEffect(() => {
     document.title = "Neo Chess";
@@ -70,6 +86,23 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    const handleAuthStateChanged = (data: { user: AuthenticatedUser | null }) => {
+      setAuthenticatedUser(data.user);
+      if (data.user === null) {
+        clearSessionToken();
+      }
+    };
+
+    socket.on("authStateChanged", handleAuthStateChanged);
+    socket.connect();
+
+    return () => {
+      socket.off("authStateChanged", handleAuthStateChanged);
+      socket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
     if (route.pathname === HOME_PATH || route.pathname === LOCAL_GAME_PATH) return;
 
     window.history.replaceState({}, "", HOME_PATH);
@@ -93,6 +126,103 @@ export function App() {
     return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId) ??
       LOCAL_TIME_CONTROLS[0];
   })();
+
+  const resetAccountForms = () => {
+    setLoginUsername("");
+    setLoginPassword("");
+    setLoginPasswordConfirmation("");
+    setSignUpUsername("");
+    setSignUpPassword("");
+    setAccountStatus(null);
+    setAccountStatusTone("success");
+    setActiveAccountAction(null);
+  };
+
+  const closeAccountPopup = () => {
+    setIsAccountPopupOpen(false);
+    resetAccountForms();
+  };
+
+  const handleLogIn = () => {
+    setActiveAccountAction("logIn");
+    setAccountStatus(null);
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit(
+      "logIn",
+      {
+        username: loginUsername,
+        password: loginPassword,
+      },
+      (response) => {
+        setActiveAccountAction(null);
+
+        if (!response.ok) {
+          setAccountStatusTone("error");
+          setAccountStatus(response.error);
+          return;
+        }
+
+        setSessionToken(response.sessionToken);
+        setAuthenticatedUser(response.user);
+        closeAccountPopup();
+      },
+    );
+  };
+
+  const handleSignUp = () => {
+    setActiveAccountAction("signUp");
+    setAccountStatus(null);
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit(
+      "signUp",
+      {
+        username: signUpUsername,
+        password: signUpPassword,
+      },
+      (response) => {
+        setActiveAccountAction(null);
+
+        if (!response.ok) {
+          setAccountStatusTone("error");
+          setAccountStatus(response.error);
+          return;
+        }
+
+        setSessionToken(response.sessionToken);
+        setAuthenticatedUser(response.user);
+        closeAccountPopup();
+      },
+    );
+  };
+
+  const handleLogOut = () => {
+    setActiveAccountAction("logOut");
+    setAccountStatus(null);
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit("logOut", (response) => {
+      setActiveAccountAction(null);
+
+      if (!response.ok) {
+        setAccountStatusTone("error");
+        setAccountStatus(response.error);
+        return;
+      }
+
+      clearSessionToken();
+      setAuthenticatedUser(null);
+      setAccountStatusTone("success");
+      setAccountStatus("Logged out");
+    });
+  };
 
   return (
     <div className="app-shell">
@@ -176,25 +306,55 @@ export function App() {
       <Popup
         open={isAccountPopupOpen}
         title="Account"
-        onClose={() => setIsAccountPopupOpen(false)}
+        onClose={closeAccountPopup}
+        closeOnBackdropPress={true}
       >
         <div className="account-popup">
+          {authenticatedUser
+            ? (
+              <>
+                <p className="account-popup__signed-in">
+                  Signed in as {authenticatedUser.username}
+                </p>
+                <button
+                  type="button"
+                  className="account-popup__button"
+                  onClick={handleLogOut}
+                  disabled={activeAccountAction !== null}
+                >
+                  Log Out
+                </button>
+                <div className="account-popup__divider" aria-hidden="true" />
+              </>
+            )
+            : null}
           <input
             className="account-popup__input"
             type="text"
             placeholder="Enter username"
+            value={loginUsername}
+            onChange={(event) => setLoginUsername(event.target.value)}
           />
           <input
             className="account-popup__input"
             type="password"
             placeholder="Enter password"
+            value={loginPassword}
+            onChange={(event) => setLoginPassword(event.target.value)}
           />
           <input
             className="account-popup__input"
             type="password"
             placeholder="Re-enter password"
+            value={loginPasswordConfirmation}
+            onChange={(event) => setLoginPasswordConfirmation(event.target.value)}
           />
-          <button type="button" className="account-popup__button">
+          <button
+            type="button"
+            className="account-popup__button"
+            onClick={handleLogIn}
+            disabled={activeAccountAction !== null}
+          >
             Log In
           </button>
 
@@ -204,13 +364,22 @@ export function App() {
             className="account-popup__input"
             type="text"
             placeholder="Enter username"
+            value={signUpUsername}
+            onChange={(event) => setSignUpUsername(event.target.value)}
           />
           <input
             className="account-popup__input"
             type="password"
             placeholder="Enter password"
+            value={signUpPassword}
+            onChange={(event) => setSignUpPassword(event.target.value)}
           />
-          <button type="button" className="account-popup__button">
+          <button
+            type="button"
+            className="account-popup__button"
+            onClick={handleSignUp}
+            disabled={activeAccountAction !== null}
+          >
             Sign Up
           </button>
 
@@ -222,6 +391,20 @@ export function App() {
           <button type="button" className="account-popup__button">
             Continue with Facebook
           </button>
+          {accountStatus
+            ? (
+              <p
+                className={[
+                  "account-popup__status",
+                  accountStatusTone === "error"
+                    ? "account-popup__status--error"
+                    : "account-popup__status--success",
+                ].join(" ")}
+              >
+                {accountStatus}
+              </p>
+            )
+            : null}
         </div>
       </Popup>
     </div>

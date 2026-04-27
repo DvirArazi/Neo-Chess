@@ -1,13 +1,21 @@
 import "dotenv/config";
+import cors from "cors";
 import express from "express";
 import http from "node:http";
-import cors from "cors";
 import path from "node:path";
-import { Server } from "socket.io";
+import { randomUUID } from "node:crypto";
+import { Server, type Socket } from "socket.io";
+import {
+  getSessionUserByToken,
+  logInWithPassword,
+  revokeSession,
+  signUpWithPassword,
+} from "./auth/service.js";
 import type {
+  AuthenticatedUser,
   ClientToServerEvents,
-  ServerToClientEvents,
   InterServerEvents,
+  ServerToClientEvents,
   SocketData,
 } from "../../shared/socket.js";
 
@@ -33,10 +41,140 @@ const io = new Server<
   },
 });
 
+type ServerSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>;
+
+function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
+  if (!socket.data.userId || !socket.data.username) {
+    return null;
+  }
+
+  return {
+    id: socket.data.userId,
+    username: socket.data.username,
+  };
+}
+
+function emitAuthState(socket: ServerSocket): void {
+  socket.emit("authStateChanged", {
+    user: getAuthenticatedUser(socket),
+  });
+}
+
+function clearSocketAuth(socket: ServerSocket): void {
+  delete socket.data.userId;
+  delete socket.data.username;
+  delete socket.data.sessionId;
+}
+
+io.use(async (socket, next) => {
+  try {
+    const sessionToken = typeof socket.handshake.auth.sessionToken === "string"
+      ? socket.handshake.auth.sessionToken
+      : null;
+
+    if (!sessionToken) {
+      clearSocketAuth(socket);
+      return next();
+    }
+
+    const sessionUser = await getSessionUserByToken(sessionToken);
+    if (!sessionUser) {
+      clearSocketAuth(socket);
+      return next();
+    }
+
+    socket.data.userId = sessionUser.user.id;
+    socket.data.username = sessionUser.user.username;
+    socket.data.sessionId = sessionUser.sessionId;
+    return next();
+  } catch (error) {
+    return next(error as Error);
+  }
+});
+
 io.on("connection", (socket) => {
+  emitAuthState(socket);
+
+  socket.on("signUp", async (data, callback) => {
+    try {
+      const result = await signUpWithPassword(data);
+      if (!result.ok) {
+        callback(result);
+        return;
+      }
+
+      socket.data.userId = result.user.id;
+      socket.data.username = result.user.username;
+      socket.data.sessionId = result.sessionId;
+
+      callback({
+        ok: true,
+        user: result.user,
+        sessionToken: result.sessionToken,
+      });
+      emitAuthState(socket);
+    } catch (error) {
+      console.error("signUp failed", error);
+      callback({
+        ok: false,
+        error: "Unable to sign up right now",
+      });
+    }
+  });
+
+  socket.on("logIn", async (data, callback) => {
+    try {
+      const result = await logInWithPassword(data);
+      if (!result.ok) {
+        callback(result);
+        return;
+      }
+
+      socket.data.userId = result.user.id;
+      socket.data.username = result.user.username;
+      socket.data.sessionId = result.sessionId;
+
+      callback({
+        ok: true,
+        user: result.user,
+        sessionToken: result.sessionToken,
+      });
+      emitAuthState(socket);
+    } catch (error) {
+      console.error("logIn failed", error);
+      callback({
+        ok: false,
+        error: "Unable to log in right now",
+      });
+    }
+  });
+
+  socket.on("logOut", async (callback) => {
+    try {
+      if (socket.data.sessionId) {
+        await revokeSession(socket.data.sessionId);
+      }
+
+      clearSocketAuth(socket);
+      callback({ ok: true });
+      emitAuthState(socket);
+    } catch (error) {
+      console.error("logOut failed", error);
+      callback({
+        ok: false,
+        error: "Unable to log out right now",
+      });
+    }
+  });
+
   socket.on("createRoom", ({ name }) => {
-    const roomId = crypto.randomUUID();
-    socket.data.playerId = crypto.randomUUID();
+    const roomId = randomUUID();
+    socket.data.playerId = randomUUID();
     socket.data.roomId = roomId;
     socket.join(roomId);
 
@@ -47,7 +185,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinRoom", ({ roomId, name }) => {
-    socket.data.playerId = crypto.randomUUID();
+    socket.data.playerId = randomUUID();
     socket.data.roomId = roomId;
     socket.join(roomId);
 
