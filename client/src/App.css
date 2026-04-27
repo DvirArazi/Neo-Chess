@@ -77,8 +77,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: inherit;
-  text-decoration: none;
+  cursor: pointer;
 }
 
 .app-header__account-icon {
@@ -395,6 +398,44 @@ body {
   margin: 0;
   color: rgba(247, 247, 245, 0.82);
   line-height: 1.45;
+}
+
+.account-popup {
+  width: min(100%, 320px);
+  display: grid;
+  gap: 10px;
+}
+
+.account-popup__input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(247, 247, 245, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7f7f5;
+  font: inherit;
+}
+
+.account-popup__input::placeholder {
+  color: rgba(247, 247, 245, 0.46);
+}
+
+.account-popup__button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #81b64c;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-popup__divider {
+  height: 1px;
+  background: rgba(247, 247, 245, 0.12);
+  margin: 4px 0;
 }
 
 .popup__actions {

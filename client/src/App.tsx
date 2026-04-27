@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
 import LocalGame, { type LocalTimeControl } from "./LocalGame";
+import { Popup } from "./Popup";
 import { TabPanel } from "./TabPanel";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
@@ -40,6 +41,7 @@ export function App() {
   }));
   const [homeTab, setHomeTab] = useState<HomeTab>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
+  const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Neo Chess";
@@ -100,9 +102,14 @@ export function App() {
           <span className="app-brand__name">Neo Chess</span>
         </div>
 
-        <a href="#" className="app-header__account-link" aria-label="Account">
+        <button
+          type="button"
+          className="app-header__account-link"
+          aria-label="Account"
+          onClick={() => setIsAccountPopupOpen(true)}
+        >
           <img className="app-header__account-icon" src={accountIcon} alt="" />
-        </a>
+        </button>
       </header>
 
       <div className="app-content">
@@ -165,6 +172,61 @@ export function App() {
             </main>
           )}
       </div>
+
+      {isAccountPopupOpen
+        ? (
+          <Popup
+            title="Account"
+            onClose={() => setIsAccountPopupOpen(false)}
+          >
+            <div className="account-popup">
+              <input
+                className="account-popup__input"
+                type="text"
+                placeholder="Enter username"
+              />
+              <input
+                className="account-popup__input"
+                type="password"
+                placeholder="Enter password"
+              />
+              <input
+                className="account-popup__input"
+                type="password"
+                placeholder="Re-enter password"
+              />
+              <button type="button" className="account-popup__button">
+                Log In
+              </button>
+
+              <div className="account-popup__divider" aria-hidden="true" />
+
+              <input
+                className="account-popup__input"
+                type="text"
+                placeholder="Enter username"
+              />
+              <input
+                className="account-popup__input"
+                type="password"
+                placeholder="Enter password"
+              />
+              <button type="button" className="account-popup__button">
+                Sign Up
+              </button>
+
+              <div className="account-popup__divider" aria-hidden="true" />
+
+              <button type="button" className="account-popup__button">
+                Continue with Google
+              </button>
+              <button type="button" className="account-popup__button">
+                Continue with Facebook
+              </button>
+            </div>
+          </Popup>
+        )
+        : null}
     </div>
   );
 }
