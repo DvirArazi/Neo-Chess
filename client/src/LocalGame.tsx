@@ -506,12 +506,13 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
         }}
       />
 
-      {shouldShowPopup && gameOutcome
-        ? (
-          <Popup
-            title={gameOutcome.title}
-            onClose={() => setIsPopupDismissed(true)}
-            actions={
+      <Popup
+        open={shouldShowPopup && Boolean(gameOutcome)}
+        title={gameOutcome?.title ?? ""}
+        onClose={() => setIsPopupDismissed(true)}
+        actions={
+          gameOutcome
+            ? (
               <button
                 type="button"
                 className="popup__button"
@@ -519,12 +520,14 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
               >
                 Restart
               </button>
-            }
-          >
-            <p className="popup__description">{gameOutcome.detail}</p>
-          </Popup>
-        )
-        : null}
+            )
+            : undefined
+        }
+      >
+        {gameOutcome
+          ? <p className="popup__description">{gameOutcome.detail}</p>
+          : null}
+      </Popup>
     </>
   );
 }

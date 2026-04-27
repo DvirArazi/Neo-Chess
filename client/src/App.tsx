@@ -173,60 +173,57 @@ export function App() {
           )}
       </div>
 
-      {isAccountPopupOpen
-        ? (
-          <Popup
-            title="Account"
-            onClose={() => setIsAccountPopupOpen(false)}
-          >
-            <div className="account-popup">
-              <input
-                className="account-popup__input"
-                type="text"
-                placeholder="Enter username"
-              />
-              <input
-                className="account-popup__input"
-                type="password"
-                placeholder="Enter password"
-              />
-              <input
-                className="account-popup__input"
-                type="password"
-                placeholder="Re-enter password"
-              />
-              <button type="button" className="account-popup__button">
-                Log In
-              </button>
+      <Popup
+        open={isAccountPopupOpen}
+        title="Account"
+        onClose={() => setIsAccountPopupOpen(false)}
+      >
+        <div className="account-popup">
+          <input
+            className="account-popup__input"
+            type="text"
+            placeholder="Enter username"
+          />
+          <input
+            className="account-popup__input"
+            type="password"
+            placeholder="Enter password"
+          />
+          <input
+            className="account-popup__input"
+            type="password"
+            placeholder="Re-enter password"
+          />
+          <button type="button" className="account-popup__button">
+            Log In
+          </button>
 
-              <div className="account-popup__divider" aria-hidden="true" />
+          <div className="account-popup__divider" aria-hidden="true" />
 
-              <input
-                className="account-popup__input"
-                type="text"
-                placeholder="Enter username"
-              />
-              <input
-                className="account-popup__input"
-                type="password"
-                placeholder="Enter password"
-              />
-              <button type="button" className="account-popup__button">
-                Sign Up
-              </button>
+          <input
+            className="account-popup__input"
+            type="text"
+            placeholder="Enter username"
+          />
+          <input
+            className="account-popup__input"
+            type="password"
+            placeholder="Enter password"
+          />
+          <button type="button" className="account-popup__button">
+            Sign Up
+          </button>
 
-              <div className="account-popup__divider" aria-hidden="true" />
+          <div className="account-popup__divider" aria-hidden="true" />
 
-              <button type="button" className="account-popup__button">
-                Continue with Google
-              </button>
-              <button type="button" className="account-popup__button">
-                Continue with Facebook
-              </button>
-            </div>
-          </Popup>
-        )
-        : null}
+          <button type="button" className="account-popup__button">
+            Continue with Google
+          </button>
+          <button type="button" className="account-popup__button">
+            Continue with Facebook
+          </button>
+        </div>
+      </Popup>
     </div>
   );
 }
