@@ -131,6 +131,7 @@ export function App() {
       googleAuthPopupRef.current = null;
     };
 
+    
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== serverOrigin) {
         return;
