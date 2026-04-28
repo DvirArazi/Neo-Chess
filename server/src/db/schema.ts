@@ -10,7 +10,8 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   username: text("username").notNull(),
   usernameNormalized: text("username_normalized").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
+  googleSubject: text("google_subject").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

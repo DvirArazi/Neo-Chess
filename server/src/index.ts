@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { Server, type Socket } from "socket.io";
 import {
   getSessionUserByToken,
+  logInWithGoogleProfile,
   logInWithPassword,
   revokeSession,
   signUpWithPassword,
@@ -20,8 +21,44 @@ import type {
 } from "../../shared/socket.js";
 
 const app = express();
+app.set("trust proxy", true);
 app.use(cors());
 app.use(express.json());
+
+const GOOGLE_AUTH_STATE_TTL_MS = 1000 * 60 * 5;
+const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
+const googleAuthStates = new Map<string, {
+  origin: string;
+  expiresAt: number;
+}>();
+let googleOpenIdConfigurationPromise: Promise<GoogleOpenIdConfiguration> | null =
+  null;
+
+type GoogleOpenIdConfiguration = {
+  authorization_endpoint: string;
+  token_endpoint: string;
+  userinfo_endpoint: string;
+};
+
+type GoogleUserProfile = {
+  sub?: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+};
+
+type GoogleAuthPopupPayload =
+  | {
+    type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
+    ok: true;
+    user: AuthenticatedUser;
+    sessionToken: string;
+  }
+  | {
+    type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
+    ok: false;
+    error: string;
+  };
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
@@ -64,6 +101,338 @@ function emitAuthState(socket: ServerSocket): void {
     user: getAuthenticatedUser(socket),
   });
 }
+
+function cleanExpiredGoogleAuthStates(): void {
+  const now = Date.now();
+  for (const [state, value] of googleAuthStates.entries()) {
+    if (value.expiresAt <= now) {
+      googleAuthStates.delete(state);
+    }
+  }
+}
+
+function getServerOrigin(req: express.Request): string {
+  return `${req.protocol}://${req.get("host")}`;
+}
+
+function getGoogleRedirectUri(req: express.Request): string {
+  return process.env.GOOGLE_REDIRECT_URI ??
+    `${getServerOrigin(req)}/auth/google/callback`;
+}
+
+function isAllowedPopupOrigin(
+  candidateOrigin: string,
+  req: express.Request,
+): boolean {
+  const allowedOrigins = new Set<string>([getServerOrigin(req)]);
+  if (process.env.CLIENT_ORIGIN) {
+    allowedOrigins.add(process.env.CLIENT_ORIGIN);
+  }
+
+  return allowedOrigins.has(candidateOrigin);
+}
+
+function createGoogleAuthState(origin: string): string {
+  cleanExpiredGoogleAuthStates();
+  const state = randomUUID();
+  googleAuthStates.set(state, {
+    origin,
+    expiresAt: Date.now() + GOOGLE_AUTH_STATE_TTL_MS,
+  });
+  return state;
+}
+
+function consumeGoogleAuthState(state: string): { origin: string } | null {
+  const storedState = googleAuthStates.get(state);
+  googleAuthStates.delete(state);
+  if (!storedState) {
+    return null;
+  }
+
+  if (storedState.expiresAt <= Date.now()) {
+    return null;
+  }
+
+  return { origin: storedState.origin };
+}
+
+function escapeInlineJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+function sendGooglePopupResponse(
+  res: express.Response,
+  targetOrigin: string,
+  payload: GoogleAuthPopupPayload,
+): void {
+  const serializedOrigin = escapeInlineJson(targetOrigin);
+  const serializedPayload = escapeInlineJson(payload);
+  const message = payload.ok
+    ? "Authentication complete. You can close this window."
+    : payload.error;
+
+  res
+    .status(payload.ok ? 200 : 400)
+    .type("html")
+    .send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Neo Chess Authentication</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #242420;
+        color: #f7f7f5;
+        font-family: system-ui, sans-serif;
+      }
+      p {
+        margin: 0;
+        max-width: 28rem;
+        padding: 24px;
+        text-align: center;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <p>${message}</p>
+    <script>
+      const targetOrigin = ${serializedOrigin};
+      const payload = ${serializedPayload};
+      if (window.opener) {
+        window.opener.postMessage(payload, targetOrigin);
+        window.close();
+      }
+    </script>
+  </body>
+</html>`);
+}
+
+function getPublicGoogleAuthErrorMessage(error: unknown): string {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    error instanceof Error &&
+    error.message.trim().length > 0
+  ) {
+    return error.message;
+  }
+
+  return "Unable to continue with Google right now";
+}
+
+async function getGoogleOpenIdConfiguration(): Promise<GoogleOpenIdConfiguration> {
+  if (!googleOpenIdConfigurationPromise) {
+    googleOpenIdConfigurationPromise = fetch(
+      "https://accounts.google.com/.well-known/openid-configuration",
+    ).then(async (response) => {
+      if (!response.ok) {
+        throw new Error(
+          `Google OpenID configuration request failed with ${response.status}`,
+        );
+      }
+
+      return await response.json() as GoogleOpenIdConfiguration;
+    }).catch((error) => {
+      googleOpenIdConfigurationPromise = null;
+      throw error;
+    });
+  }
+
+  return await googleOpenIdConfigurationPromise;
+}
+
+async function exchangeGoogleCodeForAccessToken(input: {
+  code: string;
+  redirectUri: string;
+}): Promise<string> {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Google OAuth is not configured");
+  }
+
+  const openIdConfiguration = await getGoogleOpenIdConfiguration();
+  const response = await fetch(openIdConfiguration.token_endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      code: input.code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: input.redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Google token exchange failed with ${response.status}: ${errorText}`,
+    );
+  }
+
+  const tokenResponse = await response.json() as { access_token?: string };
+  if (!tokenResponse.access_token) {
+    throw new Error("Google token response did not contain an access token");
+  }
+
+  return tokenResponse.access_token;
+}
+
+async function fetchGoogleUserProfile(
+  accessToken: string,
+): Promise<GoogleUserProfile> {
+  const openIdConfiguration = await getGoogleOpenIdConfiguration();
+  const response = await fetch(openIdConfiguration.userinfo_endpoint, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Google user info request failed with ${response.status}: ${errorText}`,
+    );
+  }
+
+  return await response.json() as GoogleUserProfile;
+}
+
+app.get("/auth/google/start", async (req, res) => {
+  const requestedOrigin = typeof req.query.origin === "string"
+    ? req.query.origin
+    : null;
+
+  if (!requestedOrigin) {
+    res.status(400).send("Missing origin");
+    return;
+  }
+
+  if (!isAllowedPopupOrigin(requestedOrigin, req)) {
+    res.status(400).send("Invalid origin");
+    return;
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    sendGooglePopupResponse(res, requestedOrigin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: false,
+      error: "Google sign-in is not configured",
+    });
+    return;
+  }
+
+  try {
+    const openIdConfiguration = await getGoogleOpenIdConfiguration();
+    const redirectUri = getGoogleRedirectUri(req);
+    const state = createGoogleAuthState(requestedOrigin);
+    const authorizationUrl = new URL(openIdConfiguration.authorization_endpoint);
+    authorizationUrl.search = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "select_account",
+      state,
+    }).toString();
+
+    res.redirect(authorizationUrl.toString());
+  } catch (error) {
+    console.error("google auth start failed", error);
+    sendGooglePopupResponse(res, requestedOrigin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: false,
+      error: "Unable to start Google sign-in right now",
+    });
+  }
+});
+
+app.get("/auth/google/callback", async (req, res) => {
+  const state = typeof req.query.state === "string" ? req.query.state : null;
+  if (!state) {
+    res.status(400).send("Missing state");
+    return;
+  }
+
+  const storedState = consumeGoogleAuthState(state);
+  if (!storedState) {
+    res.status(400).send("Invalid or expired state");
+    return;
+  }
+
+  if (typeof req.query.error === "string") {
+    sendGooglePopupResponse(res, storedState.origin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: false,
+      error: "Google sign-in was cancelled",
+    });
+    return;
+  }
+
+  const code = typeof req.query.code === "string" ? req.query.code : null;
+  if (!code) {
+    sendGooglePopupResponse(res, storedState.origin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: false,
+      error: "Missing Google authorization code",
+    });
+    return;
+  }
+
+  try {
+    const accessToken = await exchangeGoogleCodeForAccessToken({
+      code,
+      redirectUri: getGoogleRedirectUri(req),
+    });
+    const profile = await fetchGoogleUserProfile(accessToken);
+    if (!profile.sub) {
+      throw new Error("Google profile is missing a subject identifier");
+    }
+
+    const result = await logInWithGoogleProfile({
+      googleSubject: profile.sub,
+      email: profile.email,
+      emailVerified: profile.email_verified === true,
+      name: profile.name,
+    });
+
+    if (!result.ok) {
+      sendGooglePopupResponse(res, storedState.origin, {
+        type: GOOGLE_AUTH_MESSAGE_TYPE,
+        ok: false,
+        error: result.error,
+      });
+      return;
+    }
+
+    sendGooglePopupResponse(res, storedState.origin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: true,
+      user: result.user,
+      sessionToken: result.sessionToken,
+    });
+  } catch (error) {
+    console.error("google auth callback failed", error);
+    sendGooglePopupResponse(res, storedState.origin, {
+      type: GOOGLE_AUTH_MESSAGE_TYPE,
+      ok: false,
+      error: getPublicGoogleAuthErrorMessage(error),
+    });
+  }
+});
 
 function clearSocketAuth(socket: ServerSocket): void {
   delete socket.data.userId;

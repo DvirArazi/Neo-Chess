@@ -5,7 +5,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { promisify } from "node:util";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { sessions, users } from "../db/schema.js";
 
@@ -18,6 +18,8 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
+const GOOGLE_USERNAME_FALLBACK = "player";
+const MAX_GOOGLE_USERNAME_SUFFIX = 999;
 
 type PublicUser = {
   id: string;
@@ -68,6 +70,83 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
+function normalizeGoogleUsernameSource(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function buildGoogleUsernameBase(input: {
+  email?: string | null;
+  googleSubject?: string;
+  name?: string | null;
+}): string {
+  const candidateSources = [
+    input.name ?? "",
+    input.email?.split("@")[0] ?? "",
+    input.googleSubject ?? "",
+    GOOGLE_USERNAME_FALLBACK,
+  ];
+
+  for (const source of candidateSources) {
+    const candidate = normalizeGoogleUsernameSource(source);
+    if (candidate.length > 0) {
+      return candidate;
+    }
+  }
+
+  return GOOGLE_USERNAME_FALLBACK;
+}
+
+function buildGoogleUsernameCandidate(base: string, duplicateIndex: number): string {
+  if (duplicateIndex === 0) {
+    return base;
+  }
+
+  return `${base} ${duplicateIndex + 1}`;
+}
+
+async function findAvailableGoogleUsername(
+  baseUsername: string,
+  excludeUserId?: string,
+): Promise<{
+  username: string;
+  usernameNormalized: string;
+}> {
+  for (
+    let duplicateIndex = 0;
+    duplicateIndex <= MAX_GOOGLE_USERNAME_SUFFIX;
+    duplicateIndex += 1
+  ) {
+    const candidateUsername = buildGoogleUsernameCandidate(
+      baseUsername,
+      duplicateIndex,
+    );
+    const candidateNormalized = normalizeUsername(candidateUsername);
+    const [conflictingUser] = await db
+      .select({
+        id: users.id,
+      })
+      .from(users)
+      .where(
+        or(
+          eq(users.usernameNormalized, candidateNormalized),
+          eq(users.username, candidateUsername),
+        ),
+      )
+      .limit(1);
+
+    if (!conflictingUser || conflictingUser.id === excludeUserId) {
+      return {
+        username: candidateUsername,
+        usernameNormalized: candidateNormalized,
+      };
+    }
+  }
+
+  throw new Error("Unable to allocate a unique username for Google sign-in");
+}
+
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(PASSWORD_SALT_BYTES);
   const derivedKey = await scrypt(password, salt, PASSWORD_KEY_BYTES) as Buffer;
@@ -106,12 +185,21 @@ function createSessionExpiryDate(): Date {
 }
 
 function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === "23505"
-  );
+  let currentError: unknown = error;
+
+  while (typeof currentError === "object" && currentError !== null) {
+    if ("code" in currentError && currentError.code === "23505") {
+      return true;
+    }
+
+    if (!("cause" in currentError)) {
+      break;
+    }
+
+    currentError = currentError.cause;
+  }
+
+  return false;
 }
 
 async function createSession(user: PublicUser): Promise<{
@@ -133,6 +221,17 @@ async function createSession(user: PublicUser): Promise<{
   return {
     id: session.id,
     token: sessionToken,
+  };
+}
+
+async function createAuthResultForUser(user: PublicUser): Promise<AuthSuccess> {
+  const session = await createSession(user);
+
+  return {
+    ok: true,
+    user,
+    sessionId: session.id,
+    sessionToken: session.token,
   };
 }
 
@@ -176,7 +275,6 @@ export async function signUpWithPassword(input: {
       });
 
     const session = await createSession(user);
-
     return {
       ok: true,
       user,
@@ -212,20 +310,113 @@ export async function logInWithPassword(input: {
     return { ok: false, error: "Invalid username or password" };
   }
 
+  if (!user.passwordHash) {
+    return { ok: false, error: "Invalid username or password" };
+  }
+
   const isValidPassword = await verifyPassword(input.password, user.passwordHash);
   if (!isValidPassword) {
     return { ok: false, error: "Invalid username or password" };
   }
 
   const publicUser = { id: user.id, username: user.username };
-  const session = await createSession(publicUser);
+  return createAuthResultForUser(publicUser);
+}
 
-  return {
-    ok: true,
-    user: publicUser,
-    sessionId: session.id,
-    sessionToken: session.token,
-  };
+export async function logInWithGoogleProfile(input: {
+  googleSubject: string;
+  email?: string | null;
+  emailVerified: boolean;
+  name?: string | null;
+}): Promise<AuthResult> {
+  if (!input.emailVerified) {
+    return { ok: false, error: "Google account email is not verified" };
+  }
+
+  const usernameBase = buildGoogleUsernameBase(input);
+
+  const [existingUser] = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      usernameNormalized: users.usernameNormalized,
+    })
+    .from(users)
+    .where(eq(users.googleSubject, input.googleSubject))
+    .limit(1);
+
+  for (let attempt = 0; attempt <= MAX_GOOGLE_USERNAME_SUFFIX; attempt += 1) {
+    const candidateUser = await findAvailableGoogleUsername(
+      usernameBase,
+      existingUser?.id,
+    );
+
+    try {
+      if (existingUser) {
+        if (
+          existingUser.username === candidateUser.username &&
+          existingUser.usernameNormalized === candidateUser.usernameNormalized
+        ) {
+          return createAuthResultForUser({
+            id: existingUser.id,
+            username: existingUser.username,
+          });
+        }
+
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            username: candidateUser.username,
+            usernameNormalized: candidateUser.usernameNormalized,
+          })
+          .where(eq(users.id, existingUser.id))
+          .returning({
+            id: users.id,
+            username: users.username,
+          });
+
+        if (!updatedUser) {
+          throw new Error("Google user update did not return a row");
+        }
+
+        return createAuthResultForUser(updatedUser);
+      }
+
+      const [createdUser] = await db
+        .insert(users)
+        .values({
+          username: candidateUser.username,
+          usernameNormalized: candidateUser.usernameNormalized,
+          passwordHash: null,
+          googleSubject: input.googleSubject,
+        })
+        .returning({
+          id: users.id,
+          username: users.username,
+        });
+
+      return createAuthResultForUser(createdUser);
+    } catch (error) {
+      if (!isUniqueViolation(error)) {
+        throw error;
+      }
+
+      const [concurrentUser] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+        })
+        .from(users)
+        .where(eq(users.googleSubject, input.googleSubject))
+        .limit(1);
+
+      if (concurrentUser) {
+        return createAuthResultForUser(concurrentUser);
+      }
+    }
+  }
+
+  throw new Error("Unable to allocate a unique username for Google sign-in");
 }
 
 export async function getSessionUserByToken(

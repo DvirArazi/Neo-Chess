@@ -72,11 +72,12 @@ body {
 }
 
 .app-header__account-link {
-  width: 40px;
-  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  max-width: min(42vw, 220px);
   padding: 0;
   border: 0;
   background: transparent;
@@ -84,9 +85,20 @@ body {
   cursor: pointer;
 }
 
+.app-header__account-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #f7f7f5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .app-header__account-icon {
   width: 24px;
   height: 24px;
+  flex: 0 0 auto;
   display: block;
 }
 
@@ -449,6 +461,15 @@ body {
   color: rgba(247, 247, 245, 0.46);
 }
 
+.account-popup__input:-webkit-autofill,
+.account-popup__input:-webkit-autofill:hover,
+.account-popup__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f7f7f5;
+  box-shadow: 0 0 0 1000px #2f2f2b inset;
+  caret-color: #f7f7f5;
+  transition: background-color 999999s ease-out 0s;
+}
+
 .account-popup__button {
   min-height: 44px;
   padding: 0 14px;
@@ -456,9 +477,39 @@ body {
   border-radius: 10px;
   background: #81b64c;
   color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+.account-popup__button--google {
+  padding: 0 16px 0 0;
+  background: #db4437;
+  color: #ffffff;
+  justify-content: flex-start;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.account-popup__button-icon-slab {
+  align-self: stretch;
+  padding: 0 12px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.account-popup__button-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .account-popup__button:disabled {

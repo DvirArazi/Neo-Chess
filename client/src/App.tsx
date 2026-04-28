@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AuthenticatedUser } from "../../shared/socket";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
@@ -9,9 +9,11 @@ import { TabPanel } from "./TabPanel";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
 import accountIcon from "./assets/images/account.svg";
+import googleIcon from "./assets/images/socials/google.svg";
 
 const HOME_PATH = "/";
 const LOCAL_GAME_PATH = "/local-game";
+const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
 const LOCAL_TIME_CONTROLS: LocalTimeControl[] = [
   { id: "bullet", label: "Bullet", initialMs: 2 * 60 * 1000, incrementMs: 1000 },
   { id: "blitz", label: "Blitz", initialMs: 5 * 60 * 1000, incrementMs: 3000 },
@@ -27,6 +29,18 @@ type RouteState = {
 
 type HomeTab = "online" | "local";
 type OnlineMode = "rated" | "casual";
+type GoogleAuthMessage =
+  | {
+    type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
+    ok: true;
+    user: AuthenticatedUser;
+    sessionToken: string;
+  }
+  | {
+    type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
+    ok: false;
+    error: string;
+  };
 
 function formatTimeControlSubtext(timeControl: LocalTimeControl): string {
   if (timeControl.isUnlimited) return "∞";
@@ -48,16 +62,19 @@ export function App() {
     useState<AuthenticatedUser | null>(null);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [loginPasswordConfirmation, setLoginPasswordConfirmation] = useState("");
   const [signUpUsername, setSignUpUsername] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
+  const [areAccountInputsArmed, setAreAccountInputsArmed] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [accountStatusTone, setAccountStatusTone] = useState<"error" | "success">(
     "success",
   );
   const [activeAccountAction, setActiveAccountAction] = useState<
-    "logIn" | "signUp" | "logOut" | null
+    "logIn" | "signUp" | "logOut" | "google" | null
   >(null);
+  const googleAuthPopupRef = useRef<Window | null>(null);
+  const googleAuthTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     document.title = "Neo Chess";
@@ -94,11 +111,68 @@ export function App() {
     };
 
     socket.on("authStateChanged", handleAuthStateChanged);
-    socket.connect();
+    if (!socket.connected && !socket.active) {
+      socket.connect();
+    }
 
     return () => {
       socket.off("authStateChanged", handleAuthStateChanged);
-      socket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const serverOrigin = new URL(import.meta.env.VITE_SERVER_URL).origin;
+
+    const clearGooglePopupWatcher = () => {
+      if (googleAuthTimeoutRef.current !== null) {
+        window.clearTimeout(googleAuthTimeoutRef.current);
+        googleAuthTimeoutRef.current = null;
+      }
+      googleAuthPopupRef.current = null;
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== serverOrigin) {
+        return;
+      }
+
+      const data = event.data as GoogleAuthMessage | null;
+      if (!data || data.type !== GOOGLE_AUTH_MESSAGE_TYPE) {
+        return;
+      }
+
+      clearGooglePopupWatcher();
+      setActiveAccountAction(null);
+
+      if (!data.ok) {
+        setAccountStatusTone("error");
+        setAccountStatus(data.error);
+        return;
+      }
+
+      setSessionToken(data.sessionToken);
+      setAuthenticatedUser(data.user);
+      setIsAccountPopupOpen(false);
+      setLoginUsername("");
+      setLoginPassword("");
+      setSignUpUsername("");
+      setSignUpPassword("");
+      setSignUpPasswordConfirmation("");
+      setAreAccountInputsArmed(false);
+      setAccountStatus(null);
+      setAccountStatusTone("success");
+
+      if (socket.connected || socket.active) {
+        socket.disconnect();
+      }
+      socket.connect();
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      clearGooglePopupWatcher();
     };
   }, []);
 
@@ -130,9 +204,10 @@ export function App() {
   const resetAccountForms = () => {
     setLoginUsername("");
     setLoginPassword("");
-    setLoginPasswordConfirmation("");
     setSignUpUsername("");
     setSignUpPassword("");
+    setSignUpPasswordConfirmation("");
+    setAreAccountInputsArmed(false);
     setAccountStatus(null);
     setAccountStatusTone("success");
     setActiveAccountAction(null);
@@ -184,6 +259,7 @@ export function App() {
       {
         username: signUpUsername,
         password: signUpPassword,
+        passwordConfirmation: signUpPasswordConfirmation,
       },
       (response) => {
         setActiveAccountAction(null);
@@ -224,6 +300,44 @@ export function App() {
     });
   };
 
+  const handleContinueWithGoogle = () => {
+    if (googleAuthPopupRef.current) {
+      googleAuthPopupRef.current.focus();
+      return;
+    }
+
+    setAccountStatus(null);
+    setAccountStatusTone("success");
+
+    const authUrl = new URL("/auth/google/start", import.meta.env.VITE_SERVER_URL);
+    authUrl.searchParams.set("origin", window.location.origin);
+
+    const popup = window.open(
+      authUrl.toString(),
+      "neo-chess-google-auth",
+      "popup=yes,width=520,height=680",
+    );
+
+    if (!popup) {
+      setAccountStatusTone("error");
+      setAccountStatus("Google sign-in popup was blocked");
+      return;
+    }
+
+    googleAuthPopupRef.current = popup;
+    setActiveAccountAction("google");
+
+    if (googleAuthTimeoutRef.current !== null) {
+      window.clearTimeout(googleAuthTimeoutRef.current);
+    }
+
+    googleAuthTimeoutRef.current = window.setTimeout(() => {
+      googleAuthTimeoutRef.current = null;
+      googleAuthPopupRef.current = null;
+      setActiveAccountAction((current) => current === "google" ? null : current);
+    }, 2 * 60 * 1000);
+  };
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -235,9 +349,20 @@ export function App() {
         <button
           type="button"
           className="app-header__account-link"
-          aria-label="Account"
+          aria-label={
+            authenticatedUser
+              ? `Account (${authenticatedUser.username})`
+              : "Account"
+          }
           onClick={() => setIsAccountPopupOpen(true)}
         >
+          {authenticatedUser
+            ? (
+              <span className="app-header__account-name">
+                {authenticatedUser.username}
+              </span>
+            )
+            : null}
           <img className="app-header__account-icon" src={accountIcon} alt="" />
         </button>
       </header>
@@ -331,48 +456,40 @@ export function App() {
           <input
             className="account-popup__input"
             type="text"
+            name="signup_username"
             placeholder="Enter username"
-            value={loginUsername}
-            onChange={(event) => setLoginUsername(event.target.value)}
-          />
-          <input
-            className="account-popup__input"
-            type="password"
-            placeholder="Enter password"
-            value={loginPassword}
-            onChange={(event) => setLoginPassword(event.target.value)}
-          />
-          <input
-            className="account-popup__input"
-            type="password"
-            placeholder="Re-enter password"
-            value={loginPasswordConfirmation}
-            onChange={(event) => setLoginPasswordConfirmation(event.target.value)}
-          />
-          <button
-            type="button"
-            className="account-popup__button"
-            onClick={handleLogIn}
-            disabled={activeAccountAction !== null}
-          >
-            Log In
-          </button>
-
-          <div className="account-popup__divider" aria-hidden="true" />
-
-          <input
-            className="account-popup__input"
-            type="text"
-            placeholder="Enter username"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            readOnly={!areAccountInputsArmed}
+            onPointerDown={() => setAreAccountInputsArmed(true)}
+            onFocus={() => setAreAccountInputsArmed(true)}
             value={signUpUsername}
             onChange={(event) => setSignUpUsername(event.target.value)}
           />
           <input
             className="account-popup__input"
             type="password"
+            name="signup_password"
             placeholder="Enter password"
+            autoComplete="new-password"
+            readOnly={!areAccountInputsArmed}
+            onPointerDown={() => setAreAccountInputsArmed(true)}
+            onFocus={() => setAreAccountInputsArmed(true)}
             value={signUpPassword}
             onChange={(event) => setSignUpPassword(event.target.value)}
+          />
+          <input
+            className="account-popup__input"
+            type="password"
+            name="signup_password_confirmation"
+            placeholder="Re-enter password"
+            autoComplete="new-password"
+            readOnly={!areAccountInputsArmed}
+            onPointerDown={() => setAreAccountInputsArmed(true)}
+            onFocus={() => setAreAccountInputsArmed(true)}
+            value={signUpPasswordConfirmation}
+            onChange={(event) => setSignUpPasswordConfirmation(event.target.value)}
           />
           <button
             type="button"
@@ -385,8 +502,57 @@ export function App() {
 
           <div className="account-popup__divider" aria-hidden="true" />
 
-          <button type="button" className="account-popup__button">
-            Continue with Google
+          <input
+            className="account-popup__input"
+            type="text"
+            name="login_username"
+            placeholder="Enter username"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            readOnly={!areAccountInputsArmed}
+            onPointerDown={() => setAreAccountInputsArmed(true)}
+            onFocus={() => setAreAccountInputsArmed(true)}
+            value={loginUsername}
+            onChange={(event) => setLoginUsername(event.target.value)}
+          />
+          <input
+            className="account-popup__input"
+            type="password"
+            name="login_password"
+            placeholder="Enter password"
+            autoComplete="new-password"
+            readOnly={!areAccountInputsArmed}
+            onPointerDown={() => setAreAccountInputsArmed(true)}
+            onFocus={() => setAreAccountInputsArmed(true)}
+            value={loginPassword}
+            onChange={(event) => setLoginPassword(event.target.value)}
+          />
+          <button
+            type="button"
+            className="account-popup__button"
+            onClick={handleLogIn}
+            disabled={activeAccountAction !== null}
+          >
+            Log In
+          </button>
+
+          <div className="account-popup__divider" aria-hidden="true" />
+
+          <button
+            type="button"
+            className="account-popup__button account-popup__button--google"
+            onClick={handleContinueWithGoogle}
+            disabled={activeAccountAction !== null}
+          >
+            <span className="account-popup__button-icon-slab" aria-hidden="true">
+              <img
+                className="account-popup__button-icon"
+                src={googleIcon}
+                alt=""
+              />
+            </span>
+            <span>Continue with Google</span>
           </button>
           <button type="button" className="account-popup__button">
             Continue with Facebook
