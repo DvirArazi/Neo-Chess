@@ -12,6 +12,13 @@ import {
   revokeSession,
   signUpWithPassword,
 } from "./auth/service.js";
+import {
+  approveFriendRequest,
+  denyFriendRequest,
+  getFriendsSnapshot,
+  sendFriendRequest,
+  unfriend,
+} from "./friends/service.js";
 import type {
   AuthenticatedUser,
   ClientToServerEvents,
@@ -96,9 +103,21 @@ function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
   };
 }
 
+function getRequiredUserId(socket: ServerSocket): string | null {
+  return typeof socket.data.userId === "string" ? socket.data.userId : null;
+}
+
 function emitAuthState(socket: ServerSocket): void {
   socket.emit("authStateChanged", {
     user: getAuthenticatedUser(socket),
+  });
+}
+
+function emitFriendsChanged(userId: string): void {
+  io.sockets.sockets.forEach((connectedSocket) => {
+    if (connectedSocket.data.userId === userId) {
+      connectedSocket.emit("friendsChanged");
+    }
   });
 }
 
@@ -537,6 +556,136 @@ io.on("connection", (socket) => {
       callback({
         ok: false,
         error: "Unable to log out right now",
+      });
+    }
+  });
+
+  socket.on("getFriends", async (data, callback) => {
+    try {
+      const userId = getRequiredUserId(socket);
+      if (!userId) {
+        callback({ ok: false, error: "Log in to view friends" });
+        return;
+      }
+
+      const snapshot = await getFriendsSnapshot({
+        userId,
+        search: data.search,
+        markRequestsSeen: data.markRequestsSeen,
+      });
+
+      callback({
+        ok: true,
+        ...snapshot,
+      });
+    } catch (error) {
+      console.error("getFriends failed", error);
+      callback({
+        ok: false,
+        error: "Unable to load friends right now",
+      });
+    }
+  });
+
+  socket.on("sendFriendRequest", async (data, callback) => {
+    try {
+      const userId = getRequiredUserId(socket);
+      if (!userId) {
+        callback({ ok: false, error: "Log in to add friends" });
+        return;
+      }
+
+      const result = await sendFriendRequest({
+        requesterId: userId,
+        recipientId: data.userId,
+      });
+
+      callback(result);
+      if (result.ok) {
+        emitFriendsChanged(data.userId);
+        emitFriendsChanged(userId);
+      }
+    } catch (error) {
+      console.error("sendFriendRequest failed", error);
+      callback({
+        ok: false,
+        error: "Unable to send friend request right now",
+      });
+    }
+  });
+
+  socket.on("approveFriendRequest", async (data, callback) => {
+    try {
+      const userId = getRequiredUserId(socket);
+      if (!userId) {
+        callback({ ok: false, error: "Log in to approve requests" });
+        return;
+      }
+
+      const requesterId = await approveFriendRequest({
+        requestId: data.requestId,
+        recipientId: userId,
+      });
+
+      callback({ ok: true });
+      emitFriendsChanged(userId);
+      if (requesterId) {
+        emitFriendsChanged(requesterId);
+      }
+    } catch (error) {
+      console.error("approveFriendRequest failed", error);
+      callback({
+        ok: false,
+        error: "Unable to approve request right now",
+      });
+    }
+  });
+
+  socket.on("denyFriendRequest", async (data, callback) => {
+    try {
+      const userId = getRequiredUserId(socket);
+      if (!userId) {
+        callback({ ok: false, error: "Log in to deny requests" });
+        return;
+      }
+
+      await denyFriendRequest({
+        requestId: data.requestId,
+        recipientId: userId,
+      });
+
+      callback({ ok: true });
+      emitFriendsChanged(userId);
+    } catch (error) {
+      console.error("denyFriendRequest failed", error);
+      callback({
+        ok: false,
+        error: "Unable to deny request right now",
+      });
+    }
+  });
+
+  socket.on("unfriend", async (data, callback) => {
+    try {
+      const userId = getRequiredUserId(socket);
+      if (!userId) {
+        callback({ ok: false, error: "Log in to update friends" });
+        return;
+      }
+
+      await unfriend({
+        userId,
+        friendId: data.userId,
+      });
+
+      callback({ ok: true });
+      emitFriendsChanged(userId);
+      emitFriendsChanged(data.userId);
+    } catch (error) {
+      console.error("unfriend failed", error);
+      callback({
+        ok: false,
+        error: "Unable to remove friend right now",
       });
     }
   });

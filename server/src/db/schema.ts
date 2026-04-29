@@ -3,6 +3,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -26,6 +27,39 @@ export const sessions = pgTable("sessions", {
   lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
   revokedAt: timestamp("revoked_at"),
 });
+
+export const friendRequests = pgTable("friend_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  requesterId: uuid("requester_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  recipientId: uuid("recipient_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  isSeen: boolean("is_seen").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("friend_requests_requester_recipient_unique").on(
+    table.requesterId,
+    table.recipientId,
+  ),
+]);
+
+export const friendships = pgTable("friendships", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userAId: uuid("user_a_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  userBId: uuid("user_b_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("friendships_user_a_user_b_unique").on(
+    table.userAId,
+    table.userBId,
+  ),
+]);
 
 export const games = pgTable("games", {
   id: uuid("id").defaultRandom().primaryKey(),

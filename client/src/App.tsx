@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import type { AuthenticatedUser } from "../../shared/socket";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  AuthenticatedUser,
+  FriendEntry,
+  FriendRequest,
+} from "../../shared/socket";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
 import LocalGame, { type LocalTimeControl } from "./LocalGame";
@@ -65,16 +69,60 @@ export function App() {
   const [signUpUsername, setSignUpUsername] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
+  const [friendSearch, setFriendSearch] = useState("");
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [friendUsers, setFriendUsers] = useState<FriendEntry[]>([]);
+  const [hasUnseenRequests, setHasUnseenRequests] = useState(false);
   const [areAccountInputsArmed, setAreAccountInputsArmed] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [accountStatusTone, setAccountStatusTone] = useState<"error" | "success">(
     "success",
   );
+  const [friendStatus, setFriendStatus] = useState<string | null>(null);
+  const [friendStatusTone, setFriendStatusTone] = useState<"error" | "success">(
+    "success",
+  );
   const [activeAccountAction, setActiveAccountAction] = useState<
     "logIn" | "signUp" | "logOut" | "google" | null
   >(null);
+  const [activeFriendAction, setActiveFriendAction] = useState<string | null>(null);
   const googleAuthPopupRef = useRef<Window | null>(null);
   const googleAuthTimeoutRef = useRef<number | null>(null);
+
+  const fetchFriends = useCallback((options?: {
+    search?: string;
+    markRequestsSeen?: boolean;
+  }, onComplete?: () => void) => {
+    if (!authenticatedUser) {
+      onComplete?.();
+      return;
+    }
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit(
+      "getFriends",
+      {
+        search: options?.search ?? friendSearch,
+        markRequestsSeen: options?.markRequestsSeen ?? false,
+      },
+      (response) => {
+        if (!response.ok) {
+          setFriendStatusTone("error");
+          setFriendStatus(response.error);
+          onComplete?.();
+          return;
+        }
+
+        setFriendRequests(response.requests);
+        setFriendUsers(response.users);
+        setHasUnseenRequests(response.hasUnseenRequests);
+        onComplete?.();
+      },
+    );
+  }, [authenticatedUser, friendSearch]);
 
   useEffect(() => {
     document.title = "Neo Chess";
@@ -107,6 +155,9 @@ export function App() {
       setAuthenticatedUser(data.user);
       if (data.user === null) {
         clearSessionToken();
+        setFriendRequests([]);
+        setFriendUsers([]);
+        setHasUnseenRequests(false);
       }
     };
 
@@ -119,6 +170,23 @@ export function App() {
       socket.off("authStateChanged", handleAuthStateChanged);
     };
   }, []);
+
+  useEffect(() => {
+    if (!authenticatedUser) return;
+
+    fetchFriends();
+  }, [authenticatedUser, fetchFriends]);
+
+  useEffect(() => {
+    const handleFriendsChanged = () => {
+      fetchFriends({ markRequestsSeen: isAccountPopupOpen });
+    };
+
+    socket.on("friendsChanged", handleFriendsChanged);
+    return () => {
+      socket.off("friendsChanged", handleFriendsChanged);
+    };
+  }, [fetchFriends, isAccountPopupOpen]);
 
   useEffect(() => {
     const serverOrigin = new URL(import.meta.env.VITE_SERVER_URL).origin;
@@ -181,7 +249,11 @@ export function App() {
     if (route.pathname === HOME_PATH || route.pathname === LOCAL_GAME_PATH) return;
 
     window.history.replaceState({}, "", HOME_PATH);
-    setRoute({ pathname: HOME_PATH, search: "" });
+    const redirectFrame = window.requestAnimationFrame(() => {
+      setRoute({ pathname: HOME_PATH, search: "" });
+    });
+
+    return () => window.cancelAnimationFrame(redirectFrame);
   }, [route.pathname]);
 
   const navigate = (nextPathname: string, nextSearch = "") => {
@@ -217,6 +289,17 @@ export function App() {
   const closeAccountPopup = () => {
     setIsAccountPopupOpen(false);
     resetAccountForms();
+    setFriendStatus(null);
+    setFriendStatusTone("success");
+    setActiveFriendAction(null);
+  };
+
+  const openAccountPopup = () => {
+    setIsAccountPopupOpen(true);
+    if (authenticatedUser) {
+      setFriendStatus(null);
+      fetchFriends({ markRequestsSeen: true });
+    }
   };
 
   const handleLogIn = () => {
@@ -296,8 +379,63 @@ export function App() {
 
       clearSessionToken();
       setAuthenticatedUser(null);
+      setFriendRequests([]);
+      setFriendUsers([]);
+      setFriendSearch("");
+      setHasUnseenRequests(false);
       setAccountStatusTone("success");
       setAccountStatus("Logged out");
+    });
+  };
+
+  const runFriendAction = (
+    actionKey: string,
+    emitAction: (
+      callback: (response: { ok: true } | { ok: false; error: string }) => void,
+    ) => void,
+  ) => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    setActiveFriendAction(actionKey);
+    setFriendStatus(null);
+
+    emitAction((response) => {
+      if (!response.ok) {
+        setActiveFriendAction(null);
+        setFriendStatusTone("error");
+        setFriendStatus(response.error);
+        return;
+      }
+
+      setFriendStatusTone("success");
+      setFriendStatus(null);
+      fetchFriends(undefined, () => setActiveFriendAction(null));
+    });
+  };
+
+  const handleApproveFriendRequest = (requestId: string) => {
+    runFriendAction(`approve:${requestId}`, (callback) => {
+      socket.emit("approveFriendRequest", { requestId }, callback);
+    });
+  };
+
+  const handleDenyFriendRequest = (requestId: string) => {
+    runFriendAction(`deny:${requestId}`, (callback) => {
+      socket.emit("denyFriendRequest", { requestId }, callback);
+    });
+  };
+
+  const handleSendFriendRequest = (userId: string) => {
+    runFriendAction(`add:${userId}`, (callback) => {
+      socket.emit("sendFriendRequest", { userId }, callback);
+    });
+  };
+
+  const handleUnfriend = (userId: string) => {
+    runFriendAction(`unfriend:${userId}`, (callback) => {
+      socket.emit("unfriend", { userId }, callback);
     });
   };
 
@@ -355,7 +493,7 @@ export function App() {
               ? `Account (${authenticatedUser.username})`
               : "Account"
           }
-          onClick={() => setIsAccountPopupOpen(true)}
+          onClick={openAccountPopup}
         >
           {authenticatedUser
             ? (
@@ -365,6 +503,9 @@ export function App() {
             )
             : null}
           <img className="app-header__account-icon" src={accountIcon} alt="" />
+          {hasUnseenRequests
+            ? <span className="app-header__account-indicator" aria-hidden="true" />
+            : null}
         </button>
       </header>
 
@@ -431,7 +572,7 @@ export function App() {
 
       <Popup
         open={isAccountPopupOpen}
-        title="Account"
+        title={authenticatedUser ? "" : "Account"}
         onClose={closeAccountPopup}
         closeOnBackdropPress={true}
       >
@@ -439,9 +580,116 @@ export function App() {
           {authenticatedUser
             ? (
               <>
-                <p className="account-popup__signed-in">
-                  Signed in as {authenticatedUser.username}
-                </p>
+                {friendRequests.length > 0
+                  ? (
+                    <section className="account-popup__section">
+                      <h3 className="account-popup__section-title">Requests</h3>
+                      <div className="account-popup__list">
+                        {friendRequests.map((request) => (
+                          <div className="account-popup__friend-row" key={request.id}>
+                            <span className="account-popup__friend-name">
+                              {request.username}
+                            </span>
+                            <div className="account-popup__friend-actions">
+                              <button
+                                type="button"
+                                className="account-popup__icon-button account-popup__icon-button--approve"
+                                aria-label={`Approve ${request.username}`}
+                                onClick={() => handleApproveFriendRequest(request.id)}
+                                disabled={activeFriendAction === `approve:${request.id}`}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                className="account-popup__icon-button account-popup__icon-button--deny"
+                                aria-label={`Deny ${request.username}`}
+                                onClick={() => handleDenyFriendRequest(request.id)}
+                                disabled={activeFriendAction === `deny:${request.id}`}
+                              >
+                                Deny
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )
+                  : null}
+                <section className="account-popup__section">
+                  <h3 className="account-popup__section-title">Friends</h3>
+                  <input
+                    className="account-popup__input"
+                    type="search"
+                    name="friend_search"
+                    placeholder="Search users"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={friendSearch}
+                    onChange={(event) => setFriendSearch(event.target.value)}
+                  />
+                  <div className="account-popup__list account-popup__list--scroll">
+                    {friendUsers.length > 0
+                      ? friendUsers.map((user) => (
+                        <div className="account-popup__friend-row" key={user.id}>
+                          <span className="account-popup__friend-name">
+                            {user.username}
+                          </span>
+                          {user.hasPendingRequest ||
+                              activeFriendAction === `add:${user.id}`
+                            ? (
+                              <span className="account-popup__pending-text">
+                                Pending response
+                              </span>
+                            )
+                            : user.isFriend
+                            ? (
+                              <button
+                                type="button"
+                                className="account-popup__small-button"
+                                onClick={() => handleUnfriend(user.id)}
+                                disabled={activeFriendAction === `unfriend:${user.id}`}
+                              >
+                                Unfriend
+                              </button>
+                            )
+                            : (
+                              <button
+                                type="button"
+                                className="account-popup__small-button account-popup__small-button--add"
+                                onClick={() => handleSendFriendRequest(user.id)}
+                                disabled={activeFriendAction === `add:${user.id}`}
+                              >
+                                Add
+                              </button>
+                            )}
+                        </div>
+                      ))
+                      : (
+                        <p className="account-popup__empty">
+                          {friendSearch.trim().length > 0
+                            ? "No users found"
+                            : "No friends yet"}
+                        </p>
+                      )}
+                  </div>
+                </section>
+                {friendStatus
+                  ? (
+                    <p
+                      className={[
+                        "account-popup__status",
+                        friendStatusTone === "error"
+                          ? "account-popup__status--error"
+                          : "account-popup__status--success",
+                      ].join(" ")}
+                    >
+                      {friendStatus}
+                    </p>
+                  )
+                  : null}
+                <div className="account-popup__divider" aria-hidden="true" />
                 <button
                   type="button"
                   className="account-popup__button"
@@ -450,128 +698,134 @@ export function App() {
                 >
                   Log Out
                 </button>
-                <div className="account-popup__divider" aria-hidden="true" />
               </>
             )
-            : null}
-          <input
-            className="account-popup__input"
-            type="text"
-            name="signup_username"
-            placeholder="Enter username"
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            readOnly={!areAccountInputsArmed}
-            onPointerDown={() => setAreAccountInputsArmed(true)}
-            onFocus={() => setAreAccountInputsArmed(true)}
-            value={signUpUsername}
-            onChange={(event) => setSignUpUsername(event.target.value)}
-          />
-          <input
-            className="account-popup__input"
-            type="password"
-            name="signup_password"
-            placeholder="Enter password"
-            autoComplete="new-password"
-            readOnly={!areAccountInputsArmed}
-            onPointerDown={() => setAreAccountInputsArmed(true)}
-            onFocus={() => setAreAccountInputsArmed(true)}
-            value={signUpPassword}
-            onChange={(event) => setSignUpPassword(event.target.value)}
-          />
-          <input
-            className="account-popup__input"
-            type="password"
-            name="signup_password_confirmation"
-            placeholder="Re-enter password"
-            autoComplete="new-password"
-            readOnly={!areAccountInputsArmed}
-            onPointerDown={() => setAreAccountInputsArmed(true)}
-            onFocus={() => setAreAccountInputsArmed(true)}
-            value={signUpPasswordConfirmation}
-            onChange={(event) => setSignUpPasswordConfirmation(event.target.value)}
-          />
-          <button
-            type="button"
-            className="account-popup__button"
-            onClick={handleSignUp}
-            disabled={activeAccountAction !== null}
-          >
-            Sign Up
-          </button>
+            : (
+              <>
+                <input
+                  className="account-popup__input"
+                  type="text"
+                  name="signup_username"
+                  placeholder="Enter username"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  readOnly={!areAccountInputsArmed}
+                  onPointerDown={() => setAreAccountInputsArmed(true)}
+                  onFocus={() => setAreAccountInputsArmed(true)}
+                  value={signUpUsername}
+                  onChange={(event) => setSignUpUsername(event.target.value)}
+                />
+                <input
+                  className="account-popup__input"
+                  type="password"
+                  name="signup_password"
+                  placeholder="Enter password"
+                  autoComplete="new-password"
+                  readOnly={!areAccountInputsArmed}
+                  onPointerDown={() => setAreAccountInputsArmed(true)}
+                  onFocus={() => setAreAccountInputsArmed(true)}
+                  value={signUpPassword}
+                  onChange={(event) => setSignUpPassword(event.target.value)}
+                />
+                <input
+                  className="account-popup__input"
+                  type="password"
+                  name="signup_password_confirmation"
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  readOnly={!areAccountInputsArmed}
+                  onPointerDown={() => setAreAccountInputsArmed(true)}
+                  onFocus={() => setAreAccountInputsArmed(true)}
+                  value={signUpPasswordConfirmation}
+                  onChange={(event) =>
+                    setSignUpPasswordConfirmation(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="account-popup__button"
+                  onClick={handleSignUp}
+                  disabled={activeAccountAction !== null}
+                >
+                  Sign Up
+                </button>
 
-          <div className="account-popup__divider" aria-hidden="true" />
+                <div className="account-popup__divider" aria-hidden="true" />
 
-          <input
-            className="account-popup__input"
-            type="text"
-            name="login_username"
-            placeholder="Enter username"
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            readOnly={!areAccountInputsArmed}
-            onPointerDown={() => setAreAccountInputsArmed(true)}
-            onFocus={() => setAreAccountInputsArmed(true)}
-            value={loginUsername}
-            onChange={(event) => setLoginUsername(event.target.value)}
-          />
-          <input
-            className="account-popup__input"
-            type="password"
-            name="login_password"
-            placeholder="Enter password"
-            autoComplete="new-password"
-            readOnly={!areAccountInputsArmed}
-            onPointerDown={() => setAreAccountInputsArmed(true)}
-            onFocus={() => setAreAccountInputsArmed(true)}
-            value={loginPassword}
-            onChange={(event) => setLoginPassword(event.target.value)}
-          />
-          <button
-            type="button"
-            className="account-popup__button"
-            onClick={handleLogIn}
-            disabled={activeAccountAction !== null}
-          >
-            Log In
-          </button>
+                <input
+                  className="account-popup__input"
+                  type="text"
+                  name="login_username"
+                  placeholder="Enter username"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  readOnly={!areAccountInputsArmed}
+                  onPointerDown={() => setAreAccountInputsArmed(true)}
+                  onFocus={() => setAreAccountInputsArmed(true)}
+                  value={loginUsername}
+                  onChange={(event) => setLoginUsername(event.target.value)}
+                />
+                <input
+                  className="account-popup__input"
+                  type="password"
+                  name="login_password"
+                  placeholder="Enter password"
+                  autoComplete="new-password"
+                  readOnly={!areAccountInputsArmed}
+                  onPointerDown={() => setAreAccountInputsArmed(true)}
+                  onFocus={() => setAreAccountInputsArmed(true)}
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="account-popup__button"
+                  onClick={handleLogIn}
+                  disabled={activeAccountAction !== null}
+                >
+                  Log In
+                </button>
 
-          <div className="account-popup__divider" aria-hidden="true" />
+                <div className="account-popup__divider" aria-hidden="true" />
 
-          <button
-            type="button"
-            className="account-popup__button account-popup__button--google"
-            onClick={handleContinueWithGoogle}
-            disabled={activeAccountAction !== null}
-          >
-            <span className="account-popup__button-icon-slab" aria-hidden="true">
-              <img
-                className="account-popup__button-icon"
-                src={googleIcon}
-                alt=""
-              />
-            </span>
-            <span>Continue with Google</span>
-          </button>
-          <button type="button" className="account-popup__button">
-            Continue with Facebook
-          </button>
-          {accountStatus
-            ? (
-              <p
-                className={[
-                  "account-popup__status",
-                  accountStatusTone === "error"
-                    ? "account-popup__status--error"
-                    : "account-popup__status--success",
-                ].join(" ")}
-              >
-                {accountStatus}
-              </p>
-            )
-            : null}
+                <button
+                  type="button"
+                  className="account-popup__button account-popup__button--google"
+                  onClick={handleContinueWithGoogle}
+                  disabled={activeAccountAction !== null}
+                >
+                  <span
+                    className="account-popup__button-icon-slab"
+                    aria-hidden="true"
+                  >
+                    <img
+                      className="account-popup__button-icon"
+                      src={googleIcon}
+                      alt=""
+                    />
+                  </span>
+                  <span>Continue with Google</span>
+                </button>
+                <button type="button" className="account-popup__button">
+                  Continue with Facebook
+                </button>
+                {accountStatus
+                  ? (
+                    <p
+                      className={[
+                        "account-popup__status",
+                        accountStatusTone === "error"
+                          ? "account-popup__status--error"
+                          : "account-popup__status--success",
+                      ].join(" ")}
+                    >
+                      {accountStatus}
+                    </p>
+                  )
+                  : null}
+              </>
+            )}
         </div>
       </Popup>
     </div>

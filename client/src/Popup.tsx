@@ -56,6 +56,7 @@ export function Popup(props: PopupProps) {
     <div
       className={[
         "popup-backdrop",
+        props.closeOnBackdropPress ? "popup-backdrop--dismissible" : "",
         isVisible ? "popup--visible" : "popup--hidden",
       ].join(" ")}
       onClick={(event) => {
@@ -69,7 +70,10 @@ export function Popup(props: PopupProps) {
       }}
     >
       <section
-        className="popup"
+        className={[
+          "popup",
+          props.closeOnBackdropPress ? "popup--opaque" : "",
+        ].join(" ")}
         role="dialog"
         aria-modal="false"
         aria-label={displayedContent.title}

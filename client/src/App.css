@@ -30,6 +30,30 @@ body {
 
 * {
   box-sizing: border-box;
+  scrollbar-color: rgba(247, 247, 245, 0.28) rgba(255, 255, 255, 0.05);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(247, 247, 245, 0.26);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(247, 247, 245, 0.42);
+  background-clip: content-box;
 }
 
 .app-shell {
@@ -72,6 +96,7 @@ body {
 }
 
 .app-header__account-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -100,6 +125,17 @@ body {
   height: 24px;
   flex: 0 0 auto;
   display: block;
+}
+
+.app-header__account-indicator {
+  position: absolute;
+  top: 5px;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #2b2b27;
+  border-radius: 999px;
+  background: #d94f4f;
 }
 
 .app-content {
@@ -388,6 +424,10 @@ body {
     transform 220ms ease;
 }
 
+.popup--opaque {
+  background: #1f1f1c;
+}
+
 .popup--visible {
   opacity: 1;
 }
@@ -424,6 +464,10 @@ body {
   font-weight: 800;
 }
 
+.popup__title:empty {
+  display: none;
+}
+
 .popup__body {
   margin-top: 10px;
 }
@@ -435,7 +479,7 @@ body {
 }
 
 .account-popup {
-  width: min(100%, 320px);
+  width: min(100%, 340px);
   display: grid;
   gap: 10px;
 }
@@ -445,6 +489,19 @@ body {
   color: rgba(247, 247, 245, 0.82);
   line-height: 1.4;
   text-align: center;
+}
+
+.account-popup__section {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.account-popup__section-title {
+  margin: 0;
+  color: #f7f7f5;
+  font-size: 0.98rem;
+  font-weight: 800;
 }
 
 .account-popup__input {
@@ -459,6 +516,10 @@ body {
 
 .account-popup__input::placeholder {
   color: rgba(247, 247, 245, 0.46);
+}
+
+.account-popup__input::-webkit-search-cancel-button {
+  display: none;
 }
 
 .account-popup__input:-webkit-autofill,
@@ -515,6 +576,93 @@ body {
 .account-popup__button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.account-popup__list {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.account-popup__list--scroll {
+  height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+  align-content: start;
+}
+
+.account-popup__friend-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(247, 247, 245, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.account-popup__friend-name {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(247, 247, 245, 0.9);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.account-popup__friend-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.account-popup__icon-button,
+.account-popup__small-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.account-popup__icon-button--approve,
+.account-popup__small-button--add {
+  background: #81b64c;
+}
+
+.account-popup__icon-button--deny,
+.account-popup__small-button {
+  background: #c74e4e;
+}
+
+.account-popup__small-button--add {
+  background: #81b64c;
+}
+
+.account-popup__icon-button:disabled,
+.account-popup__small-button:disabled {
+  cursor: default;
+}
+
+.account-popup__pending-text {
+  color: rgba(247, 247, 245, 0.58);
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.account-popup__empty {
+  margin: 0;
+  padding: 8px 4px;
+  color: rgba(247, 247, 245, 0.58);
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .account-popup__divider {

@@ -15,6 +15,13 @@
       "when": 1777380393017,
       "tag": "0001_organic_spirit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777459200000,
+      "tag": "0002_social_graph",
+      "breakpoints": true
     }
   ]
 }
