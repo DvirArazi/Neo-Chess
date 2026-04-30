@@ -89,7 +89,8 @@ export function App() {
     "logIn" | "signUp" | "logOut" | "google" | null
   >(null);
   const [activeFriendAction, setActiveFriendAction] = useState<string | null>(null);
-  const opponentSelectRef = useRef<HTMLSelectElement | null>(null);
+  const [isOpponentMenuOpen, setIsOpponentMenuOpen] = useState(false);
+  const opponentSelectRef = useRef<HTMLDivElement | null>(null);
   const googleAuthPopupRef = useRef<Window | null>(null);
   const googleAuthTimeoutRef = useRef<number | null>(null);
 
@@ -197,13 +198,11 @@ export function App() {
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
-      const opponentSelect = opponentSelectRef.current;
       if (
-        opponentSelect &&
-        document.activeElement === opponentSelect &&
-        event.target !== opponentSelect
+        opponentSelectRef.current &&
+        !opponentSelectRef.current.contains(event.target as Node)
       ) {
-        opponentSelect.blur();
+        setIsOpponentMenuOpen(false);
       }
     };
 
@@ -309,6 +308,10 @@ export function App() {
     return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId) ??
       LOCAL_TIME_CONTROLS[0];
   })();
+  const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
+    ? "Random opponent"
+    : friendOptions.find((friend) => friend.id === selectedOpponentId)?.username ??
+      "Random opponent";
 
   const resetAccountForms = () => {
     setLoginUsername("");
@@ -578,22 +581,61 @@ export function App() {
                         />
                         <label className="home-page__field">
                           <span className="home-page__field-label">VS</span>
-                          <select
+                          <div
                             ref={opponentSelectRef}
                             className="home-page__select"
-                            value={selectedOpponentId}
-                            onChange={(event) =>
-                              setSelectedOpponentId(event.target.value)}
                           >
-                            <option value={RANDOM_OPPONENT_ID}>
-                              Random opponent
-                            </option>
-                            {friendOptions.map((friend) => (
-                              <option key={friend.id} value={friend.id}>
-                                {friend.username}
-                              </option>
-                            ))}
-                          </select>
+                            <button
+                              type="button"
+                              className="home-page__select-button"
+                              aria-haspopup="listbox"
+                              aria-expanded={isOpponentMenuOpen}
+                              onClick={() =>
+                                setIsOpponentMenuOpen((current) => !current)}
+                            >
+                              <span className="home-page__select-value">
+                                {selectedOpponentLabel}
+                              </span>
+                            </button>
+                            {isOpponentMenuOpen
+                              ? (
+                                <div
+                                  className="home-page__select-menu"
+                                  role="listbox"
+                                  aria-label="Opponent"
+                                >
+                                  <button
+                                    type="button"
+                                    className="home-page__select-option"
+                                    role="option"
+                                    aria-selected={selectedOpponentId ===
+                                      RANDOM_OPPONENT_ID}
+                                    onClick={() => {
+                                      setSelectedOpponentId(RANDOM_OPPONENT_ID);
+                                      setIsOpponentMenuOpen(false);
+                                    }}
+                                  >
+                                    Random opponent
+                                  </button>
+                                  {friendOptions.map((friend) => (
+                                    <button
+                                      type="button"
+                                      className="home-page__select-option"
+                                      role="option"
+                                      aria-selected={selectedOpponentId === friend.id}
+                                      key={friend.id}
+                                      onClick={() => {
+                                        setSelectedOpponentId(friend.id);
+                                        setIsOpponentMenuOpen(false);
+                                      }}
+                                    >
+                                      {friend.username}
+                                    </button>
+                                  ))}
+                                </div>
+                              )
+                              : null}
+                          </div>
                         </label>
                         <p className="home-page__message">
                           Online settings will go here.

@@ -189,6 +189,11 @@ body {
 }
 
 .home-page__select {
+  position: relative;
+  width: 100%;
+}
+
+.home-page__select-button {
   min-height: 48px;
   width: 100%;
   padding: 0 38px 0 14px;
@@ -203,16 +208,71 @@ body {
   color: #f7f7f5;
   font: inherit;
   font-weight: 700;
-  appearance: none;
   cursor: default;
+  text-align: left;
 }
 
-.home-page__select:hover {
+.home-page__select-button:hover {
   cursor: pointer;
 }
 
-.home-page__select:focus {
+.home-page__select-button:focus {
   outline: none;
+}
+
+.home-page__select-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-page__select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(247, 247, 245, 0.12);
+  border-radius: 12px;
+  background: #2b2b27;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+}
+
+.home-page__select-option {
+  min-height: 46px;
+  width: 100%;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(247, 247, 245, 0.86);
+  display: block;
+  overflow: hidden;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.home-page__select-option[aria-selected="true"] {
+  background: rgba(129, 182, 76, 0.18);
+  color: #f7f7f5;
+}
+
+.home-page__select-option:hover {
+  background: rgba(247, 247, 245, 0.1);
+  color: #f7f7f5;
+}
+
+.home-page__select-option[aria-selected="true"]:hover {
+  background: rgba(129, 182, 76, 0.28);
 }
 
 .button-group {
