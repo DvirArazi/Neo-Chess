@@ -18,6 +18,7 @@ import googleIcon from "./assets/images/socials/google.svg";
 const HOME_PATH = "/";
 const LOCAL_GAME_PATH = "/local-game";
 const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
+const RANDOM_OPPONENT_ID = "random";
 const LOCAL_TIME_CONTROLS: LocalTimeControl[] = [
   { id: "bullet", label: "Bullet", initialMs: 2 * 60 * 1000, incrementMs: 1000 },
   { id: "blitz", label: "Blitz", initialMs: 5 * 60 * 1000, incrementMs: 3000 },
@@ -61,6 +62,7 @@ export function App() {
   }));
   const [homeTab, setHomeTab] = useState<HomeTab>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
+  const [selectedOpponentId, setSelectedOpponentId] = useState(RANDOM_OPPONENT_ID);
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] =
     useState<AuthenticatedUser | null>(null);
@@ -72,6 +74,7 @@ export function App() {
   const [friendSearch, setFriendSearch] = useState("");
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [friendUsers, setFriendUsers] = useState<FriendEntry[]>([]);
+  const [friendOptions, setFriendOptions] = useState<FriendEntry[]>([]);
   const [hasUnseenRequests, setHasUnseenRequests] = useState(false);
   const [areAccountInputsArmed, setAreAccountInputsArmed] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
@@ -86,6 +89,7 @@ export function App() {
     "logIn" | "signUp" | "logOut" | "google" | null
   >(null);
   const [activeFriendAction, setActiveFriendAction] = useState<string | null>(null);
+  const opponentSelectRef = useRef<HTMLSelectElement | null>(null);
   const googleAuthPopupRef = useRef<Window | null>(null);
   const googleAuthTimeoutRef = useRef<number | null>(null);
 
@@ -118,6 +122,9 @@ export function App() {
 
         setFriendRequests(response.requests);
         setFriendUsers(response.users);
+        if ((options?.search ?? friendSearch).trim().length === 0) {
+          setFriendOptions(response.users.filter((user) => user.isFriend));
+        }
         setHasUnseenRequests(response.hasUnseenRequests);
         onComplete?.();
       },
@@ -157,6 +164,8 @@ export function App() {
         clearSessionToken();
         setFriendRequests([]);
         setFriendUsers([]);
+        setFriendOptions([]);
+        setSelectedOpponentId(RANDOM_OPPONENT_ID);
         setHasUnseenRequests(false);
       }
     };
@@ -176,6 +185,33 @@ export function App() {
 
     fetchFriends();
   }, [authenticatedUser, fetchFriends]);
+
+  useEffect(() => {
+    if (
+      selectedOpponentId !== RANDOM_OPPONENT_ID &&
+      !friendOptions.some((friend) => friend.id === selectedOpponentId)
+    ) {
+      setSelectedOpponentId(RANDOM_OPPONENT_ID);
+    }
+  }, [friendOptions, selectedOpponentId]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const opponentSelect = opponentSelectRef.current;
+      if (
+        opponentSelect &&
+        document.activeElement === opponentSelect &&
+        event.target !== opponentSelect
+      ) {
+        opponentSelect.blur();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+    };
+  }, []);
 
   useEffect(() => {
     const handleFriendsChanged = () => {
@@ -381,7 +417,9 @@ export function App() {
       setAuthenticatedUser(null);
       setFriendRequests([]);
       setFriendUsers([]);
+      setFriendOptions([]);
       setFriendSearch("");
+      setSelectedOpponentId(RANDOM_OPPONENT_ID);
       setHasUnseenRequests(false);
       setAccountStatusTone("success");
       setAccountStatus("Logged out");
@@ -538,6 +576,25 @@ export function App() {
                             { label: "Casual", value: "casual" },
                           ]}
                         />
+                        <label className="home-page__field">
+                          <span className="home-page__field-label">VS</span>
+                          <select
+                            ref={opponentSelectRef}
+                            className="home-page__select"
+                            value={selectedOpponentId}
+                            onChange={(event) =>
+                              setSelectedOpponentId(event.target.value)}
+                          >
+                            <option value={RANDOM_OPPONENT_ID}>
+                              Random opponent
+                            </option>
+                            {friendOptions.map((friend) => (
+                              <option key={friend.id} value={friend.id}>
+                                {friend.username}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                         <p className="home-page__message">
                           Online settings will go here.
                         </p>

@@ -174,6 +174,47 @@ body {
   line-height: 1.45;
 }
 
+.home-page__field {
+  width: min(100%, 360px);
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.home-page__field-label {
+  color: rgba(247, 247, 245, 0.72);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.home-page__select {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 38px 0 14px;
+  border: 1px solid rgba(247, 247, 245, 0.12);
+  border-radius: 12px;
+  background:
+    linear-gradient(45deg, transparent 50%, rgba(247, 247, 245, 0.72) 50%)
+      calc(100% - 20px) 50% / 6px 6px no-repeat,
+    linear-gradient(135deg, rgba(247, 247, 245, 0.72) 50%, transparent 50%)
+      calc(100% - 15px) 50% / 6px 6px no-repeat,
+    #2b2b27;
+  color: #f7f7f5;
+  font: inherit;
+  font-weight: 700;
+  appearance: none;
+  cursor: default;
+}
+
+.home-page__select:hover {
+  cursor: pointer;
+}
+
+.home-page__select:focus {
+  outline: none;
+}
+
 .button-group {
   width: min(100%, 720px);
   display: grid;
