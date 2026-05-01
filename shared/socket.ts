@@ -1,6 +1,7 @@
 export type AuthenticatedUser = {
   id: string;
   username: string;
+  elo: number;
 };
 
 export type FriendRequest = {
@@ -40,12 +41,29 @@ export type FriendsActionResponse =
   }
   | { ok: false; error: string };
 
+export type OnlineMatchRequest = {
+  mode: "rated" | "casual";
+  timeControlId: string;
+  opponentId: string | null;
+  ratingMin: number;
+  ratingMax: number;
+};
+
+export type OnlineMatchFound = {
+  roomId: string;
+  color: "white" | "black";
+  opponent: AuthenticatedUser;
+  timeControlId: string;
+  mode: "rated" | "casual";
+};
+
 export interface ServerToClientEvents {
   roomJoined: (data: { roomId: string; playerId: string }) => void;
   gameStateUpdated: (data: { fenLikeState: string }) => void;
   errorMessage: (message: string) => void;
   authStateChanged: (data: { user: AuthenticatedUser | null }) => void;
   friendsChanged: () => void;
+  onlineMatchFound: (data: OnlineMatchFound) => void;
 }
 
 export interface ClientToServerEvents {
@@ -82,6 +100,11 @@ export interface ClientToServerEvents {
     data: { userId: string },
     callback: (response: BasicActionResponse) => void,
   ) => void;
+  findOnlineMatch: (
+    data: OnlineMatchRequest,
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
+  cancelOnlineMatch: (callback: (response: BasicActionResponse) => void) => void;
   joinRoom: (data: { roomId: string; name: string }) => void;
   createRoom: (data: { name: string }) => void;
   makeMove: (data: { roomId: string; from: string; to: string }) => void;
@@ -94,5 +117,6 @@ export interface SocketData {
   roomId?: string;
   userId?: string;
   username?: string;
+  elo?: number;
   sessionId?: string;
 }

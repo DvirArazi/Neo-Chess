@@ -24,6 +24,7 @@ const MAX_GOOGLE_USERNAME_SUFFIX = 999;
 type PublicUser = {
   id: string;
   username: string;
+  elo: number;
 };
 
 type AuthSuccess = {
@@ -272,6 +273,7 @@ export async function signUpWithPassword(input: {
       .returning({
         id: users.id,
         username: users.username,
+        elo: users.elo,
       });
 
     const session = await createSession(user);
@@ -300,6 +302,7 @@ export async function logInWithPassword(input: {
     .select({
       id: users.id,
       username: users.username,
+      elo: users.elo,
       passwordHash: users.passwordHash,
     })
     .from(users)
@@ -319,7 +322,7 @@ export async function logInWithPassword(input: {
     return { ok: false, error: "Invalid username or password" };
   }
 
-  const publicUser = { id: user.id, username: user.username };
+  const publicUser = { id: user.id, username: user.username, elo: user.elo };
   return createAuthResultForUser(publicUser);
 }
 
@@ -340,6 +343,7 @@ export async function logInWithGoogleProfile(input: {
       id: users.id,
       username: users.username,
       usernameNormalized: users.usernameNormalized,
+      elo: users.elo,
     })
     .from(users)
     .where(eq(users.googleSubject, input.googleSubject))
@@ -360,6 +364,7 @@ export async function logInWithGoogleProfile(input: {
           return createAuthResultForUser({
             id: existingUser.id,
             username: existingUser.username,
+            elo: existingUser.elo,
           });
         }
 
@@ -373,6 +378,7 @@ export async function logInWithGoogleProfile(input: {
           .returning({
             id: users.id,
             username: users.username,
+            elo: users.elo,
           });
 
         if (!updatedUser) {
@@ -393,6 +399,7 @@ export async function logInWithGoogleProfile(input: {
         .returning({
           id: users.id,
           username: users.username,
+          elo: users.elo,
         });
 
       return createAuthResultForUser(createdUser);
@@ -405,6 +412,7 @@ export async function logInWithGoogleProfile(input: {
         .select({
           id: users.id,
           username: users.username,
+          elo: users.elo,
         })
         .from(users)
         .where(eq(users.googleSubject, input.googleSubject))
@@ -430,6 +438,7 @@ export async function getSessionUserByToken(
       sessionId: sessions.id,
       userId: users.id,
       username: users.username,
+      elo: users.elo,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
@@ -456,6 +465,7 @@ export async function getSessionUserByToken(
     user: {
       id: session.userId,
       username: session.username,
+      elo: session.elo,
     },
   };
 }

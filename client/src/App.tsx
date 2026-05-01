@@ -3,12 +3,21 @@ import type {
   AuthenticatedUser,
   FriendEntry,
   FriendRequest,
+  OnlineMatchFound,
 } from "../../shared/socket";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
 import LocalGame, { type LocalTimeControl } from "./LocalGame";
 import { Popup } from "./Popup";
-import { clearSessionToken, setSessionToken, socket } from "./socket";
+import { RangeSlider } from "./RangeSlider";
+import {
+  clearSessionToken,
+  clearStoredAuthenticatedUser,
+  getStoredAuthenticatedUser,
+  setSessionToken,
+  setStoredAuthenticatedUser,
+  socket,
+} from "./socket";
 import { TabPanel } from "./TabPanel";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
@@ -17,8 +26,12 @@ import googleIcon from "./assets/images/socials/google.svg";
 
 const HOME_PATH = "/";
 const LOCAL_GAME_PATH = "/local-game";
+const ONLINE_GAME_PATH = "/online-game";
 const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
 const RANDOM_OPPONENT_ID = "random";
+const DEFAULT_ELO = 1200;
+const RATING_RANGE_RADIUS = 500;
+const MIN_RATING_RANGE_DISTANCE = 100;
 const LOCAL_TIME_CONTROLS: LocalTimeControl[] = [
   { id: "bullet", label: "Bullet", initialMs: 2 * 60 * 1000, incrementMs: 1000 },
   { id: "blitz", label: "Blitz", initialMs: 5 * 60 * 1000, incrementMs: 3000 },
@@ -63,9 +76,17 @@ export function App() {
   const [homeTab, setHomeTab] = useState<HomeTab>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
   const [selectedOpponentId, setSelectedOpponentId] = useState(RANDOM_OPPONENT_ID);
+  const [selectedOnlineTimeControlId, setSelectedOnlineTimeControlId] =
+    useState(LOCAL_TIME_CONTROLS[0].id);
+  const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
+  const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(null);
+  const [ratingRange, setRatingRange] = useState<[number, number]>([
+    DEFAULT_ELO - RATING_RANGE_RADIUS,
+    DEFAULT_ELO + RATING_RANGE_RADIUS,
+  ]);
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] =
-    useState<AuthenticatedUser | null>(null);
+    useState<AuthenticatedUser | null>(() => getStoredAuthenticatedUser());
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signUpUsername, setSignUpUsername] = useState("");
@@ -163,12 +184,16 @@ export function App() {
       setAuthenticatedUser(data.user);
       if (data.user === null) {
         clearSessionToken();
+        clearStoredAuthenticatedUser();
         setFriendRequests([]);
         setFriendUsers([]);
         setFriendOptions([]);
         setSelectedOpponentId(RANDOM_OPPONENT_ID);
         setHasUnseenRequests(false);
+        return;
       }
+
+      setStoredAuthenticatedUser(data.user);
     };
 
     socket.on("authStateChanged", handleAuthStateChanged);
@@ -186,6 +211,28 @@ export function App() {
 
     fetchFriends();
   }, [authenticatedUser, fetchFriends]);
+
+  useEffect(() => {
+    const handleOnlineMatchFound = (match: OnlineMatchFound) => {
+      setIsWaitingForOpponent(false);
+      setOnlineMatchStatus(null);
+      setSelectedOnlineTimeControlId(match.timeControlId);
+      navigate(ONLINE_GAME_PATH, `?time=${match.timeControlId}`);
+    };
+
+    socket.on("onlineMatchFound", handleOnlineMatchFound);
+    return () => {
+      socket.off("onlineMatchFound", handleOnlineMatchFound);
+    };
+  });
+
+  useEffect(() => {
+    const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
+    setRatingRange([
+      userElo - RATING_RANGE_RADIUS,
+      userElo + RATING_RANGE_RADIUS,
+    ]);
+  }, [authenticatedUser?.elo]);
 
   useEffect(() => {
     if (
@@ -255,6 +302,7 @@ export function App() {
       }
 
       setSessionToken(data.sessionToken);
+      setStoredAuthenticatedUser(data.user);
       setAuthenticatedUser(data.user);
       setIsAccountPopupOpen(false);
       setLoginUsername("");
@@ -281,7 +329,11 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (route.pathname === HOME_PATH || route.pathname === LOCAL_GAME_PATH) return;
+    if (
+      route.pathname === HOME_PATH ||
+      route.pathname === LOCAL_GAME_PATH ||
+      route.pathname === ONLINE_GAME_PATH
+    ) return;
 
     window.history.replaceState({}, "", HOME_PATH);
     const redirectFrame = window.requestAnimationFrame(() => {
@@ -308,10 +360,16 @@ export function App() {
     return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId) ??
       LOCAL_TIME_CONTROLS[0];
   })();
+  const selectedOnlineTimeControl = LOCAL_TIME_CONTROLS.find((control) =>
+    control.id === selectedOnlineTimeControlId
+  ) ?? LOCAL_TIME_CONTROLS[0];
   const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
     ? "Random opponent"
     : friendOptions.find((friend) => friend.id === selectedOpponentId)?.username ??
       "Random opponent";
+  const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
+  const ratingRangeMin = userElo - RATING_RANGE_RADIUS;
+  const ratingRangeMax = userElo + RATING_RANGE_RADIUS;
 
   const resetAccountForms = () => {
     setLoginUsername("");
@@ -364,6 +422,7 @@ export function App() {
         }
 
         setSessionToken(response.sessionToken);
+        setStoredAuthenticatedUser(response.user);
         setAuthenticatedUser(response.user);
         closeAccountPopup();
       },
@@ -394,6 +453,7 @@ export function App() {
         }
 
         setSessionToken(response.sessionToken);
+        setStoredAuthenticatedUser(response.user);
         setAuthenticatedUser(response.user);
         closeAccountPopup();
       },
@@ -417,6 +477,7 @@ export function App() {
       }
 
       clearSessionToken();
+      clearStoredAuthenticatedUser();
       setAuthenticatedUser(null);
       setFriendRequests([]);
       setFriendUsers([]);
@@ -518,6 +579,43 @@ export function App() {
     }, 2 * 60 * 1000);
   };
 
+  const handleFindOnlineMatch = (timeControl: LocalTimeControl) => {
+    setSelectedOnlineTimeControlId(timeControl.id);
+    setIsWaitingForOpponent(true);
+    setOnlineMatchStatus(null);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit(
+      "findOnlineMatch",
+      {
+        mode: onlineMode,
+        timeControlId: timeControl.id,
+        opponentId: selectedOpponentId === RANDOM_OPPONENT_ID
+          ? null
+          : selectedOpponentId,
+        ratingMin: ratingRange[0],
+        ratingMax: ratingRange[1],
+      },
+      (response) => {
+        if (!response.ok) {
+          setOnlineMatchStatus(response.error);
+          return;
+        }
+      },
+    );
+  };
+
+  const handleCancelOnlineMatch = () => {
+    setIsWaitingForOpponent(false);
+    setOnlineMatchStatus(null);
+
+    if (!socket.connected) return;
+    socket.emit("cancelOnlineMatch", () => {});
+  };
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -551,11 +649,15 @@ export function App() {
       </header>
 
       <div className="app-content">
-        {route.pathname === LOCAL_GAME_PATH
+        {route.pathname === LOCAL_GAME_PATH || route.pathname === ONLINE_GAME_PATH
           ? (
             <LocalGame
-              key={selectedTimeControl.id}
-              timeControl={selectedTimeControl}
+              key={route.pathname === ONLINE_GAME_PATH
+                ? `online:${selectedOnlineTimeControl.id}`
+                : `local:${selectedTimeControl.id}`}
+              timeControl={route.pathname === ONLINE_GAME_PATH
+                ? selectedOnlineTimeControl
+                : selectedTimeControl}
             />
           )
           : (
@@ -579,7 +681,7 @@ export function App() {
                             { label: "Casual", value: "casual" },
                           ]}
                         />
-                        <label className="home-page__field">
+                        <div className="home-page__field">
                           <span className="home-page__field-label">VS</span>
                           <div
                             ref={opponentSelectRef}
@@ -590,8 +692,15 @@ export function App() {
                               className="home-page__select-button"
                               aria-haspopup="listbox"
                               aria-expanded={isOpponentMenuOpen}
-                              onClick={() =>
-                                setIsOpponentMenuOpen((current) => !current)}
+                              onPointerDown={(event) => {
+                                event.preventDefault();
+                                setIsOpponentMenuOpen((current) => !current);
+                              }}
+                              onClick={(event) => {
+                                if (event.detail === 0) {
+                                  setIsOpponentMenuOpen((current) => !current);
+                                }
+                              }}
                             >
                               <span className="home-page__select-value">
                                 {selectedOpponentLabel}
@@ -610,9 +719,16 @@ export function App() {
                                     role="option"
                                     aria-selected={selectedOpponentId ===
                                       RANDOM_OPPONENT_ID}
-                                    onClick={() => {
+                                    onPointerDown={(event) => {
+                                      event.preventDefault();
                                       setSelectedOpponentId(RANDOM_OPPONENT_ID);
                                       setIsOpponentMenuOpen(false);
+                                    }}
+                                    onClick={(event) => {
+                                      if (event.detail === 0) {
+                                        setSelectedOpponentId(RANDOM_OPPONENT_ID);
+                                        setIsOpponentMenuOpen(false);
+                                      }
                                     }}
                                   >
                                     Random opponent
@@ -624,9 +740,16 @@ export function App() {
                                       role="option"
                                       aria-selected={selectedOpponentId === friend.id}
                                       key={friend.id}
-                                      onClick={() => {
+                                      onPointerDown={(event) => {
+                                        event.preventDefault();
                                         setSelectedOpponentId(friend.id);
                                         setIsOpponentMenuOpen(false);
+                                      }}
+                                      onClick={(event) => {
+                                        if (event.detail === 0) {
+                                          setSelectedOpponentId(friend.id);
+                                          setIsOpponentMenuOpen(false);
+                                        }
                                       }}
                                     >
                                       {friend.username}
@@ -636,10 +759,41 @@ export function App() {
                               )
                               : null}
                           </div>
-                        </label>
-                        <p className="home-page__message">
-                          Online settings will go here.
-                        </p>
+                        </div>
+                        <div className="home-page__field">
+                          <span className="home-page__field-label">
+                            Rating range
+                          </span>
+                          <RangeSlider
+                            min={ratingRangeMin}
+                            max={ratingRangeMax}
+                            minDistance={MIN_RATING_RANGE_DISTANCE}
+                            value={ratingRange}
+                            ariaLabel="Rating range"
+                            markers={[
+                              {
+                                value: ratingRangeMin,
+                                label: `${ratingRangeMin}`,
+                              },
+                              {
+                                value: userElo,
+                                label: `${userElo}`,
+                              },
+                              {
+                                value: ratingRangeMax,
+                                label: `${ratingRangeMax}`,
+                              },
+                            ]}
+                            onChange={setRatingRange}
+                          />
+                        </div>
+                        <ButtonGroup
+                          items={LOCAL_TIME_CONTROLS.map((timeControl) => ({
+                            text: timeControl.label,
+                            subtext: formatTimeControlSubtext(timeControl),
+                            onClick: () => handleFindOnlineMatch(timeControl),
+                          }))}
+                        />
                       </section>
                     ),
                   },
@@ -668,6 +822,22 @@ export function App() {
             </main>
           )}
       </div>
+
+      <Popup
+        open={isWaitingForOpponent}
+        title="Waiting for opponent"
+        onClose={handleCancelOnlineMatch}
+        closeOnBackdropPress={true}
+      >
+        <div className="waiting-popup">
+          <div className="waiting-popup__spinner" aria-hidden="true" />
+          {onlineMatchStatus
+            ? <p className="account-popup__status account-popup__status--error">
+              {onlineMatchStatus}
+            </p>
+            : null}
+        </div>
+      </Popup>
 
       <Popup
         open={isAccountPopupOpen}

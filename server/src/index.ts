@@ -23,6 +23,7 @@ import type {
   AuthenticatedUser,
   ClientToServerEvents,
   InterServerEvents,
+  OnlineMatchRequest,
   ServerToClientEvents,
   SocketData,
 } from "../../shared/socket.js";
@@ -92,6 +93,14 @@ type ServerSocket = Socket<
   SocketData
 >;
 
+type MatchmakingEntry = {
+  socket: ServerSocket;
+  user: AuthenticatedUser;
+  criteria: OnlineMatchRequest;
+};
+
+const matchmakingQueue = new Map<string, MatchmakingEntry>();
+
 function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
   if (!socket.data.userId || !socket.data.username) {
     return null;
@@ -100,6 +109,7 @@ function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
   return {
     id: socket.data.userId,
     username: socket.data.username,
+    elo: socket.data.elo ?? 1200,
   };
 }
 
@@ -118,6 +128,80 @@ function emitFriendsChanged(userId: string): void {
     if (connectedSocket.data.userId === userId) {
       connectedSocket.emit("friendsChanged");
     }
+  });
+}
+
+function removeFromMatchmakingQueue(socket: ServerSocket): void {
+  if (socket.data.userId) {
+    matchmakingQueue.delete(socket.data.userId);
+  }
+}
+
+function doMatchCriteriaFit(
+  left: MatchmakingEntry,
+  right: MatchmakingEntry,
+): boolean {
+  if (left.user.id === right.user.id) return false;
+  if (left.criteria.mode !== right.criteria.mode) return false;
+  if (left.criteria.timeControlId !== right.criteria.timeControlId) return false;
+  if (
+    left.criteria.opponentId !== null &&
+    left.criteria.opponentId !== right.user.id
+  ) {
+    return false;
+  }
+  if (
+    right.criteria.opponentId !== null &&
+    right.criteria.opponentId !== left.user.id
+  ) {
+    return false;
+  }
+  if (
+    right.user.elo < left.criteria.ratingMin ||
+    right.user.elo > left.criteria.ratingMax
+  ) {
+    return false;
+  }
+  if (
+    left.user.elo < right.criteria.ratingMin ||
+    left.user.elo > right.criteria.ratingMax
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function findMatchFor(entry: MatchmakingEntry): MatchmakingEntry | null {
+  for (const candidate of matchmakingQueue.values()) {
+    if (doMatchCriteriaFit(entry, candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function startOnlineMatch(left: MatchmakingEntry, right: MatchmakingEntry): void {
+  const roomId = randomUUID();
+  left.socket.data.roomId = roomId;
+  right.socket.data.roomId = roomId;
+  left.socket.join(roomId);
+  right.socket.join(roomId);
+
+  left.socket.emit("onlineMatchFound", {
+    roomId,
+    color: "white",
+    opponent: right.user,
+    timeControlId: left.criteria.timeControlId,
+    mode: left.criteria.mode,
+  });
+  right.socket.emit("onlineMatchFound", {
+    roomId,
+    color: "black",
+    opponent: left.user,
+    timeControlId: right.criteria.timeControlId,
+    mode: right.criteria.mode,
   });
 }
 
@@ -456,6 +540,7 @@ app.get("/auth/google/callback", async (req, res) => {
 function clearSocketAuth(socket: ServerSocket): void {
   delete socket.data.userId;
   delete socket.data.username;
+  delete socket.data.elo;
   delete socket.data.sessionId;
 }
 
@@ -478,6 +563,7 @@ io.use(async (socket, next) => {
 
     socket.data.userId = sessionUser.user.id;
     socket.data.username = sessionUser.user.username;
+    socket.data.elo = sessionUser.user.elo;
     socket.data.sessionId = sessionUser.sessionId;
     return next();
   } catch (error) {
@@ -498,6 +584,7 @@ io.on("connection", (socket) => {
 
       socket.data.userId = result.user.id;
       socket.data.username = result.user.username;
+      socket.data.elo = result.user.elo;
       socket.data.sessionId = result.sessionId;
 
       callback({
@@ -525,6 +612,7 @@ io.on("connection", (socket) => {
 
       socket.data.userId = result.user.id;
       socket.data.username = result.user.username;
+      socket.data.elo = result.user.elo;
       socket.data.sessionId = result.sessionId;
 
       callback({
@@ -544,6 +632,7 @@ io.on("connection", (socket) => {
 
   socket.on("logOut", async (callback) => {
     try {
+      removeFromMatchmakingQueue(socket);
       if (socket.data.sessionId) {
         await revokeSession(socket.data.sessionId);
       }
@@ -690,6 +779,42 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("findOnlineMatch", (data, callback) => {
+    const user = getAuthenticatedUser(socket);
+    if (!user) {
+      callback({ ok: false, error: "Log in to play online" });
+      return;
+    }
+
+    if (data.ratingMax - data.ratingMin < 100) {
+      callback({ ok: false, error: "Rating range must be at least 100 points" });
+      return;
+    }
+
+    const entry: MatchmakingEntry = {
+      socket,
+      user,
+      criteria: data,
+    };
+    removeFromMatchmakingQueue(socket);
+
+    const match = findMatchFor(entry);
+    if (match) {
+      removeFromMatchmakingQueue(match.socket);
+      startOnlineMatch(entry, match);
+      callback({ ok: true });
+      return;
+    }
+
+    matchmakingQueue.set(user.id, entry);
+    callback({ ok: true });
+  });
+
+  socket.on("cancelOnlineMatch", (callback) => {
+    removeFromMatchmakingQueue(socket);
+    callback({ ok: true });
+  });
+
   socket.on("createRoom", ({ name }) => {
     const roomId = randomUUID();
     socket.data.playerId = randomUUID();
@@ -718,6 +843,10 @@ io.on("connection", (socket) => {
       fenLikeState: `${from}-${to}`,
     });
   });
+
+  socket.on("disconnect", () => {
+    removeFromMatchmakingQueue(socket);
+  });
 });
 
 const clientDistPath = path.resolve(process.cwd(), "../client/dist");
@@ -730,6 +859,17 @@ app.get("/{*splat}", (req, res, next) => {
 });
 
 const port = Number(process.env.PORT) || 3000;
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(
+      `Port ${port} is already in use. Stop the existing dev server or run with a different PORT.`,
+    );
+    process.exit(1);
+  }
+
+  throw error;
+});
+
 server.listen(port, () => {
   console.log(`Server listening on ${port}`);
 });

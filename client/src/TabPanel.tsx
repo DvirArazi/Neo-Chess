@@ -2,6 +2,7 @@ import type { PointerEvent, ReactNode } from "react";
 import { useRef, useState } from "react";
 
 const SWIPE_THRESHOLD_PX = 48;
+const PANEL_GAP_PX = 64;
 
 export type TabPanelItem = {
   id: string;
@@ -89,8 +90,12 @@ export function TabPanel(props: TabPanelProps) {
 
   const tabWidthPercent = 100 / Math.max(1, props.items.length);
   const trackTransform = containerRef.current
-    ? `translateX(calc(${-activeIndex * 100}% + ${dragOffsetPx}px))`
-    : `translateX(${-activeIndex * 100}%)`;
+    ? `translateX(calc(${-activeIndex * 100}% - ${
+      activeIndex * PANEL_GAP_PX
+    }px + ${dragOffsetPx}px))`
+    : `translateX(calc(${-activeIndex * 100}% - ${
+      activeIndex * PANEL_GAP_PX
+    }px))`;
 
   return (
     <div className="tab-panel">
@@ -107,7 +112,10 @@ export function TabPanel(props: TabPanelProps) {
             "tab-panel__track",
             isDragging ? "tab-panel__track--dragging" : "",
           ].filter(Boolean).join(" ")}
-          style={{ transform: trackTransform }}
+          style={{
+            gap: `${PANEL_GAP_PX}px`,
+            transform: trackTransform,
+          }}
         >
           {props.items.map((item) => (
             <section

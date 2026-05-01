@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "elo" integer DEFAULT 1200 NOT NULL;
