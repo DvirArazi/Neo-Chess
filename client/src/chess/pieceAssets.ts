@@ -15,7 +15,7 @@ import whiteRook from "../assets/images/pieces/white-rook.svg";
 export type PieceImage = HTMLImageElement;
 export type PieceImages = Record<PieceColor, Record<PieceType, PieceImage>>;
 
-const pieceImageSources: Record<PieceColor, Record<PieceType, string>> = {
+export const pieceImageSources: Record<PieceColor, Record<PieceType, string>> = {
   black: {
     bishop: blackBishop,
     king: blackKing,

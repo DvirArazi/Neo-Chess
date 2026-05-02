@@ -85,7 +85,23 @@ export type OnlineGameState = {
   drawOffer?: {
     offeredBy: PieceColor;
   };
+  createdAt: number;
+  updatedAt: number;
 };
+
+export type OnlineGameListEntry = {
+  id: string;
+  mode: OnlineGameState["mode"];
+  timeControlId: string;
+  players: OnlineGameState["players"];
+  state: GameState;
+  status: OnlineGameStatus;
+  updatedAt: number;
+};
+
+export type OnlineGamesActionResponse =
+  | { ok: true; games: OnlineGameListEntry[] }
+  | { ok: false; error: string };
 
 export interface ServerToClientEvents {
   roomJoined: (data: { roomId: string; playerId: string }) => void;
@@ -143,6 +159,9 @@ export interface ClientToServerEvents {
         | { ok: true; game: OnlineGameState }
         | { ok: false; error: string },
     ) => void,
+  ) => void;
+  listOnlineGames: (
+    callback: (response: OnlineGamesActionResponse) => void,
   ) => void;
   makeOnlineMove: (
     data: { gameId: string; move: MoveInput },

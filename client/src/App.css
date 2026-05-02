@@ -148,12 +148,15 @@ body {
 
 .home-page {
   flex: 1;
+  min-width: 0;
   display: flex;
+  overflow: hidden;
   padding: 24px 0;
 }
 
 .home-page__panel {
   width: 100%;
+  min-width: 0;
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -177,6 +180,30 @@ body {
   line-height: 1.45;
 }
 
+.home-page__online-settings-shell {
+  width: 100%;
+  max-height: 320px;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    max-height 280ms ease,
+    opacity 180ms ease;
+}
+
+.home-page__online-settings-shell--hidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-page__online-settings {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
 .home-page__field {
   width: min(100%, 360px);
   display: grid;
@@ -189,6 +216,153 @@ body {
   font-size: 0.86rem;
   font-weight: 800;
   text-align: center;
+}
+
+.games-tab {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 24px 8px;
+}
+
+.games-tab__inner {
+  width: min(100%, 760px);
+  min-width: 0;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 12px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.games-tab__section {
+  display: grid;
+  gap: 12px;
+}
+
+.games-tab__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.games-tab__section-title {
+  margin: 0;
+  color: #f7f7f5;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.games-tab__history-filter {
+  min-height: 36px;
+  padding: 0 34px 0 12px;
+  border: 1px solid rgba(247, 247, 245, 0.12);
+  border-radius: 10px;
+  background:
+    linear-gradient(45deg, transparent 50%, rgba(247, 247, 245, 0.72) 50%)
+      calc(100% - 17px) 50% / 6px 6px no-repeat,
+    linear-gradient(135deg, rgba(247, 247, 245, 0.72) 50%, transparent 50%)
+      calc(100% - 12px) 50% / 6px 6px no-repeat,
+    #2b2b27;
+  color: #f7f7f5;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  appearance: none;
+}
+
+.games-tab__history-filter:focus {
+  outline: none;
+}
+
+.games-tab__list {
+  display: grid;
+  gap: 10px;
+}
+
+.games-tab__card {
+  width: 100%;
+  min-height: 104px;
+  padding: 10px;
+  border: 1px solid rgba(247, 247, 245, 0.1);
+  border-radius: 12px;
+  background: #2b2b27;
+  color: #f7f7f5;
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  align-items: center;
+  gap: 12px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.games-tab__card:hover {
+  border-color: rgba(129, 182, 76, 0.5);
+}
+
+.games-tab__card-body {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.games-tab__players {
+  min-width: 0;
+  overflow: hidden;
+  color: #f7f7f5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.games-tab__meta,
+.games-tab__status {
+  color: rgba(247, 247, 245, 0.68);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.games-tab__status {
+  color: #a7c97d;
+}
+
+.game-thumbnail {
+  width: 84px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.game-thumbnail__square {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.game-thumbnail__square--light {
+  background: #f0d9b5;
+}
+
+.game-thumbnail__square--dark {
+  background: #b58863;
+}
+
+.game-thumbnail__piece {
+  width: 110%;
+  height: 110%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .home-page__select {
@@ -450,6 +624,8 @@ body {
 
 .tab-panel {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -458,12 +634,15 @@ body {
 
 .tab-panel__viewport {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   touch-action: pan-y;
 }
 
 .tab-panel__track {
+  width: 100%;
   height: 100%;
   display: flex;
   transition: transform 280ms ease;
@@ -475,8 +654,10 @@ body {
 }
 
 .tab-panel__panel {
+  flex: 0 0 100%;
   width: 100%;
-  min-width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
 }
 

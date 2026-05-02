@@ -3,8 +3,11 @@ import type {
   AuthenticatedUser,
   FriendEntry,
   FriendRequest,
+  OnlineGameListEntry,
   OnlineMatchFound,
+  OnlineGameState,
 } from "../../shared/socket";
+import type { GameState } from "../../shared/chess/types";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
 import LocalGame from "./LocalGame";
@@ -26,6 +29,7 @@ import {
   type LocalTimeControl,
 } from "./timeControls";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
+import { pieceImageSources } from "./chess/pieceAssets";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
 import accountIcon from "./assets/images/account.svg";
 import googleIcon from "./assets/images/socials/google.svg";
@@ -44,8 +48,10 @@ type RouteState = {
   search: string;
 };
 
-type HomeTab = "online" | "local";
+type HomeTab = "play" | "games";
+type PlayMode = "online" | "local";
 type OnlineMode = "rated" | "casual";
+type GamesHistoryFilter = "all" | "online" | "local";
 type GoogleAuthMessage =
   | {
     type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
@@ -59,13 +65,60 @@ type GoogleAuthMessage =
     error: string;
   };
 
+function BoardThumbnail(props: { gameState: GameState }) {
+  return (
+    <div className="game-thumbnail" aria-hidden="true">
+      {props.gameState.board.map((row, y) =>
+        row.map((piece, x) => (
+          <div
+            key={`${x}-${y}`}
+            className={[
+              "game-thumbnail__square",
+              (x + y) % 2 === 0
+                ? "game-thumbnail__square--light"
+                : "game-thumbnail__square--dark",
+            ].join(" ")}
+          >
+            {piece
+              ? (
+                <img
+                  className="game-thumbnail__piece"
+                  src={pieceImageSources[piece.color][piece.type]}
+                  alt=""
+                  draggable={false}
+                />
+              )
+              : null}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function getTimeControlLabel(timeControlId: string): string {
+  return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId)
+    ?.label ?? timeControlId;
+}
+
+function formatGameStatus(game: OnlineGameListEntry): string {
+  if (game.status.type === "active") return "Ongoing";
+  if (game.status.type === "draw") return "Draw";
+  return `${game.players[game.status.winner].username} won`;
+}
+
 export function App() {
   const [route, setRoute] = useState<RouteState>(() => ({
     pathname: window.location.pathname,
     search: window.location.search,
   }));
-  const [homeTab, setHomeTab] = useState<HomeTab>("online");
+  const [homeTab, setHomeTab] = useState<HomeTab>("play");
+  const [playMode, setPlayMode] = useState<PlayMode>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
+  const [gamesHistoryFilter, setGamesHistoryFilter] =
+    useState<GamesHistoryFilter>("all");
+  const [onlineGames, setOnlineGames] = useState<OnlineGameListEntry[]>([]);
+  const [gamesStatus, setGamesStatus] = useState<string | null>(null);
   const [selectedOpponentId, setSelectedOpponentId] = useState(RANDOM_OPPONENT_ID);
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(null);
@@ -142,6 +195,31 @@ export function App() {
     );
   }, [authenticatedUser, friendSearch]);
 
+  const fetchOnlineGames = useCallback((onComplete?: () => void) => {
+    if (!authenticatedUser) {
+      setOnlineGames([]);
+      setGamesStatus(null);
+      onComplete?.();
+      return;
+    }
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit("listOnlineGames", (response) => {
+      if (!response.ok) {
+        setGamesStatus(response.error);
+        onComplete?.();
+        return;
+      }
+
+      setOnlineGames(response.games);
+      setGamesStatus(null);
+      onComplete?.();
+    });
+  }, [authenticatedUser]);
+
   useEffect(() => {
     document.title = "Neo Chess";
 
@@ -177,6 +255,7 @@ export function App() {
         setFriendRequests([]);
         setFriendUsers([]);
         setFriendOptions([]);
+        setOnlineGames([]);
         setSelectedOpponentId(RANDOM_OPPONENT_ID);
         setHasUnseenRequests(false);
         return;
@@ -200,6 +279,47 @@ export function App() {
 
     fetchFriends();
   }, [authenticatedUser, fetchFriends]);
+
+  useEffect(() => {
+    if (!authenticatedUser || homeTab !== "games") return;
+
+    fetchOnlineGames();
+  }, [authenticatedUser, fetchOnlineGames, homeTab]);
+
+  useEffect(() => {
+    const handleOnlineGameUpdated = (game: OnlineGameState) => {
+      if (
+        !authenticatedUser ||
+        (
+          game.players.white.id !== authenticatedUser.id &&
+          game.players.black.id !== authenticatedUser.id
+        )
+      ) {
+        return;
+      }
+
+      setOnlineGames((currentGames) => {
+        const nextEntry: OnlineGameListEntry = {
+          id: game.id,
+          mode: game.mode,
+          timeControlId: game.timeControlId,
+          players: game.players,
+          state: game.state,
+          status: game.status,
+          updatedAt: game.updatedAt,
+        };
+        const otherGames = currentGames.filter((entry) => entry.id !== game.id);
+        return [nextEntry, ...otherGames].sort((left, right) =>
+          right.updatedAt - left.updatedAt
+        );
+      });
+    };
+
+    socket.on("onlineGameUpdated", handleOnlineGameUpdated);
+    return () => {
+      socket.off("onlineGameUpdated", handleOnlineGameUpdated);
+    };
+  }, [authenticatedUser]);
 
   useEffect(() => {
     const handleOnlineMatchFound = (match: OnlineMatchFound) => {
@@ -357,6 +477,23 @@ export function App() {
   const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
   const ratingRangeMin = userElo - RATING_RANGE_RADIUS;
   const ratingRangeMax = userElo + RATING_RANGE_RADIUS;
+  const onlineGameEntries = onlineGames.map((game) => ({
+    ...game,
+    kind: "online" as const,
+  }));
+  const localGameEntries: Array<OnlineGameListEntry & { kind: "local" }> = [];
+  const gameEntries = [...onlineGameEntries, ...localGameEntries].sort((
+    left,
+    right,
+  ) => right.updatedAt - left.updatedAt);
+  const ongoingGameEntries = gameEntries.filter((game) =>
+    game.status.type === "active"
+  );
+  const historyGameEntries = gameEntries.filter((game) => {
+    if (game.status.type === "active") return false;
+    if (gamesHistoryFilter === "all") return true;
+    return game.kind === gamesHistoryFilter;
+  });
 
   const resetAccountForms = () => {
     setLoginUsername("");
@@ -673,153 +810,298 @@ export function App() {
                 onChange={(tabId) => setHomeTab(tabId as HomeTab)}
                 items={[
                   {
-                    id: "online",
-                    label: "Online",
+                    id: "play",
+                    label: "Play",
                     content: (
                       <section className="home-page__panel">
-                        <h1 className="home-page__title">Online Game</h1>
+                        <h1 className="home-page__title">
+                          {playMode === "online" ? "Online Game" : "Local Game"}
+                        </h1>
                         <ToggleButtonGroup
-                          ariaLabel="Game type"
-                          value={onlineMode}
-                          onChange={(value) => setOnlineMode(value as OnlineMode)}
+                          ariaLabel="Game mode"
+                          value={playMode}
+                          onChange={(value) => {
+                            setPlayMode(value as PlayMode);
+                            setIsOpponentMenuOpen(false);
+                          }}
                           items={[
-                            { label: "Rated", value: "rated" },
-                            { label: "Casual", value: "casual" },
+                            { label: "Online", value: "online" },
+                            { label: "Local", value: "local" },
                           ]}
                         />
-                        <div className="home-page__field">
-                          <span className="home-page__field-label">VS</span>
-                          <div
-                            ref={opponentSelectRef}
-                            className="home-page__select"
-                          >
-                            <button
-                              type="button"
-                              className="home-page__select-button"
-                              aria-haspopup="listbox"
-                              aria-expanded={isOpponentMenuOpen}
-                              onPointerDown={(event) => {
-                                event.preventDefault();
-                                setIsOpponentMenuOpen((current) => !current);
-                              }}
-                              onClick={(event) => {
-                                if (event.detail === 0) {
-                                  setIsOpponentMenuOpen((current) => !current);
-                                }
-                              }}
-                            >
-                              <span className="home-page__select-value">
-                                {selectedOpponentLabel}
-                              </span>
-                            </button>
-                            {isOpponentMenuOpen
-                              ? (
-                                <div
-                                  className="home-page__select-menu"
-                                  role="listbox"
-                                  aria-label="Opponent"
+                        <div
+                          className={[
+                            "home-page__online-settings-shell",
+                            playMode === "local"
+                              ? "home-page__online-settings-shell--hidden"
+                              : "",
+                          ].filter(Boolean).join(" ")}
+                          aria-hidden={playMode === "local"}
+                          inert={playMode === "local"}
+                        >
+                          <div className="home-page__online-settings">
+                            <ToggleButtonGroup
+                              ariaLabel="Game type"
+                              value={onlineMode}
+                              onChange={(value) =>
+                                setOnlineMode(value as OnlineMode)}
+                              items={[
+                                { label: "Rated", value: "rated" },
+                                { label: "Casual", value: "casual" },
+                              ]}
+                            />
+                            <div className="home-page__field">
+                              <span className="home-page__field-label">VS</span>
+                              <div
+                                ref={opponentSelectRef}
+                                className="home-page__select"
+                              >
+                                <button
+                                  type="button"
+                                  className="home-page__select-button"
+                                  aria-haspopup="listbox"
+                                  aria-expanded={isOpponentMenuOpen}
+                                  onPointerDown={(event) => {
+                                    event.preventDefault();
+                                    setIsOpponentMenuOpen((current) => !current);
+                                  }}
+                                  onClick={(event) => {
+                                    if (event.detail === 0) {
+                                      setIsOpponentMenuOpen((current) => !current);
+                                    }
+                                  }}
                                 >
-                                  <button
-                                    type="button"
-                                    className="home-page__select-option"
-                                    role="option"
-                                    aria-selected={selectedOpponentId ===
-                                      RANDOM_OPPONENT_ID}
-                                    onPointerDown={(event) => {
-                                      event.preventDefault();
-                                      setSelectedOpponentId(RANDOM_OPPONENT_ID);
-                                      setIsOpponentMenuOpen(false);
-                                    }}
-                                    onClick={(event) => {
-                                      if (event.detail === 0) {
-                                        setSelectedOpponentId(RANDOM_OPPONENT_ID);
-                                        setIsOpponentMenuOpen(false);
-                                      }
-                                    }}
-                                  >
-                                    Random opponent
-                                  </button>
-                                  {friendOptions.map((friend) => (
-                                    <button
-                                      type="button"
-                                      className="home-page__select-option"
-                                      role="option"
-                                      aria-selected={selectedOpponentId === friend.id}
-                                      key={friend.id}
-                                      onPointerDown={(event) => {
-                                        event.preventDefault();
-                                        setSelectedOpponentId(friend.id);
-                                        setIsOpponentMenuOpen(false);
-                                      }}
-                                      onClick={(event) => {
-                                        if (event.detail === 0) {
-                                          setSelectedOpponentId(friend.id);
-                                          setIsOpponentMenuOpen(false);
-                                        }
-                                      }}
+                                  <span className="home-page__select-value">
+                                    {selectedOpponentLabel}
+                                  </span>
+                                </button>
+                                {isOpponentMenuOpen
+                                  ? (
+                                    <div
+                                      className="home-page__select-menu"
+                                      role="listbox"
+                                      aria-label="Opponent"
                                     >
-                                      {friend.username}
-                                    </button>
-                                  ))}
-                                </div>
-                              )
-                              : null}
+                                      <button
+                                        type="button"
+                                        className="home-page__select-option"
+                                        role="option"
+                                        aria-selected={selectedOpponentId ===
+                                          RANDOM_OPPONENT_ID}
+                                        onPointerDown={(event) => {
+                                          event.preventDefault();
+                                          setSelectedOpponentId(RANDOM_OPPONENT_ID);
+                                          setIsOpponentMenuOpen(false);
+                                        }}
+                                        onClick={(event) => {
+                                          if (event.detail === 0) {
+                                            setSelectedOpponentId(
+                                              RANDOM_OPPONENT_ID,
+                                            );
+                                            setIsOpponentMenuOpen(false);
+                                          }
+                                        }}
+                                      >
+                                        Random opponent
+                                      </button>
+                                      {friendOptions.map((friend) => (
+                                        <button
+                                          type="button"
+                                          className="home-page__select-option"
+                                          role="option"
+                                          aria-selected={selectedOpponentId ===
+                                            friend.id}
+                                          key={friend.id}
+                                          onPointerDown={(event) => {
+                                            event.preventDefault();
+                                            setSelectedOpponentId(friend.id);
+                                            setIsOpponentMenuOpen(false);
+                                          }}
+                                          onClick={(event) => {
+                                            if (event.detail === 0) {
+                                              setSelectedOpponentId(friend.id);
+                                              setIsOpponentMenuOpen(false);
+                                            }
+                                          }}
+                                        >
+                                          {friend.username}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )
+                                  : null}
+                              </div>
+                            </div>
+                            <div className="home-page__field">
+                              <span className="home-page__field-label">
+                                Rating range
+                              </span>
+                              <RangeSlider
+                                min={ratingRangeMin}
+                                max={ratingRangeMax}
+                                minDistance={MIN_RATING_RANGE_DISTANCE}
+                                value={ratingRange}
+                                ariaLabel="Rating range"
+                                markers={[
+                                  {
+                                    value: ratingRangeMin,
+                                    label: `${ratingRangeMin}`,
+                                  },
+                                  {
+                                    value: userElo,
+                                    label: `${userElo}`,
+                                  },
+                                  {
+                                    value: ratingRangeMax,
+                                    label: `${ratingRangeMax}`,
+                                  },
+                                ]}
+                                onChange={setRatingRange}
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="home-page__field">
-                          <span className="home-page__field-label">
-                            Rating range
-                          </span>
-                          <RangeSlider
-                            min={ratingRangeMin}
-                            max={ratingRangeMax}
-                            minDistance={MIN_RATING_RANGE_DISTANCE}
-                            value={ratingRange}
-                            ariaLabel="Rating range"
-                            markers={[
-                              {
-                                value: ratingRangeMin,
-                                label: `${ratingRangeMin}`,
-                              },
-                              {
-                                value: userElo,
-                                label: `${userElo}`,
-                              },
-                              {
-                                value: ratingRangeMax,
-                                label: `${ratingRangeMax}`,
-                              },
-                            ]}
-                            onChange={setRatingRange}
-                          />
                         </div>
                         <ButtonGroup
                           items={LOCAL_TIME_CONTROLS.map((timeControl) => ({
                             text: timeControl.label,
                             subtext: formatTimeControlSubtext(timeControl),
-                            onClick: () => handleFindOnlineMatch(timeControl),
+                            onClick: () => {
+                              if (playMode === "online") {
+                                handleFindOnlineMatch(timeControl);
+                                return;
+                              }
+
+                              navigate(
+                                LOCAL_GAME_PATH,
+                                `?time=${timeControl.id}`,
+                              );
+                            },
                           }))}
                         />
                       </section>
                     ),
                   },
                   {
-                    id: "local",
-                    label: "Local",
+                    id: "games",
+                    label: "Games",
                     content: (
-                      <section className="home-page__panel">
-                        <h1 className="home-page__title">Local Game</h1>
-                        <ButtonGroup
-                          items={LOCAL_TIME_CONTROLS.map((timeControl) => ({
-                            text: timeControl.label,
-                            subtext: formatTimeControlSubtext(timeControl),
-                            onClick: () =>
-                              navigate(
-                                LOCAL_GAME_PATH,
-                                `?time=${timeControl.id}`,
-                              ),
-                          }))}
-                        />
+                      <section className="games-tab">
+                        <div className="games-tab__inner">
+                          <h1 className="home-page__title">Games</h1>
+                          {!authenticatedUser
+                            ? (
+                              <p className="home-page__message">
+                                Log in to view your games.
+                              </p>
+                            )
+                            : (
+                              <>
+                                {ongoingGameEntries.length > 0
+                                  ? (
+                                    <section className="games-tab__section">
+                                      <h2 className="games-tab__section-title">
+                                        Ongoing Games
+                                      </h2>
+                                      <div className="games-tab__list">
+                                        {ongoingGameEntries.map((game) => (
+                                          <button
+                                            type="button"
+                                            className="games-tab__card"
+                                            key={`${game.kind}:${game.id}`}
+                                            onClick={() =>
+                                              navigate(
+                                                ONLINE_GAME_PATH,
+                                                `?game-id=${game.id}`,
+                                              )}
+                                          >
+                                            <BoardThumbnail gameState={game.state} />
+                                            <span className="games-tab__card-body">
+                                              <span className="games-tab__players">
+                                                {game.players.white.username} vs{" "}
+                                                {game.players.black.username}
+                                              </span>
+                                              <span className="games-tab__meta">
+                                                Online - {getTimeControlLabel(
+                                                  game.timeControlId,
+                                                )} - {game.mode}
+                                              </span>
+                                              <span className="games-tab__status">
+                                                {formatGameStatus(game)}
+                                              </span>
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </section>
+                                  )
+                                  : null}
+
+                                <section className="games-tab__section">
+                                  <div className="games-tab__section-header">
+                                    <h2 className="games-tab__section-title">
+                                      History
+                                    </h2>
+                                    <select
+                                      className="games-tab__history-filter"
+                                      value={gamesHistoryFilter}
+                                      onChange={(event) =>
+                                        setGamesHistoryFilter(
+                                          event.target.value as GamesHistoryFilter,
+                                        )}
+                                    >
+                                      <option value="all">All</option>
+                                      <option value="online">Online</option>
+                                      <option value="local">Local</option>
+                                    </select>
+                                  </div>
+                                  {gamesStatus
+                                    ? (
+                                      <p className="home-page__message">
+                                        {gamesStatus}
+                                      </p>
+                                    )
+                                    : historyGameEntries.length > 0
+                                    ? (
+                                      <div className="games-tab__list">
+                                        {historyGameEntries.map((game) => (
+                                          <button
+                                            type="button"
+                                            className="games-tab__card"
+                                            key={`${game.kind}:${game.id}`}
+                                            onClick={() =>
+                                              navigate(
+                                                ONLINE_GAME_PATH,
+                                                `?game-id=${game.id}`,
+                                              )}
+                                          >
+                                            <BoardThumbnail gameState={game.state} />
+                                            <span className="games-tab__card-body">
+                                              <span className="games-tab__players">
+                                                {game.players.white.username} vs{" "}
+                                                {game.players.black.username}
+                                              </span>
+                                              <span className="games-tab__meta">
+                                                Online - {getTimeControlLabel(
+                                                  game.timeControlId,
+                                                )} - {game.mode}
+                                              </span>
+                                              <span className="games-tab__status">
+                                                {formatGameStatus(game)}
+                                              </span>
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )
+                                    : (
+                                      <p className="home-page__message">
+                                        No games.
+                                      </p>
+                                    )}
+                                </section>
+                              </>
+                            )}
+                        </div>
                       </section>
                     ),
                   },

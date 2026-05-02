@@ -23,6 +23,7 @@ import type {
   AuthenticatedUser,
   ClientToServerEvents,
   InterServerEvents,
+  OnlineGameListEntry,
   OnlineGameState,
   OnlineMatchFound,
   OnlineMatchRequest,
@@ -198,11 +199,12 @@ function startOnlineMatch(
   right: MatchmakingEntry,
 ): StartedOnlineMatch {
   const gameId = randomUUID();
+  const nowMs = Date.now();
   const isLeftWhite = Math.random() < 0.5;
   const whiteEntry = isLeftWhite ? left : right;
   const blackEntry = isLeftWhite ? right : left;
   const initialState = createInitialBoard();
-    const game: OnlineGameState = {
+  const game: OnlineGameState = {
     id: gameId,
     mode: left.criteria.mode,
     timeControlId: left.criteria.timeControlId,
@@ -221,6 +223,8 @@ function startOnlineMatch(
     moves: [],
     status: { type: "active" },
     drawOffer: undefined,
+    createdAt: nowMs,
+    updatedAt: nowMs,
   };
 
   onlineGames.set(gameId, game);
@@ -264,6 +268,18 @@ function getOnlinePlayerColor(
   if (game.players.white.id === userId) return "white";
   if (game.players.black.id === userId) return "black";
   return null;
+}
+
+function toOnlineGameListEntry(game: OnlineGameState): OnlineGameListEntry {
+  return {
+    id: game.id,
+    mode: game.mode,
+    timeControlId: game.timeControlId,
+    players: game.players,
+    state: game.state,
+    status: game.status,
+    updatedAt: game.updatedAt,
+  };
 }
 
 function isLegalOnlineMove(game: OnlineGameState, move: MoveInput): boolean {
@@ -931,6 +947,21 @@ io.on("connection", (socket) => {
     callback({ ok: true, game });
   });
 
+  socket.on("listOnlineGames", (callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to view your games" });
+      return;
+    }
+
+    const games = [...onlineGames.values()]
+      .filter((game) => getOnlinePlayerColor(game, userId) !== null)
+      .sort((left, right) => right.updatedAt - left.updatedAt)
+      .map(toOnlineGameListEntry);
+
+    callback({ ok: true, games });
+  });
+
   socket.on("makeOnlineMove", (data, callback) => {
     const userId = getRequiredUserId(socket);
     if (!userId) {
@@ -977,6 +1008,7 @@ io.on("connection", (socket) => {
       state: nextState,
       history: [...game.history, nextState],
       moves: [...game.moves, data.move],
+      updatedAt: Date.now(),
     };
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
@@ -1007,6 +1039,7 @@ io.on("connection", (socket) => {
       ...game,
       status: { type: "resigned", winner, loser },
       drawOffer: undefined,
+      updatedAt: Date.now(),
     };
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
@@ -1040,6 +1073,7 @@ io.on("connection", (socket) => {
     const nextGame: OnlineGameState = {
       ...game,
       drawOffer: { offeredBy },
+      updatedAt: Date.now(),
     };
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
@@ -1085,10 +1119,12 @@ io.on("connection", (socket) => {
         ...game,
         status: { type: "draw", reason: "agreement" },
         drawOffer: undefined,
+        updatedAt: Date.now(),
       }
       : {
         ...game,
         drawOffer: undefined,
+        updatedAt: Date.now(),
       };
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
