@@ -23,10 +23,15 @@ import type {
   AuthenticatedUser,
   ClientToServerEvents,
   InterServerEvents,
+  OnlineGameState,
+  OnlineMatchFound,
   OnlineMatchRequest,
   ServerToClientEvents,
   SocketData,
 } from "../../shared/socket.js";
+import { createInitialBoard } from "../../shared/chess/setup.js";
+import { applyMove, getLegalMoves } from "../../shared/chess/moveGeneration.js";
+import type { MoveInput, PieceColor } from "../../shared/chess/types.js";
 
 const app = express();
 app.set("trust proxy", true);
@@ -99,7 +104,13 @@ type MatchmakingEntry = {
   criteria: OnlineMatchRequest;
 };
 
+type StartedOnlineMatch = {
+  leftMatch: OnlineMatchFound;
+  rightMatch: OnlineMatchFound;
+};
+
 const matchmakingQueue = new Map<string, MatchmakingEntry>();
+const onlineGames = new Map<string, OnlineGameState>();
 
 function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
   if (!socket.data.userId || !socket.data.username) {
@@ -182,27 +193,84 @@ function findMatchFor(entry: MatchmakingEntry): MatchmakingEntry | null {
   return null;
 }
 
-function startOnlineMatch(left: MatchmakingEntry, right: MatchmakingEntry): void {
-  const roomId = randomUUID();
-  left.socket.data.roomId = roomId;
-  right.socket.data.roomId = roomId;
-  left.socket.join(roomId);
-  right.socket.join(roomId);
+function startOnlineMatch(
+  left: MatchmakingEntry,
+  right: MatchmakingEntry,
+): StartedOnlineMatch {
+  const gameId = randomUUID();
+  const isLeftWhite = Math.random() < 0.5;
+  const whiteEntry = isLeftWhite ? left : right;
+  const blackEntry = isLeftWhite ? right : left;
+  const initialState = createInitialBoard();
+    const game: OnlineGameState = {
+    id: gameId,
+    mode: left.criteria.mode,
+    timeControlId: left.criteria.timeControlId,
+    players: {
+      white: {
+        ...whiteEntry.user,
+        color: "white",
+      },
+      black: {
+        ...blackEntry.user,
+        color: "black",
+      },
+    },
+    state: initialState,
+    history: [initialState],
+    moves: [],
+    status: { type: "active" },
+    drawOffer: undefined,
+  };
 
-  left.socket.emit("onlineMatchFound", {
-    roomId,
-    color: "white",
+  onlineGames.set(gameId, game);
+  console.log("online match created", {
+    gameId,
+    white: whiteEntry.user.username,
+    black: blackEntry.user.username,
+    mode: game.mode,
+    timeControlId: game.timeControlId,
+  });
+  left.socket.data.roomId = gameId;
+  right.socket.data.roomId = gameId;
+  left.socket.join(gameId);
+  right.socket.join(gameId);
+
+  const leftMatch: OnlineMatchFound = {
+    gameId,
+    color: isLeftWhite ? "white" : "black",
     opponent: right.user,
     timeControlId: left.criteria.timeControlId,
     mode: left.criteria.mode,
-  });
-  right.socket.emit("onlineMatchFound", {
-    roomId,
-    color: "black",
+  };
+  const rightMatch: OnlineMatchFound = {
+    gameId,
+    color: isLeftWhite ? "black" : "white",
     opponent: left.user,
     timeControlId: right.criteria.timeControlId,
     mode: right.criteria.mode,
-  });
+  };
+
+  left.socket.emit("onlineMatchFound", leftMatch);
+  right.socket.emit("onlineMatchFound", rightMatch);
+  io.to(gameId).emit("onlineGameUpdated", game);
+  return { leftMatch, rightMatch };
+}
+
+function getOnlinePlayerColor(
+  game: OnlineGameState,
+  userId: string,
+): PieceColor | null {
+  if (game.players.white.id === userId) return "white";
+  if (game.players.black.id === userId) return "black";
+  return null;
+}
+
+function isLegalOnlineMove(game: OnlineGameState, move: MoveInput): boolean {
+  const legalMoves = getLegalMoves(move.from, game.state);
+  return legalMoves.some((legalMove) =>
+    legalMove.x === move.to.x && legalMove.y === move.to.y
+  );
 }
 
 function cleanExpiredGoogleAuthStates(): void {
@@ -791,28 +859,240 @@ io.on("connection", (socket) => {
       return;
     }
 
+    const criteria: OnlineMatchRequest = {
+      mode: data.mode,
+      timeControlId: data.timeControlId,
+      opponentId: data.opponentId ?? null,
+      ratingMin: Math.min(data.ratingMin, data.ratingMax),
+      ratingMax: Math.max(data.ratingMin, data.ratingMax),
+    };
+
     const entry: MatchmakingEntry = {
       socket,
       user,
-      criteria: data,
+      criteria,
     };
     removeFromMatchmakingQueue(socket);
+
+    console.log("online matchmaking request", {
+      userId: user.id,
+      username: user.username,
+      elo: user.elo,
+      criteria,
+      queuedUsers: [...matchmakingQueue.values()].map((queuedEntry) => ({
+        userId: queuedEntry.user.id,
+        username: queuedEntry.user.username,
+        elo: queuedEntry.user.elo,
+        criteria: queuedEntry.criteria,
+      })),
+    });
 
     const match = findMatchFor(entry);
     if (match) {
       removeFromMatchmakingQueue(match.socket);
-      startOnlineMatch(entry, match);
-      callback({ ok: true });
+      const startedMatch = startOnlineMatch(entry, match);
+      callback({
+        ok: true,
+        status: "matched",
+        match: startedMatch.leftMatch,
+      });
       return;
     }
 
     matchmakingQueue.set(user.id, entry);
-    callback({ ok: true });
+    callback({ ok: true, status: "queued" });
   });
 
   socket.on("cancelOnlineMatch", (callback) => {
     removeFromMatchmakingQueue(socket);
     callback({ ok: true });
+  });
+
+  socket.on("getOnlineGame", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to view this game" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    if (!getOnlinePlayerColor(game, userId)) {
+      callback({ ok: false, error: "You are not a player in this game" });
+      return;
+    }
+
+    socket.data.roomId = game.id;
+    socket.join(game.id);
+    callback({ ok: true, game });
+  });
+
+  socket.on("makeOnlineMove", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to move" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    if (game.status.type !== "active") {
+      callback({ ok: false, error: "This game is already over" });
+      return;
+    }
+
+    const playerColor = getOnlinePlayerColor(game, userId);
+    if (!playerColor) {
+      callback({ ok: false, error: "You are not a player in this game" });
+      return;
+    }
+
+    if (game.state.turn !== playerColor) {
+      callback({ ok: false, error: "It is not your turn" });
+      return;
+    }
+
+    const movingPiece = game.state.board[data.move.from.y]?.[data.move.from.x];
+    if (!movingPiece || movingPiece.color !== playerColor) {
+      callback({ ok: false, error: "You can only move your own pieces" });
+      return;
+    }
+
+    if (!isLegalOnlineMove(game, data.move)) {
+      callback({ ok: false, error: "Illegal move" });
+      return;
+    }
+
+    const nextState = applyMove(game.state, data.move);
+    const nextGame: OnlineGameState = {
+      ...game,
+      state: nextState,
+      history: [...game.history, nextState],
+      moves: [...game.moves, data.move],
+    };
+    onlineGames.set(nextGame.id, nextGame);
+    callback({ ok: true });
+    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+  });
+
+  socket.on("resignOnlineGame", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to resign" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    const loser = getOnlinePlayerColor(game, userId);
+    if (!loser) {
+      callback({ ok: false, error: "You are not a player in this game" });
+      return;
+    }
+
+    const winner = loser === "white" ? "black" : "white";
+    const nextGame: OnlineGameState = {
+      ...game,
+      status: { type: "resigned", winner, loser },
+      drawOffer: undefined,
+    };
+    onlineGames.set(nextGame.id, nextGame);
+    callback({ ok: true });
+    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+  });
+
+  socket.on("offerOnlineDraw", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to offer a draw" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    if (game.status.type !== "active") {
+      callback({ ok: false, error: "This game is already over" });
+      return;
+    }
+
+    const offeredBy = getOnlinePlayerColor(game, userId);
+    if (!offeredBy) {
+      callback({ ok: false, error: "You are not a player in this game" });
+      return;
+    }
+
+    const nextGame: OnlineGameState = {
+      ...game,
+      drawOffer: { offeredBy },
+    };
+    onlineGames.set(nextGame.id, nextGame);
+    callback({ ok: true });
+    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+  });
+
+  socket.on("respondOnlineDrawOffer", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to respond to a draw offer" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    if (game.status.type !== "active") {
+      callback({ ok: false, error: "This game is already over" });
+      return;
+    }
+
+    const playerColor = getOnlinePlayerColor(game, userId);
+    if (!playerColor) {
+      callback({ ok: false, error: "You are not a player in this game" });
+      return;
+    }
+
+    if (!game.drawOffer) {
+      callback({ ok: false, error: "There is no draw offer to respond to" });
+      return;
+    }
+
+    if (game.drawOffer.offeredBy === playerColor) {
+      callback({ ok: false, error: "You cannot respond to your own draw offer" });
+      return;
+    }
+
+    const nextGame: OnlineGameState = data.accepted
+      ? {
+        ...game,
+        status: { type: "draw", reason: "agreement" },
+        drawOffer: undefined,
+      }
+      : {
+        ...game,
+        drawOffer: undefined,
+      };
+    onlineGames.set(nextGame.id, nextGame);
+    callback({ ok: true });
+    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
   });
 
   socket.on("createRoom", ({ name }) => {

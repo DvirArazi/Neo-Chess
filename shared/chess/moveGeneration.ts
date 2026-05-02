@@ -1,4 +1,4 @@
-import type { GameState, MoveInput, Piece, Square } from "./types";
+import type { GameState, MoveInput, Piece, Square } from "./types.js";
 
 const BOARD_SIZE = 8;
 

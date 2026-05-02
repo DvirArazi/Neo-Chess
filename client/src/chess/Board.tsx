@@ -562,6 +562,7 @@ export function Board(
     shouldAnimateReset: boolean;
     isBoardRotated: boolean;
     pieceRotations: Record<PieceColor, boolean>;
+    movableColor?: PieceColor | null;
     onMoveAttempt: (move: MoveInput) => void;
   },
 ) {
@@ -981,6 +982,12 @@ export function Board(
     dragStartPointerRef.current = null;
   };
 
+  const canMovePiece = (piece: Piece | null | undefined) => {
+    if (!piece || piece.color !== props.gameState.turn) return false;
+    if (props.movableColor === undefined) return true;
+    return props.movableColor === piece.color;
+  };
+
   const executeLegalMove = (
     from: Square,
     to: Square,
@@ -1012,7 +1019,7 @@ export function Board(
     }
 
     const piece = props.gameState.board[tileIndex.y][tileIndex.x];
-    if (!piece || piece.color !== props.gameState.turn) {
+    if (!canMovePiece(piece)) {
       clearInteractionState();
       return;
     }
@@ -1036,8 +1043,7 @@ export function Board(
     const dragStartPointer = dragStartPointerRef.current;
     if (!dragStartPointer) {
       const piece = props.gameState.board[tileIndex.y]?.[tileIndex.x] ?? null;
-      e.currentTarget.style.cursor =
-        piece && piece.color == props.gameState.turn ? "pointer" : "default";
+      e.currentTarget.style.cursor = canMovePiece(piece) ? "pointer" : "default";
       return;
     }
     e.currentTarget.style.cursor = "pointer";

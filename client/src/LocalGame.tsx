@@ -9,6 +9,7 @@ import {
 import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { ActionsBar } from "./ActionsBar";
+import { formatClock, type LocalTimeControl } from "./timeControls";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
 import blackProfileImage from "./assets/images/localProfile/black.png";
 import replayIcon from "./assets/images/replay.svg";
@@ -21,13 +22,6 @@ import flipIcon from "./assets/images/flip_disabled.svg";
 import flipLockIcon from "./assets/images/flip.svg";
 
 type ClockSnapshot = Record<PieceColor, number>;
-export type LocalTimeControl = {
-  id: string;
-  label: string;
-  initialMs: number;
-  incrementMs: number;
-  isUnlimited?: boolean;
-};
 
 type GameOutcomeMessage = {
   title: string;
@@ -56,16 +50,6 @@ function getDisplayedClocks(
     ...baseClocks,
     [activeColor]: Math.max(0, baseClocks[activeColor] - (nowMs - anchorMs)),
   };
-}
-
-function formatClock(clockMs: number): string {
-  if (!Number.isFinite(clockMs)) return "∞";
-
-  const totalSeconds = Math.ceil(Math.max(0, clockMs) / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function formatColorName(color: PieceColor): string {

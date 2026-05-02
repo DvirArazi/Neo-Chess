@@ -1,4 +1,4 @@
-import type { GameState, PieceBoard, PieceType } from "./types";
+import type { GameState, PieceBoard, PieceType } from "./types.js";
 
 export const BOARD_SIZE = 8;
 

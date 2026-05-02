@@ -1,3 +1,5 @@
+import type { GameState, MoveInput, PieceColor } from "./chess/types.js";
+
 export type AuthenticatedUser = {
   id: string;
   username: string;
@@ -50,11 +52,39 @@ export type OnlineMatchRequest = {
 };
 
 export type OnlineMatchFound = {
-  roomId: string;
+  gameId: string;
   color: "white" | "black";
   opponent: AuthenticatedUser;
   timeControlId: string;
   mode: "rated" | "casual";
+};
+
+export type OnlineMatchResponse =
+  | { ok: true; status: "queued" }
+  | { ok: true; status: "matched"; match: OnlineMatchFound }
+  | { ok: false; error: string };
+
+export type OnlineGamePlayer = AuthenticatedUser & {
+  color: PieceColor;
+};
+
+export type OnlineGameStatus =
+  | { type: "active" }
+  | { type: "draw"; reason: "agreement" }
+  | { type: "resigned"; winner: PieceColor; loser: PieceColor };
+
+export type OnlineGameState = {
+  id: string;
+  mode: "rated" | "casual";
+  timeControlId: string;
+  players: Record<PieceColor, OnlineGamePlayer>;
+  state: GameState;
+  history: GameState[];
+  moves: MoveInput[];
+  status: OnlineGameStatus;
+  drawOffer?: {
+    offeredBy: PieceColor;
+  };
 };
 
 export interface ServerToClientEvents {
@@ -64,6 +94,7 @@ export interface ServerToClientEvents {
   authStateChanged: (data: { user: AuthenticatedUser | null }) => void;
   friendsChanged: () => void;
   onlineMatchFound: (data: OnlineMatchFound) => void;
+  onlineGameUpdated: (data: OnlineGameState) => void;
 }
 
 export interface ClientToServerEvents {
@@ -102,9 +133,33 @@ export interface ClientToServerEvents {
   ) => void;
   findOnlineMatch: (
     data: OnlineMatchRequest,
-    callback: (response: BasicActionResponse) => void,
+    callback: (response: OnlineMatchResponse) => void,
   ) => void;
   cancelOnlineMatch: (callback: (response: BasicActionResponse) => void) => void;
+  getOnlineGame: (
+    data: { gameId: string },
+    callback: (
+      response:
+        | { ok: true; game: OnlineGameState }
+        | { ok: false; error: string },
+    ) => void,
+  ) => void;
+  makeOnlineMove: (
+    data: { gameId: string; move: MoveInput },
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
+  resignOnlineGame: (
+    data: { gameId: string },
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
+  offerOnlineDraw: (
+    data: { gameId: string },
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
+  respondOnlineDrawOffer: (
+    data: { gameId: string; accepted: boolean },
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
   joinRoom: (data: { roomId: string; name: string }) => void;
   createRoom: (data: { name: string }) => void;
   makeMove: (data: { roomId: string; from: string; to: string }) => void;

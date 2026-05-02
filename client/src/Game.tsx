@@ -26,8 +26,10 @@ type GameProps = {
   topPlayerRotated: boolean;
   bottomPlayerRotated: boolean;
   onMoveAttempt: (move: MoveInput) => void;
+  movableColor?: PieceColor | null;
   players: Record<PieceColor, PlayerInfo>;
   controls?: ReactNode;
+  bottomPlayerAddon?: ReactNode;
 };
 
 const STARTING_PIECE_COUNTS: Record<PieceType, number> = {
@@ -153,6 +155,7 @@ export function Game(props: GameProps) {
                     capturedMaterial={capturedMaterial[color]}
                     isActive={props.gameState.turn === color}
                   />
+                  {!isTop && props.bottomPlayerAddon}
                 </div>
               </div>
             );
@@ -173,6 +176,7 @@ export function Game(props: GameProps) {
               shouldAnimateReset={props.shouldAnimateReset}
               isBoardRotated={props.boardRotated}
               pieceRotations={props.pieceRotations}
+              movableColor={props.movableColor}
               onMoveAttempt={props.onMoveAttempt}
             />
           </div>

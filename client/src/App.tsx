@@ -7,7 +7,8 @@ import type {
 } from "../../shared/socket";
 import "./App.css";
 import { ButtonGroup } from "./ButtonGroup";
-import LocalGame, { type LocalTimeControl } from "./LocalGame";
+import LocalGame from "./LocalGame";
+import { OnlineGame } from "./OnlineGame";
 import { Popup } from "./Popup";
 import { RangeSlider } from "./RangeSlider";
 import {
@@ -19,6 +20,11 @@ import {
   socket,
 } from "./socket";
 import { TabPanel } from "./TabPanel";
+import {
+  LOCAL_TIME_CONTROLS,
+  formatTimeControlSubtext,
+  type LocalTimeControl,
+} from "./timeControls";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
 import blackQueen from "./assets/images/pieces/black-queen.svg";
 import accountIcon from "./assets/images/account.svg";
@@ -32,13 +38,6 @@ const RANDOM_OPPONENT_ID = "random";
 const DEFAULT_ELO = 1200;
 const RATING_RANGE_RADIUS = 500;
 const MIN_RATING_RANGE_DISTANCE = 100;
-const LOCAL_TIME_CONTROLS: LocalTimeControl[] = [
-  { id: "bullet", label: "Bullet", initialMs: 2 * 60 * 1000, incrementMs: 1000 },
-  { id: "blitz", label: "Blitz", initialMs: 5 * 60 * 1000, incrementMs: 3000 },
-  { id: "rapid", label: "Rapid", initialMs: 10 * 60 * 1000, incrementMs: 5000 },
-  { id: "classical", label: "Classical", initialMs: 30 * 60 * 1000, incrementMs: 20000 },
-  { id: "unlimited", label: "Unlimited", initialMs: Number.POSITIVE_INFINITY, incrementMs: 0, isUnlimited: true },
-];
 
 type RouteState = {
   pathname: string;
@@ -60,14 +59,6 @@ type GoogleAuthMessage =
     error: string;
   };
 
-function formatTimeControlSubtext(timeControl: LocalTimeControl): string {
-  if (timeControl.isUnlimited) return "∞";
-
-  return `${Math.round(timeControl.initialMs / 60000)}m|${
-    Math.round(timeControl.incrementMs / 1000)
-  }s`;
-}
-
 export function App() {
   const [route, setRoute] = useState<RouteState>(() => ({
     pathname: window.location.pathname,
@@ -76,8 +67,6 @@ export function App() {
   const [homeTab, setHomeTab] = useState<HomeTab>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
   const [selectedOpponentId, setSelectedOpponentId] = useState(RANDOM_OPPONENT_ID);
-  const [selectedOnlineTimeControlId, setSelectedOnlineTimeControlId] =
-    useState(LOCAL_TIME_CONTROLS[0].id);
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(null);
   const [ratingRange, setRatingRange] = useState<[number, number]>([
@@ -216,15 +205,16 @@ export function App() {
     const handleOnlineMatchFound = (match: OnlineMatchFound) => {
       setIsWaitingForOpponent(false);
       setOnlineMatchStatus(null);
-      setSelectedOnlineTimeControlId(match.timeControlId);
-      navigate(ONLINE_GAME_PATH, `?time=${match.timeControlId}`);
+      const nextSearch = `?game-id=${match.gameId}`;
+      window.history.pushState({}, "", `${ONLINE_GAME_PATH}${nextSearch}`);
+      setRoute({ pathname: ONLINE_GAME_PATH, search: nextSearch });
     };
 
     socket.on("onlineMatchFound", handleOnlineMatchFound);
     return () => {
       socket.off("onlineMatchFound", handleOnlineMatchFound);
     };
-  });
+  }, []);
 
   useEffect(() => {
     const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
@@ -360,9 +350,6 @@ export function App() {
     return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId) ??
       LOCAL_TIME_CONTROLS[0];
   })();
-  const selectedOnlineTimeControl = LOCAL_TIME_CONTROLS.find((control) =>
-    control.id === selectedOnlineTimeControlId
-  ) ?? LOCAL_TIME_CONTROLS[0];
   const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
     ? "Random opponent"
     : friendOptions.find((friend) => friend.id === selectedOpponentId)?.username ??
@@ -580,7 +567,6 @@ export function App() {
   };
 
   const handleFindOnlineMatch = (timeControl: LocalTimeControl) => {
-    setSelectedOnlineTimeControlId(timeControl.id);
     setIsWaitingForOpponent(true);
     setOnlineMatchStatus(null);
 
@@ -604,6 +590,14 @@ export function App() {
           setOnlineMatchStatus(response.error);
           return;
         }
+
+        if (response.status === "matched") {
+          setIsWaitingForOpponent(false);
+          setOnlineMatchStatus(null);
+          const nextSearch = `?game-id=${response.match.gameId}`;
+          window.history.pushState({}, "", `${ONLINE_GAME_PATH}${nextSearch}`);
+          setRoute({ pathname: ONLINE_GAME_PATH, search: nextSearch });
+        }
       },
     );
   };
@@ -619,10 +613,18 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="app-brand" aria-label="Neo Chess">
+        <a
+          className="app-brand"
+          href={HOME_PATH}
+          aria-label="Neo Chess home"
+          onClick={(event) => {
+            event.preventDefault();
+            navigate(HOME_PATH);
+          }}
+        >
           <img className="app-brand__icon" src={blackQueen} alt="" />
           <span className="app-brand__name">Neo Chess</span>
-        </div>
+        </a>
 
         <button
           type="button"
@@ -649,15 +651,19 @@ export function App() {
       </header>
 
       <div className="app-content">
-        {route.pathname === LOCAL_GAME_PATH || route.pathname === ONLINE_GAME_PATH
+        {route.pathname === ONLINE_GAME_PATH
+          ? (
+            <OnlineGame
+              key={new URLSearchParams(route.search).get("game-id") ?? ""}
+              gameId={new URLSearchParams(route.search).get("game-id") ?? ""}
+              authenticatedUser={authenticatedUser}
+            />
+          )
+          : route.pathname === LOCAL_GAME_PATH
           ? (
             <LocalGame
-              key={route.pathname === ONLINE_GAME_PATH
-                ? `online:${selectedOnlineTimeControl.id}`
-                : `local:${selectedTimeControl.id}`}
-              timeControl={route.pathname === ONLINE_GAME_PATH
-                ? selectedOnlineTimeControl
-                : selectedTimeControl}
+              key={selectedTimeControl.id}
+              timeControl={selectedTimeControl}
             />
           )
           : (
