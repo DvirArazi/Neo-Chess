@@ -1,12 +1,16 @@
 import {
   boolean,
+  index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { OnlineGameState } from "../../../shared/socket.js";
+import type { GameState } from "../../../shared/chess/types.js";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -72,3 +76,24 @@ export const games = pgTable("games", {
   isFinished: boolean("is_finished").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const onlineGameRecords = pgTable("online_games", {
+  id: uuid("id").primaryKey(),
+  whiteUserId: uuid("white_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  blackUserId: uuid("black_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  mode: text("mode").notNull(),
+  timeControlId: text("time_control_id").notNull(),
+  state: jsonb("state").$type<GameState>().notNull(),
+  snapshot: jsonb("snapshot").$type<OnlineGameState>().notNull(),
+  isFinished: boolean("is_finished").default(false).notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+}, (table) => [
+  index("online_games_white_user_id_idx").on(table.whiteUserId),
+  index("online_games_black_user_id_idx").on(table.blackUserId),
+  index("online_games_updated_at_idx").on(table.updatedAt),
+]);

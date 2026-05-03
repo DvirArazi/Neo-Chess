@@ -19,6 +19,10 @@ import {
   sendFriendRequest,
   unfriend,
 } from "./friends/service.js";
+import {
+  loadPersistedOnlineGames,
+  persistOnlineGameSnapshot,
+} from "./onlineGames/persistence.js";
 import type {
   AuthenticatedUser,
   ClientToServerEvents,
@@ -112,6 +116,53 @@ type StartedOnlineMatch = {
 
 const matchmakingQueue = new Map<string, MatchmakingEntry>();
 const onlineGames = new Map<string, OnlineGameState>();
+const pendingOnlineGamePersistence = new Map<string, OnlineGameState>();
+let onlineGamePersistenceFlushTimeout: NodeJS.Timeout | null = null;
+let onlineGamePersistenceChain: Promise<void> = Promise.resolve();
+
+function flushOnlineGamePersistence(): void {
+  onlineGamePersistenceFlushTimeout = null;
+  const gamesToPersist = [...pendingOnlineGamePersistence.values()];
+  pendingOnlineGamePersistence.clear();
+  if (gamesToPersist.length === 0) return;
+
+  onlineGamePersistenceChain = onlineGamePersistenceChain
+    .then(async () => {
+      const results = await Promise.allSettled(
+        gamesToPersist.map((game) => persistOnlineGameSnapshot(game)),
+      );
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.error("online game persistence failed", result.reason);
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("online game persistence queue failed", error);
+    });
+}
+
+function queueOnlineGamePersistence(game: OnlineGameState): void {
+  pendingOnlineGamePersistence.set(game.id, game);
+  if (onlineGamePersistenceFlushTimeout !== null) return;
+
+  onlineGamePersistenceFlushTimeout = setTimeout(
+    flushOnlineGamePersistence,
+    0,
+  );
+}
+
+async function hydrateOnlineGames(): Promise<void> {
+  try {
+    const persistedGames = await loadPersistedOnlineGames();
+    for (const game of persistedGames) {
+      onlineGames.set(game.id, game);
+    }
+    console.log(`Loaded ${persistedGames.length} online games from database`);
+  } catch (error) {
+    console.error("Unable to load online games from database", error);
+  }
+}
 
 function getAuthenticatedUser(socket: ServerSocket): AuthenticatedUser | null {
   if (!socket.data.userId || !socket.data.username) {
@@ -228,6 +279,7 @@ function startOnlineMatch(
   };
 
   onlineGames.set(gameId, game);
+  queueOnlineGamePersistence(game);
   console.log("online match created", {
     gameId,
     white: whiteEntry.user.username,
@@ -1013,6 +1065,7 @@ io.on("connection", (socket) => {
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
     io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+    queueOnlineGamePersistence(nextGame);
   });
 
   socket.on("resignOnlineGame", (data, callback) => {
@@ -1044,6 +1097,7 @@ io.on("connection", (socket) => {
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
     io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+    queueOnlineGamePersistence(nextGame);
   });
 
   socket.on("offerOnlineDraw", (data, callback) => {
@@ -1078,6 +1132,7 @@ io.on("connection", (socket) => {
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
     io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+    queueOnlineGamePersistence(nextGame);
   });
 
   socket.on("respondOnlineDrawOffer", (data, callback) => {
@@ -1129,6 +1184,7 @@ io.on("connection", (socket) => {
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
     io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+    queueOnlineGamePersistence(nextGame);
   });
 
   socket.on("createRoom", ({ name }) => {
@@ -1186,6 +1242,11 @@ server.on("error", (error: NodeJS.ErrnoException) => {
   throw error;
 });
 
-server.listen(port, () => {
-  console.log(`Server listening on ${port}`);
-});
+async function startServer(): Promise<void> {
+  await hydrateOnlineGames();
+  server.listen(port, () => {
+    console.log(`Server listening on ${port}`);
+  });
+}
+
+void startServer();

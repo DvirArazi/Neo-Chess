@@ -4,8 +4,8 @@ import type {
   FriendEntry,
   FriendRequest,
   OnlineGameListEntry,
-  OnlineMatchFound,
   OnlineGameState,
+  OnlineMatchFound,
 } from "../../shared/socket";
 import type { GameState } from "../../shared/chess/types";
 import "./App.css";
@@ -24,8 +24,8 @@ import {
 } from "./socket";
 import { TabPanel } from "./TabPanel";
 import {
-  LOCAL_TIME_CONTROLS,
   formatTimeControlSubtext,
+  LOCAL_TIME_CONTROLS,
   type LocalTimeControl,
 } from "./timeControls";
 import { ToggleButtonGroup } from "./ToggleButtonGroup";
@@ -42,6 +42,7 @@ const RANDOM_OPPONENT_ID = "random";
 const DEFAULT_ELO = 1200;
 const RATING_RANGE_RADIUS = 500;
 const MIN_RATING_RANGE_DISTANCE = 100;
+const RATING_RANGE_OFFSETS_STORAGE_KEY = "neo-chess-rating-range-offsets";
 
 type RouteState = {
   pathname: string;
@@ -52,6 +53,11 @@ type HomeTab = "play" | "games";
 type PlayMode = "online" | "local";
 type OnlineMode = "rated" | "casual";
 type GamesHistoryFilter = "all" | "online" | "local";
+type RatingRangeOffsets = {
+  minOffset: number;
+  maxOffset: number;
+};
+type RatingRangeOffsetsByUser = Record<string, RatingRangeOffsets>;
 type GoogleAuthMessage =
   | {
     type: typeof GOOGLE_AUTH_MESSAGE_TYPE;
@@ -107,6 +113,105 @@ function formatGameStatus(game: OnlineGameListEntry): string {
   return `${game.players[game.status.winner].username} won`;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getRatingRangeStorageUserId(user: AuthenticatedUser | null): string {
+  return user?.id ?? "guest";
+}
+
+function normalizeRatingRangeOffsets(
+  minOffset: number,
+  maxOffset: number,
+): [number, number] {
+  if (!Number.isFinite(minOffset) || !Number.isFinite(maxOffset)) {
+    return [-RATING_RANGE_RADIUS, RATING_RANGE_RADIUS];
+  }
+
+  const nextMinOffset = clamp(
+    Math.round(minOffset),
+    -RATING_RANGE_RADIUS,
+    RATING_RANGE_RADIUS - MIN_RATING_RANGE_DISTANCE,
+  );
+  const nextMaxOffset = clamp(
+    Math.round(maxOffset),
+    -RATING_RANGE_RADIUS + MIN_RATING_RANGE_DISTANCE,
+    RATING_RANGE_RADIUS,
+  );
+
+  if (nextMaxOffset - nextMinOffset < MIN_RATING_RANGE_DISTANCE) {
+    return [-RATING_RANGE_RADIUS, RATING_RANGE_RADIUS];
+  }
+
+  return [nextMinOffset, nextMaxOffset];
+}
+
+function readStoredRatingRangeOffsets(): RatingRangeOffsetsByUser {
+  const storedOffsets = window.localStorage.getItem(
+    RATING_RANGE_OFFSETS_STORAGE_KEY,
+  );
+  if (!storedOffsets) return {};
+
+  try {
+    const parsedOffsets = JSON.parse(storedOffsets);
+    return parsedOffsets && typeof parsedOffsets === "object"
+      ? parsedOffsets as RatingRangeOffsetsByUser
+      : {};
+  } catch {
+    window.localStorage.removeItem(RATING_RANGE_OFFSETS_STORAGE_KEY);
+    return {};
+  }
+}
+
+function getStoredRatingRangeOffsets(
+  user: AuthenticatedUser | null,
+): [number, number] {
+  const storedOffsets = readStoredRatingRangeOffsets()[
+    getRatingRangeStorageUserId(user)
+  ];
+
+  if (
+    !storedOffsets ||
+    typeof storedOffsets.minOffset !== "number" ||
+    typeof storedOffsets.maxOffset !== "number"
+  ) {
+    return [-RATING_RANGE_RADIUS, RATING_RANGE_RADIUS];
+  }
+
+  return normalizeRatingRangeOffsets(
+    storedOffsets.minOffset,
+    storedOffsets.maxOffset,
+  );
+}
+
+function getRatingRangeForUser(user: AuthenticatedUser | null): [number, number] {
+  const userElo = user?.elo ?? DEFAULT_ELO;
+  const [minOffset, maxOffset] = getStoredRatingRangeOffsets(user);
+  return [userElo + minOffset, userElo + maxOffset];
+}
+
+function setStoredRatingRangeOffsets(
+  user: AuthenticatedUser | null,
+  ratingRange: [number, number],
+): void {
+  const userElo = user?.elo ?? DEFAULT_ELO;
+  const [minOffset, maxOffset] = normalizeRatingRangeOffsets(
+    ratingRange[0] - userElo,
+    ratingRange[1] - userElo,
+  );
+  const storedOffsetsByUser = readStoredRatingRangeOffsets();
+
+  storedOffsetsByUser[getRatingRangeStorageUserId(user)] = {
+    minOffset,
+    maxOffset,
+  };
+  window.localStorage.setItem(
+    RATING_RANGE_OFFSETS_STORAGE_KEY,
+    JSON.stringify(storedOffsetsByUser),
+  );
+}
+
 export function App() {
   const [route, setRoute] = useState<RouteState>(() => ({
     pathname: window.location.pathname,
@@ -115,25 +220,32 @@ export function App() {
   const [homeTab, setHomeTab] = useState<HomeTab>("play");
   const [playMode, setPlayMode] = useState<PlayMode>("online");
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
-  const [gamesHistoryFilter, setGamesHistoryFilter] =
-    useState<GamesHistoryFilter>("all");
+  const [gamesHistoryFilter, setGamesHistoryFilter] = useState<
+    GamesHistoryFilter
+  >("all");
   const [onlineGames, setOnlineGames] = useState<OnlineGameListEntry[]>([]);
   const [gamesStatus, setGamesStatus] = useState<string | null>(null);
-  const [selectedOpponentId, setSelectedOpponentId] = useState(RANDOM_OPPONENT_ID);
+  const [selectedOpponentId, setSelectedOpponentId] = useState(
+    RANDOM_OPPONENT_ID,
+  );
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
-  const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(null);
-  const [ratingRange, setRatingRange] = useState<[number, number]>([
-    DEFAULT_ELO - RATING_RANGE_RADIUS,
-    DEFAULT_ELO + RATING_RANGE_RADIUS,
-  ]);
+  const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(
+    null,
+  );
+  const [authenticatedUser, setAuthenticatedUser] = useState<
+    AuthenticatedUser | null
+  >(() => getStoredAuthenticatedUser());
+  const [ratingRange, setRatingRange] = useState<[number, number]>(() =>
+    getRatingRangeForUser(authenticatedUser)
+  );
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
-  const [authenticatedUser, setAuthenticatedUser] =
-    useState<AuthenticatedUser | null>(() => getStoredAuthenticatedUser());
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signUpUsername, setSignUpUsername] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
-  const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
+  const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState(
+    "",
+  );
   const [friendSearch, setFriendSearch] = useState("");
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [friendUsers, setFriendUsers] = useState<FriendEntry[]>([]);
@@ -141,7 +253,9 @@ export function App() {
   const [hasUnseenRequests, setHasUnseenRequests] = useState(false);
   const [areAccountInputsArmed, setAreAccountInputsArmed] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
-  const [accountStatusTone, setAccountStatusTone] = useState<"error" | "success">(
+  const [accountStatusTone, setAccountStatusTone] = useState<
+    "error" | "success"
+  >(
     "success",
   );
   const [friendStatus, setFriendStatus] = useState<string | null>(null);
@@ -151,8 +265,12 @@ export function App() {
   const [activeAccountAction, setActiveAccountAction] = useState<
     "logIn" | "signUp" | "logOut" | "google" | null
   >(null);
-  const [activeFriendAction, setActiveFriendAction] = useState<string | null>(null);
+  const [activeFriendAction, setActiveFriendAction] = useState<string | null>(
+    null,
+  );
+  const [hasFriendListScrollbar, setHasFriendListScrollbar] = useState(false);
   const [isOpponentMenuOpen, setIsOpponentMenuOpen] = useState(false);
+  const friendListRef = useRef<HTMLDivElement | null>(null);
   const opponentSelectRef = useRef<HTMLDivElement | null>(null);
   const googleAuthPopupRef = useRef<Window | null>(null);
   const googleAuthTimeoutRef = useRef<number | null>(null);
@@ -247,7 +365,9 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const handleAuthStateChanged = (data: { user: AuthenticatedUser | null }) => {
+    const handleAuthStateChanged = (
+      data: { user: AuthenticatedUser | null },
+    ) => {
       setAuthenticatedUser(data.user);
       if (data.user === null) {
         clearSessionToken();
@@ -337,12 +457,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
-    setRatingRange([
-      userElo - RATING_RANGE_RADIUS,
-      userElo + RATING_RANGE_RADIUS,
-    ]);
-  }, [authenticatedUser?.elo]);
+    setRatingRange(getRatingRangeForUser(authenticatedUser));
+  }, [authenticatedUser?.id, authenticatedUser?.elo]);
 
   useEffect(() => {
     if (
@@ -352,6 +468,37 @@ export function App() {
       setSelectedOpponentId(RANDOM_OPPONENT_ID);
     }
   }, [friendOptions, selectedOpponentId]);
+
+  useEffect(() => {
+    if (!isAccountPopupOpen || !authenticatedUser) {
+      setHasFriendListScrollbar(false);
+      return;
+    }
+
+    const list = friendListRef.current;
+    if (!list) return;
+
+    const updateScrollbarState = () => {
+      setHasFriendListScrollbar(list.scrollHeight > list.clientHeight);
+    };
+
+    const frameId = window.requestAnimationFrame(updateScrollbarState);
+    const resizeObserver = new ResizeObserver(updateScrollbarState);
+    resizeObserver.observe(list);
+    window.addEventListener("resize", updateScrollbarState);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScrollbarState);
+    };
+  }, [
+    activeFriendAction,
+    authenticatedUser,
+    friendSearch,
+    friendUsers,
+    isAccountPopupOpen,
+  ]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -391,7 +538,6 @@ export function App() {
       googleAuthPopupRef.current = null;
     };
 
-    
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== serverOrigin) {
         return;
@@ -467,12 +613,15 @@ export function App() {
 
   const selectedTimeControl = (() => {
     const timeControlId = new URLSearchParams(route.search).get("time");
-    return LOCAL_TIME_CONTROLS.find((control) => control.id === timeControlId) ??
+    return LOCAL_TIME_CONTROLS.find((control) =>
+      control.id === timeControlId
+    ) ??
       LOCAL_TIME_CONTROLS[0];
   })();
   const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
     ? "Random opponent"
-    : friendOptions.find((friend) => friend.id === selectedOpponentId)?.username ??
+    : friendOptions.find((friend) => friend.id === selectedOpponentId)
+      ?.username ??
       "Random opponent";
   const userElo = authenticatedUser?.elo ?? DEFAULT_ELO;
   const ratingRangeMin = userElo - RATING_RANGE_RADIUS;
@@ -674,7 +823,10 @@ export function App() {
     setAccountStatus(null);
     setAccountStatusTone("success");
 
-    const authUrl = new URL("/auth/google/start", import.meta.env.VITE_SERVER_URL);
+    const authUrl = new URL(
+      "/auth/google/start",
+      import.meta.env.VITE_SERVER_URL,
+    );
     authUrl.searchParams.set("origin", window.location.origin);
 
     const popup = window.open(
@@ -699,7 +851,9 @@ export function App() {
     googleAuthTimeoutRef.current = window.setTimeout(() => {
       googleAuthTimeoutRef.current = null;
       googleAuthPopupRef.current = null;
-      setActiveAccountAction((current) => current === "google" ? null : current);
+      setActiveAccountAction((current) =>
+        current === "google" ? null : current
+      );
     }, 2 * 60 * 1000);
   };
 
@@ -739,6 +893,11 @@ export function App() {
     );
   };
 
+  const handleRatingRangeChange = (nextRatingRange: [number, number]) => {
+    setRatingRange(nextRatingRange);
+    setStoredRatingRangeOffsets(authenticatedUser, nextRatingRange);
+  };
+
   const handleCancelOnlineMatch = () => {
     setIsWaitingForOpponent(false);
     setOnlineMatchStatus(null);
@@ -766,11 +925,9 @@ export function App() {
         <button
           type="button"
           className="app-header__account-link"
-          aria-label={
-            authenticatedUser
-              ? `Account (${authenticatedUser.username})`
-              : "Account"
-          }
+          aria-label={authenticatedUser
+            ? `Account (${authenticatedUser.username})`
+            : "Account"}
           onClick={openAccountPopup}
         >
           {authenticatedUser
@@ -782,7 +939,12 @@ export function App() {
             : null}
           <img className="app-header__account-icon" src={accountIcon} alt="" />
           {hasUnseenRequests
-            ? <span className="app-header__account-indicator" aria-hidden="true" />
+            ? (
+              <span
+                className="app-header__account-indicator"
+                aria-hidden="true"
+              />
+            )
             : null}
         </button>
       </header>
@@ -840,16 +1002,6 @@ export function App() {
                           inert={playMode === "local"}
                         >
                           <div className="home-page__online-settings">
-                            <ToggleButtonGroup
-                              ariaLabel="Game type"
-                              value={onlineMode}
-                              onChange={(value) =>
-                                setOnlineMode(value as OnlineMode)}
-                              items={[
-                                { label: "Rated", value: "rated" },
-                                { label: "Casual", value: "casual" },
-                              ]}
-                            />
                             <div className="home-page__field">
                               <span className="home-page__field-label">VS</span>
                               <div
@@ -863,11 +1015,15 @@ export function App() {
                                   aria-expanded={isOpponentMenuOpen}
                                   onPointerDown={(event) => {
                                     event.preventDefault();
-                                    setIsOpponentMenuOpen((current) => !current);
+                                    setIsOpponentMenuOpen((current) =>
+                                      !current
+                                    );
                                   }}
                                   onClick={(event) => {
                                     if (event.detail === 0) {
-                                      setIsOpponentMenuOpen((current) => !current);
+                                      setIsOpponentMenuOpen((current) =>
+                                        !current
+                                      );
                                     }
                                   }}
                                 >
@@ -890,7 +1046,9 @@ export function App() {
                                           RANDOM_OPPONENT_ID}
                                         onPointerDown={(event) => {
                                           event.preventDefault();
-                                          setSelectedOpponentId(RANDOM_OPPONENT_ID);
+                                          setSelectedOpponentId(
+                                            RANDOM_OPPONENT_ID,
+                                          );
                                           setIsOpponentMenuOpen(false);
                                         }}
                                         onClick={(event) => {
@@ -956,7 +1114,17 @@ export function App() {
                                     label: `${ratingRangeMax}`,
                                   },
                                 ]}
-                                onChange={setRatingRange}
+                                onChange={handleRatingRangeChange}
+                              />
+                              <ToggleButtonGroup
+                                ariaLabel="Game type"
+                                value={onlineMode}
+                                onChange={(value) =>
+                                  setOnlineMode(value as OnlineMode)}
+                                items={[
+                                  { label: "Rated", value: "rated" },
+                                  { label: "Casual", value: "casual" },
+                                ]}
                               />
                             </div>
                           </div>
@@ -1014,10 +1182,13 @@ export function App() {
                                                 `?game-id=${game.id}`,
                                               )}
                                           >
-                                            <BoardThumbnail gameState={game.state} />
+                                            <BoardThumbnail
+                                              gameState={game.state}
+                                            />
                                             <span className="games-tab__card-body">
                                               <span className="games-tab__players">
-                                                {game.players.white.username} vs{" "}
+                                                {game.players.white.username} vs
+                                                {" "}
                                                 {game.players.black.username}
                                               </span>
                                               <span className="games-tab__meta">
@@ -1046,7 +1217,8 @@ export function App() {
                                       value={gamesHistoryFilter}
                                       onChange={(event) =>
                                         setGamesHistoryFilter(
-                                          event.target.value as GamesHistoryFilter,
+                                          event.target
+                                            .value as GamesHistoryFilter,
                                         )}
                                     >
                                       <option value="all">All</option>
@@ -1074,10 +1246,13 @@ export function App() {
                                                 `?game-id=${game.id}`,
                                               )}
                                           >
-                                            <BoardThumbnail gameState={game.state} />
+                                            <BoardThumbnail
+                                              gameState={game.state}
+                                            />
                                             <span className="games-tab__card-body">
                                               <span className="games-tab__players">
-                                                {game.players.white.username} vs{" "}
+                                                {game.players.white.username} vs
+                                                {" "}
                                                 {game.players.black.username}
                                               </span>
                                               <span className="games-tab__meta">
@@ -1120,9 +1295,11 @@ export function App() {
         <div className="waiting-popup">
           <div className="waiting-popup__spinner" aria-hidden="true" />
           {onlineMatchStatus
-            ? <p className="account-popup__status account-popup__status--error">
-              {onlineMatchStatus}
-            </p>
+            ? (
+              <p className="account-popup__status account-popup__status--error">
+                {onlineMatchStatus}
+              </p>
+            )
             : null}
         </div>
       </Popup>
@@ -1143,7 +1320,10 @@ export function App() {
                       <h3 className="account-popup__section-title">Requests</h3>
                       <div className="account-popup__list">
                         {friendRequests.map((request) => (
-                          <div className="account-popup__friend-row" key={request.id}>
+                          <div
+                            className="account-popup__friend-row"
+                            key={request.id}
+                          >
                             <span className="account-popup__friend-name">
                               {request.username}
                             </span>
@@ -1152,8 +1332,10 @@ export function App() {
                                 type="button"
                                 className="account-popup__icon-button account-popup__icon-button--approve"
                                 aria-label={`Approve ${request.username}`}
-                                onClick={() => handleApproveFriendRequest(request.id)}
-                                disabled={activeFriendAction === `approve:${request.id}`}
+                                onClick={() =>
+                                  handleApproveFriendRequest(request.id)}
+                                disabled={activeFriendAction ===
+                                  `approve:${request.id}`}
                               >
                                 Approve
                               </button>
@@ -1161,8 +1343,10 @@ export function App() {
                                 type="button"
                                 className="account-popup__icon-button account-popup__icon-button--deny"
                                 aria-label={`Deny ${request.username}`}
-                                onClick={() => handleDenyFriendRequest(request.id)}
-                                disabled={activeFriendAction === `deny:${request.id}`}
+                                onClick={() =>
+                                  handleDenyFriendRequest(request.id)}
+                                disabled={activeFriendAction ===
+                                  `deny:${request.id}`}
                               >
                                 Deny
                               </button>
@@ -1186,10 +1370,22 @@ export function App() {
                     value={friendSearch}
                     onChange={(event) => setFriendSearch(event.target.value)}
                   />
-                  <div className="account-popup__list account-popup__list--scroll">
+                  <div
+                    ref={friendListRef}
+                    className={[
+                      "account-popup__list",
+                      "account-popup__list--scroll",
+                      hasFriendListScrollbar
+                        ? "account-popup__list--has-scrollbar"
+                        : "",
+                    ].filter(Boolean).join(" ")}
+                  >
                     {friendUsers.length > 0
                       ? friendUsers.map((user) => (
-                        <div className="account-popup__friend-row" key={user.id}>
+                        <div
+                          className="account-popup__friend-row"
+                          key={user.id}
+                        >
                           <span className="account-popup__friend-name">
                             {user.username}
                           </span>
@@ -1206,7 +1402,8 @@ export function App() {
                                 type="button"
                                 className="account-popup__small-button"
                                 onClick={() => handleUnfriend(user.id)}
-                                disabled={activeFriendAction === `unfriend:${user.id}`}
+                                disabled={activeFriendAction ===
+                                  `unfriend:${user.id}`}
                               >
                                 Unfriend
                               </button>
@@ -1216,7 +1413,8 @@ export function App() {
                                 type="button"
                                 className="account-popup__small-button account-popup__small-button--add"
                                 onClick={() => handleSendFriendRequest(user.id)}
-                                disabled={activeFriendAction === `add:${user.id}`}
+                                disabled={activeFriendAction ===
+                                  `add:${user.id}`}
                               >
                                 Add
                               </button>

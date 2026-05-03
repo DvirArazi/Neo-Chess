@@ -77,9 +77,13 @@ export function OnlineGame(props: OnlineGameProps) {
     const handleGameUpdated = (nextGame: OnlineGameState) => {
       if (nextGame.id !== props.gameId) return;
 
+      const previousHistoryLength = historyLengthRef.current;
+      const nextHistoryLength = nextGame.history.length;
+      const hasNewMove = previousHistoryLength > 0 &&
+        nextHistoryLength > previousHistoryLength;
       const wasViewingCurrent = historyIndexRef.current >=
-        Math.max(0, historyLengthRef.current - 1);
-      historyLengthRef.current = nextGame.history.length;
+        Math.max(0, previousHistoryLength - 1);
+      historyLengthRef.current = nextHistoryLength;
       setGame(nextGame);
       setStatusMessage(null);
       if (nextGame.status.type !== "active") {
@@ -89,8 +93,10 @@ export function OnlineGame(props: OnlineGameProps) {
       }
 
       if (wasViewingCurrent) {
-        setHistoryIndex(nextGame.history.length - 1);
-        setTransitionMove(nextGame.moves[nextGame.moves.length - 1] ?? null);
+        setHistoryIndex(nextHistoryLength - 1);
+        setTransitionMove(
+          hasNewMove ? nextGame.moves[nextGame.moves.length - 1] ?? null : null,
+        );
         setShouldAnimateReset(false);
       }
     };
@@ -180,6 +186,9 @@ export function OnlineGame(props: OnlineGameProps) {
     game.status.type === "active" &&
     game.drawOffer !== undefined &&
     game.drawOffer.offeredBy !== playerColor;
+  const drawOfferOpponent = hasIncomingDrawOffer && game.drawOffer
+    ? game.players[game.drawOffer.offeredBy].username
+    : "";
 
   const handleMoveAttempt = (move: MoveInput) => {
     if (!isViewingCurrentPosition || game.status.type !== "active") return;
@@ -339,7 +348,7 @@ export function OnlineGame(props: OnlineGameProps) {
           ? (
             <div className="online-game__draw-offer" role="status">
               <span className="online-game__draw-offer-text">
-                Accept draw offer?
+                {drawOfferOpponent} offers a draw.
               </span>
               <div className="online-game__draw-offer-actions">
                 <button
@@ -347,14 +356,14 @@ export function OnlineGame(props: OnlineGameProps) {
                   className="online-game__draw-offer-button"
                   onClick={() => handleDrawResponse(false)}
                 >
-                  No
+                  Reject
                 </button>
                 <button
                   type="button"
                   className="online-game__draw-offer-button online-game__draw-offer-button--accept"
                   onClick={() => handleDrawResponse(true)}
                 >
-                  Yes
+                  Accept
                 </button>
               </div>
             </div>
