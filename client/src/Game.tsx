@@ -12,6 +12,7 @@ type PlayerInfo = {
   name: string;
   clock: string;
   imageSrc: string;
+  ratingDelta?: number;
 };
 
 type GameProps = {
@@ -154,6 +155,7 @@ export function Game(props: GameProps) {
                     imageSrc={props.players[color].imageSrc}
                     capturedMaterial={capturedMaterial[color]}
                     isActive={props.gameState.turn === color}
+                    ratingDelta={props.players[color].ratingDelta}
                   />
                   {!isTop && props.bottomPlayerAddon}
                 </div>

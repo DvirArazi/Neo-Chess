@@ -4,6 +4,7 @@ import express from "express";
 import http from "node:http";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { Server, type Socket } from "socket.io";
 import {
   getSessionUserByToken,
@@ -35,8 +36,14 @@ import type {
   SocketData,
 } from "../../shared/socket.js";
 import { createInitialBoard } from "../../shared/chess/setup.js";
-import { applyMove, getLegalMoves } from "../../shared/chess/moveGeneration.js";
+import {
+  applyMove,
+  getBoardGameOutcome,
+  getLegalMoves,
+} from "../../shared/chess/moveGeneration.js";
 import type { MoveInput, PieceColor } from "../../shared/chess/types.js";
+import { db } from "./db/index.js";
+import { users } from "./db/schema.js";
 
 const app = express();
 app.set("trust proxy", true);
@@ -45,6 +52,8 @@ app.use(express.json());
 
 const GOOGLE_AUTH_STATE_TTL_MS = 1000 * 60 * 5;
 const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
+const RATING_K_FACTOR = 32;
+const MIN_ELO = 100;
 const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 const PRIVATE_IPV4_RANGES = [
   /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
@@ -387,6 +396,129 @@ function isLegalOnlineMove(game: OnlineGameState, move: MoveInput): boolean {
   return legalMoves.some((legalMove) =>
     legalMove.x === move.to.x && legalMove.y === move.to.y
   );
+}
+
+function getExpectedRatingScore(playerElo: number, opponentElo: number): number {
+  return 1 / (1 + 10 ** ((opponentElo - playerElo) / 400));
+}
+
+function getRatingDeltas(
+  game: OnlineGameState,
+  result: { winner: PieceColor } | { winner: null },
+): Record<PieceColor, number> {
+  const whiteElo = game.players.white.elo;
+  const blackElo = game.players.black.elo;
+  const whiteScore = result.winner === null
+    ? 0.5
+    : result.winner === "white"
+    ? 1
+    : 0;
+  const whiteExpected = getExpectedRatingScore(whiteElo, blackElo);
+  const whiteDelta = Math.round(RATING_K_FACTOR * (whiteScore - whiteExpected));
+
+  return {
+    white: whiteDelta,
+    black: -whiteDelta,
+  };
+}
+
+function updateConnectedUserElo(userId: string, elo: number): void {
+  io.sockets.sockets.forEach((connectedSocket) => {
+    if (connectedSocket.data.userId !== userId) return;
+
+    connectedSocket.data.elo = elo;
+    emitAuthState(connectedSocket as ServerSocket);
+  });
+}
+
+async function applyRatedGameResult(
+  game: OnlineGameState,
+): Promise<OnlineGameState> {
+  if (
+    game.mode !== "rated" ||
+    game.status.type === "active" ||
+    game.ratingDeltas
+  ) {
+    return game;
+  }
+
+  const result = game.status.type === "draw"
+    ? { winner: null }
+    : { winner: game.status.winner };
+  const ratingUpdate = await db.transaction(async (tx) => {
+    const [whiteUser, blackUser] = await Promise.all([
+      tx
+        .select({ elo: users.elo })
+        .from(users)
+        .where(eq(users.id, game.players.white.id))
+        .limit(1),
+      tx
+        .select({ elo: users.elo })
+        .from(users)
+        .where(eq(users.id, game.players.black.id))
+        .limit(1),
+    ]);
+    const currentWhiteElo = whiteUser[0]?.elo ?? game.players.white.elo;
+    const currentBlackElo = blackUser[0]?.elo ?? game.players.black.elo;
+    const ratingDeltas = getRatingDeltas(
+      {
+        ...game,
+        players: {
+          white: { ...game.players.white, elo: currentWhiteElo },
+          black: { ...game.players.black, elo: currentBlackElo },
+        },
+      },
+      result,
+    );
+    const nextWhiteElo = Math.max(MIN_ELO, currentWhiteElo + ratingDeltas.white);
+    const nextBlackElo = Math.max(MIN_ELO, currentBlackElo + ratingDeltas.black);
+
+    await tx
+      .update(users)
+      .set({ elo: nextWhiteElo })
+      .where(eq(users.id, game.players.white.id));
+    await tx
+      .update(users)
+      .set({ elo: nextBlackElo })
+      .where(eq(users.id, game.players.black.id));
+
+    return {
+      whiteElo: nextWhiteElo,
+      blackElo: nextBlackElo,
+      ratingDeltas: {
+        white: nextWhiteElo - currentWhiteElo,
+        black: nextBlackElo - currentBlackElo,
+      },
+    };
+  });
+
+  updateConnectedUserElo(game.players.white.id, ratingUpdate.whiteElo);
+  updateConnectedUserElo(game.players.black.id, ratingUpdate.blackElo);
+
+  return {
+    ...game,
+    players: {
+      white: {
+        ...game.players.white,
+        elo: ratingUpdate.whiteElo,
+      },
+      black: {
+        ...game.players.black,
+        elo: ratingUpdate.blackElo,
+      },
+    },
+    ratingDeltas: ratingUpdate.ratingDeltas,
+  };
+}
+
+async function finalizeOnlineGame(
+  game: OnlineGameState,
+): Promise<OnlineGameState> {
+  const nextGame = await applyRatedGameResult(game);
+  onlineGames.set(nextGame.id, nextGame);
+  io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+  queueOnlineGamePersistence(nextGame);
+  return nextGame;
 }
 
 function cleanExpiredGoogleAuthStates(): void {
@@ -1063,7 +1195,7 @@ io.on("connection", (socket) => {
     callback({ ok: true, games });
   });
 
-  socket.on("makeOnlineMove", (data, callback) => {
+  socket.on("makeOnlineMove", async (data, callback) => {
     const userId = getRequiredUserId(socket);
     if (!userId) {
       callback({ ok: false, error: "Log in to move" });
@@ -1104,20 +1236,44 @@ io.on("connection", (socket) => {
     }
 
     const nextState = applyMove(game.state, data.move);
+    const boardOutcome = getBoardGameOutcome(nextState);
+    const nextStatus = boardOutcome
+      ? boardOutcome.result === "draw"
+        ? { type: "draw" as const, reason: boardOutcome.reason }
+        : {
+          type: "checkmate" as const,
+          winner: boardOutcome.winner,
+          loser: boardOutcome.winner === "white" ? "black" as const : "white" as const,
+        }
+      : game.status;
     const nextGame: OnlineGameState = {
       ...game,
       state: nextState,
       history: [...game.history, nextState],
       moves: [...game.moves, data.move],
+      status: nextStatus,
+      drawOffer: undefined,
       updatedAt: Date.now(),
     };
+    if (nextGame.status.type === "active") {
+      onlineGames.set(nextGame.id, nextGame);
+      callback({ ok: true });
+      io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+      queueOnlineGamePersistence(nextGame);
+      return;
+    }
+
     onlineGames.set(nextGame.id, nextGame);
     callback({ ok: true });
     io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
     queueOnlineGamePersistence(nextGame);
+
+    void finalizeOnlineGame(nextGame).catch((error) => {
+      console.error("rated game finalization failed", error);
+    });
   });
 
-  socket.on("resignOnlineGame", (data, callback) => {
+  socket.on("resignOnlineGame", async (data, callback) => {
     const userId = getRequiredUserId(socket);
     if (!userId) {
       callback({ ok: false, error: "Log in to resign" });
@@ -1127,6 +1283,11 @@ io.on("connection", (socket) => {
     const game = onlineGames.get(data.gameId);
     if (!game) {
       callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    if (game.status.type !== "active") {
+      callback({ ok: false, error: "This game is already over" });
       return;
     }
 
@@ -1143,10 +1304,13 @@ io.on("connection", (socket) => {
       drawOffer: undefined,
       updatedAt: Date.now(),
     };
-    onlineGames.set(nextGame.id, nextGame);
-    callback({ ok: true });
-    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
-    queueOnlineGamePersistence(nextGame);
+    try {
+      await finalizeOnlineGame(nextGame);
+      callback({ ok: true });
+    } catch (error) {
+      console.error("rated game finalization failed", error);
+      callback({ ok: false, error: "Unable to finish the rated game" });
+    }
   });
 
   socket.on("offerOnlineDraw", (data, callback) => {
@@ -1184,7 +1348,7 @@ io.on("connection", (socket) => {
     queueOnlineGamePersistence(nextGame);
   });
 
-  socket.on("respondOnlineDrawOffer", (data, callback) => {
+  socket.on("respondOnlineDrawOffer", async (data, callback) => {
     const userId = getRequiredUserId(socket);
     if (!userId) {
       callback({ ok: false, error: "Log in to respond to a draw offer" });
@@ -1230,10 +1394,21 @@ io.on("connection", (socket) => {
         drawOffer: undefined,
         updatedAt: Date.now(),
       };
-    onlineGames.set(nextGame.id, nextGame);
-    callback({ ok: true });
-    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
-    queueOnlineGamePersistence(nextGame);
+    if (nextGame.status.type === "active") {
+      onlineGames.set(nextGame.id, nextGame);
+      callback({ ok: true });
+      io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+      queueOnlineGamePersistence(nextGame);
+      return;
+    }
+
+    try {
+      await finalizeOnlineGame(nextGame);
+      callback({ ok: true });
+    } catch (error) {
+      console.error("rated game finalization failed", error);
+      callback({ ok: false, error: "Unable to finish the rated game" });
+    }
   });
 
   socket.on("createRoom", ({ name }) => {

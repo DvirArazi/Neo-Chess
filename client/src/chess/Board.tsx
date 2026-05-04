@@ -286,7 +286,12 @@ function drawPieceImage(
 }
 
 function getBoardMetrics(canvas: HTMLCanvasElement): BoardMetrics {
-  const cssSize = canvas.getBoundingClientRect().width;
+  const measuredSize = canvas.parentElement?.getBoundingClientRect().width ??
+    canvas.getBoundingClientRect().width;
+  const cssSize = Math.max(
+    BOARD_SIZE,
+    Math.floor(measuredSize / BOARD_SIZE) * BOARD_SIZE,
+  );
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_BOARD_DPR);
 
   return {
@@ -298,6 +303,14 @@ function getBoardMetrics(canvas: HTMLCanvasElement): BoardMetrics {
 }
 
 function resizeCanvas(canvas: HTMLCanvasElement, metrics: BoardMetrics): void {
+  const cssSizePx = `${metrics.cssSize}px`;
+  if (canvas.style.width !== cssSizePx) {
+    canvas.style.width = cssSizePx;
+  }
+  if (canvas.style.height !== cssSizePx) {
+    canvas.style.height = cssSizePx;
+  }
+
   if (
     canvas.width === metrics.pixelSize &&
     canvas.height === metrics.pixelSize
@@ -835,8 +848,8 @@ export function Board(
       draw();
     };
 
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(canvas);
+  const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(canvas.parentElement ?? canvas);
     window.addEventListener("resize", handleResize);
 
     return () => {

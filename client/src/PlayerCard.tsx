@@ -29,6 +29,7 @@ export type PlayerCardProps = {
   imageSrc: string;
   capturedMaterial: CapturedMaterial;
   isActive: boolean;
+  ratingDelta?: number;
 };
 
 const CAPTURE_ICON_SOURCES: Record<
@@ -71,6 +72,21 @@ export function PlayerCard(props: PlayerCardProps) {
       <div className="player-card__identity">
         <div className="player-card__name-row">
           <span className="player-card__name">{props.name}</span>
+          {props.ratingDelta !== undefined
+            ? (
+              <span
+                className={[
+                  "player-card__rating-delta",
+                  props.ratingDelta >= 0
+                    ? "player-card__rating-delta--gain"
+                    : "player-card__rating-delta--loss",
+                ].join(" ")}
+              >
+                {props.ratingDelta >= 0 ? "+" : ""}
+                {props.ratingDelta}
+              </span>
+            )
+            : null}
         </div>
 
         <div

@@ -111,6 +111,9 @@ function getTimeControlLabel(timeControlId: string): string {
 function formatGameStatus(game: OnlineGameListEntry): string {
   if (game.status.type === "active") return "Ongoing";
   if (game.status.type === "draw") return "Draw";
+  if (game.status.type === "checkmate") {
+    return `${game.players[game.status.winner].username} won by checkmate`;
+  }
   return `${game.players[game.status.winner].username} won`;
 }
 
@@ -801,8 +804,7 @@ export function App() {
       setFriendSearch("");
       setSelectedOpponentId(RANDOM_OPPONENT_ID);
       setHasUnseenRequests(false);
-      setAccountStatusTone("success");
-      setAccountStatus("Logged out");
+      setAccountStatus(null);
     });
   };
 
@@ -1624,9 +1626,6 @@ export function App() {
                     />
                   </span>
                   <span>Continue with Google</span>
-                </button>
-                <button type="button" className="account-popup__button">
-                  Continue with Facebook
                 </button>
                 {accountStatus
                   ? (

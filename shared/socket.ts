@@ -70,8 +70,9 @@ export type OnlineGamePlayer = AuthenticatedUser & {
 
 export type OnlineGameStatus =
   | { type: "active" }
-  | { type: "draw"; reason: "agreement" }
-  | { type: "resigned"; winner: PieceColor; loser: PieceColor };
+  | { type: "draw"; reason: "agreement" | "stalemate" }
+  | { type: "resigned"; winner: PieceColor; loser: PieceColor }
+  | { type: "checkmate"; winner: PieceColor; loser: PieceColor };
 
 export type OnlineGameState = {
   id: string;
@@ -82,6 +83,7 @@ export type OnlineGameState = {
   history: GameState[];
   moves: MoveInput[];
   status: OnlineGameStatus;
+  ratingDeltas?: Record<PieceColor, number>;
   drawOffer?: {
     offeredBy: PieceColor;
   };

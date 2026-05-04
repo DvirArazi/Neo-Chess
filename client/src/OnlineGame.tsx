@@ -6,7 +6,6 @@ import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { socket } from "./socket";
 import { LOCAL_TIME_CONTROLS, formatClock } from "./timeControls";
-import { useMediaQuery } from "./useMediaQuery";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
 import blackProfileImage from "./assets/images/localProfile/black.png";
 import backIcon from "./assets/images/backwards.svg";
@@ -36,6 +35,9 @@ function getPlayerColor(
 function formatStatus(game: OnlineGameState): string | null {
   if (game.status.type === "active") return null;
   if (game.status.type === "draw") return "Draw";
+  if (game.status.type === "checkmate") {
+    return `${game.players[game.status.winner].username} wins by checkmate`;
+  }
 
   return `${game.players[game.status.winner].username} wins by resignation`;
 }
@@ -48,18 +50,21 @@ function getGameOutcome(game: OnlineGameState): {
   if (game.status.type === "draw") {
     return {
       title: "Draw",
-      detail: "The game ended by agreement.",
+      detail: game.status.reason === "stalemate"
+        ? "The game ended by stalemate."
+        : "The game ended by agreement.",
     };
   }
 
   return {
     title: `${game.players[game.status.winner].username} wins`,
-    detail: "Reason: resignation.",
+    detail: game.status.type === "checkmate"
+      ? "Reason: checkmate."
+      : "Reason: resignation.",
   };
 }
 
 export function OnlineGame(props: OnlineGameProps) {
-  const isDesktopLayout = useMediaQuery("(min-width: 600px)");
   const [game, setGame] = useState<OnlineGameState | null>(null);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
@@ -68,9 +73,6 @@ export function OnlineGame(props: OnlineGameProps) {
   const [isResignPopupOpen, setIsResignPopupOpen] = useState(false);
   const [isDrawPopupOpen, setIsDrawPopupOpen] = useState(false);
   const [isEndGamePopupDismissed, setIsEndGamePopupDismissed] = useState(false);
-  const [desktopBottomColor, setDesktopBottomColor] = useState<PieceColor>(() =>
-    Math.random() < 0.5 ? "white" : "black"
-  );
   const historyIndexRef = useRef(0);
   const historyLengthRef = useRef(0);
 
@@ -133,7 +135,6 @@ export function OnlineGame(props: OnlineGameProps) {
     setIsResignPopupOpen(false);
     setIsDrawPopupOpen(false);
     setIsEndGamePopupDismissed(false);
-    setDesktopBottomColor(Math.random() < 0.5 ? "white" : "black");
   }, [props.gameId]);
 
   if (!props.authenticatedUser) {
@@ -177,7 +178,7 @@ export function OnlineGame(props: OnlineGameProps) {
   const displayedMove = historyIndex > 0
     ? game.moves[historyIndex - 1] ?? null
     : null;
-  const bottomColor = isDesktopLayout ? desktopBottomColor : playerColor;
+  const bottomColor = playerColor;
   const topColor = oppositeColor(bottomColor);
   const boardRotated = bottomColor === "black";
   const gameStatus = formatStatus(game);
@@ -343,11 +344,13 @@ export function OnlineGame(props: OnlineGameProps) {
             name: game.players.black.username,
             clock: clockLabel,
             imageSrc: blackProfileImage,
+            ratingDelta: game.ratingDeltas?.black,
           },
           white: {
             name: game.players.white.username,
             clock: clockLabel,
             imageSrc: whiteProfileImage,
+            ratingDelta: game.ratingDeltas?.white,
           },
         }}
         bottomPlayerAddon={hasIncomingDrawOffer
