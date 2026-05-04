@@ -7,6 +7,7 @@ const PANEL_GAP_PX = 64;
 export type TabPanelItem = {
   id: string;
   label: string;
+  isLocked?: boolean;
   content: ReactNode;
 };
 
@@ -14,6 +15,7 @@ type TabPanelProps = {
   items: TabPanelItem[];
   activeTabId: string;
   onChange: (tabId: string) => void;
+  isSwipeLocked?: boolean;
 };
 
 export function TabPanel(props: TabPanelProps) {
@@ -33,6 +35,10 @@ export function TabPanel(props: TabPanelProps) {
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (props.isSwipeLocked) {
+      return;
+    }
+
     if (isInteractiveTarget(event.target)) {
       return;
     }
@@ -145,7 +151,9 @@ export function TabPanel(props: TabPanelProps) {
             className={[
               "tab-panel__tab",
               item.id === props.activeTabId ? "tab-panel__tab--active" : "",
+              item.isLocked ? "tab-panel__tab--locked" : "",
             ].filter(Boolean).join(" ")}
+            aria-disabled={item.isLocked || undefined}
             onClick={() => props.onChange(item.id)}
           >
             {item.label}

@@ -10,6 +10,7 @@ import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { ActionsBar } from "./ActionsBar";
 import { formatClock, type LocalTimeControl } from "./timeControls";
+import { useMediaQuery } from "./useMediaQuery";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
 import blackProfileImage from "./assets/images/localProfile/black.png";
 import replayIcon from "./assets/images/replay.svg";
@@ -116,6 +117,7 @@ function applyIncrement(
 }
 
 function LocalGame(props: { timeControl: LocalTimeControl }) {
+  const isDesktopLayout = useMediaQuery("(min-width: 600px)");
   const initialClocks = createInitialClocks(props.timeControl.initialMs);
   const [history, setHistory] = useState([createInitialBoard()]);
   const [moves, setMoves] = useState<MoveInput[]>([]);
@@ -153,20 +155,36 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
   const gameOutcome = getTimeoutOutcome(displayedClocks) ??
     getBoardOutcomeMessage(getBoardGameOutcome(gameState));
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
-  const topColor = oppositeColor(bottomColorAtStart);
-  const bottomColor = bottomColorAtStart;
-  const boardRotated = topColor === "white";
+  const topColor: PieceColor = oppositeColor(bottomColorAtStart);
+  const bottomColor: PieceColor = bottomColorAtStart;
+  const boardRotated = bottomColor === "black";
   const isTopPlayersTurn = gameState.turn === topColor;
   const modePieceRotations: Record<PieceColor, boolean> = {
-    black: flipMode === "flip" ? isTopPlayersTurn : topColor === "black",
-    white: flipMode === "flip" ? isTopPlayersTurn : topColor === "white",
+    black: isDesktopLayout
+      ? boardRotated
+      : flipMode === "flip"
+      ? isTopPlayersTurn
+      : topColor === "black",
+    white: isDesktopLayout
+      ? boardRotated
+      : flipMode === "flip"
+      ? isTopPlayersTurn
+      : topColor === "white",
   };
   const pieceRotations: Record<PieceColor, boolean> = {
-    black: boardRotated !== modePieceRotations.black,
-    white: boardRotated !== modePieceRotations.white,
+    black: isDesktopLayout
+      ? boardRotated
+      : boardRotated !== modePieceRotations.black,
+    white: isDesktopLayout
+      ? boardRotated
+      : boardRotated !== modePieceRotations.white,
   };
-  const topPlayerRotated = flipMode === "flip-lock" || isTopPlayersTurn;
-  const bottomPlayerRotated = flipMode === "flip" && isTopPlayersTurn;
+  const topPlayerRotated = isDesktopLayout
+    ? false
+    : flipMode === "flip-lock" || isTopPlayersTurn;
+  const bottomPlayerRotated = isDesktopLayout
+    ? false
+    : flipMode === "flip" && isTopPlayersTurn;
 
   useEffect(() => {
     return () => {
@@ -445,11 +463,13 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
                 label: "Restart",
                 onClick: handleRestart,
               },
-              {
-                iconSrc: flipMode === "flip-lock" ? flipLockIcon : flipIcon,
-                label: flipMode === "flip-lock" ? "Flip lock" : "Flip",
-                onClick: handleToggleFlipMode,
-              },
+              ...(!isDesktopLayout
+                ? [{
+                  iconSrc: flipMode === "flip-lock" ? flipLockIcon : flipIcon,
+                  label: flipMode === "flip-lock" ? "Flip lock" : "Flip",
+                  onClick: handleToggleFlipMode,
+                }]
+                : []),
               {
                 iconSrc: isPaused ? playIcon : pauseIcon,
                 label: isPaused ? "Resume" : "Pause",

@@ -6,6 +6,7 @@ import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { socket } from "./socket";
 import { LOCAL_TIME_CONTROLS, formatClock } from "./timeControls";
+import { useMediaQuery } from "./useMediaQuery";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
 import blackProfileImage from "./assets/images/localProfile/black.png";
 import backIcon from "./assets/images/backwards.svg";
@@ -58,6 +59,7 @@ function getGameOutcome(game: OnlineGameState): {
 }
 
 export function OnlineGame(props: OnlineGameProps) {
+  const isDesktopLayout = useMediaQuery("(min-width: 600px)");
   const [game, setGame] = useState<OnlineGameState | null>(null);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
@@ -66,6 +68,9 @@ export function OnlineGame(props: OnlineGameProps) {
   const [isResignPopupOpen, setIsResignPopupOpen] = useState(false);
   const [isDrawPopupOpen, setIsDrawPopupOpen] = useState(false);
   const [isEndGamePopupDismissed, setIsEndGamePopupDismissed] = useState(false);
+  const [desktopBottomColor, setDesktopBottomColor] = useState<PieceColor>(() =>
+    Math.random() < 0.5 ? "white" : "black"
+  );
   const historyIndexRef = useRef(0);
   const historyLengthRef = useRef(0);
 
@@ -128,6 +133,7 @@ export function OnlineGame(props: OnlineGameProps) {
     setIsResignPopupOpen(false);
     setIsDrawPopupOpen(false);
     setIsEndGamePopupDismissed(false);
+    setDesktopBottomColor(Math.random() < 0.5 ? "white" : "black");
   }, [props.gameId]);
 
   if (!props.authenticatedUser) {
@@ -171,8 +177,8 @@ export function OnlineGame(props: OnlineGameProps) {
   const displayedMove = historyIndex > 0
     ? game.moves[historyIndex - 1] ?? null
     : null;
-  const topColor = oppositeColor(playerColor);
-  const bottomColor = playerColor;
+  const bottomColor = isDesktopLayout ? desktopBottomColor : playerColor;
+  const topColor = oppositeColor(bottomColor);
   const boardRotated = bottomColor === "black";
   const gameStatus = formatStatus(game);
   const gameOutcome = getGameOutcome(game);

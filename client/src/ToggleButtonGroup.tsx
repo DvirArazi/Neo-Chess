@@ -1,6 +1,7 @@
 export type ToggleButtonGroupItem = {
   label: string;
   value: string;
+  isLocked?: boolean;
 };
 
 type ToggleButtonGroupProps = {
@@ -26,8 +27,10 @@ export function ToggleButtonGroup(props: ToggleButtonGroupProps) {
             item.value === props.value
               ? "toggle-button-group__button--selected"
               : "",
+            item.isLocked ? "toggle-button-group__button--locked" : "",
           ].filter(Boolean).join(" ")}
           aria-pressed={item.value === props.value}
+          aria-disabled={item.isLocked || undefined}
           onClick={() => props.onChange(item.value)}
         >
           {item.label}

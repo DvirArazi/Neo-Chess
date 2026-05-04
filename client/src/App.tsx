@@ -53,6 +53,7 @@ type HomeTab = "play" | "games";
 type PlayMode = "online" | "local";
 type OnlineMode = "rated" | "casual";
 type GamesHistoryFilter = "all" | "online" | "local";
+type AuthRequiredReason = "games" | "online";
 type RatingRangeOffsets = {
   minOffset: number;
   maxOffset: number;
@@ -217,8 +218,13 @@ export function App() {
     pathname: window.location.pathname,
     search: window.location.search,
   }));
+  const [authenticatedUser, setAuthenticatedUser] = useState<
+    AuthenticatedUser | null
+  >(() => getStoredAuthenticatedUser());
   const [homeTab, setHomeTab] = useState<HomeTab>("play");
-  const [playMode, setPlayMode] = useState<PlayMode>("online");
+  const [playMode, setPlayMode] = useState<PlayMode>(() =>
+    authenticatedUser ? "online" : "local"
+  );
   const [onlineMode, setOnlineMode] = useState<OnlineMode>("rated");
   const [gamesHistoryFilter, setGamesHistoryFilter] = useState<
     GamesHistoryFilter
@@ -232,13 +238,13 @@ export function App() {
   const [onlineMatchStatus, setOnlineMatchStatus] = useState<string | null>(
     null,
   );
-  const [authenticatedUser, setAuthenticatedUser] = useState<
-    AuthenticatedUser | null
-  >(() => getStoredAuthenticatedUser());
   const [ratingRange, setRatingRange] = useState<[number, number]>(() =>
     getRatingRangeForUser(authenticatedUser)
   );
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
+  const [authRequiredReason, setAuthRequiredReason] = useState<
+    AuthRequiredReason | null
+  >(null);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signUpUsername, setSignUpUsername] = useState("");
@@ -274,6 +280,14 @@ export function App() {
   const opponentSelectRef = useRef<HTMLDivElement | null>(null);
   const googleAuthPopupRef = useRef<Window | null>(null);
   const googleAuthTimeoutRef = useRef<number | null>(null);
+
+  const clearGoogleAuthPopupWatcher = useCallback(() => {
+    if (googleAuthTimeoutRef.current !== null) {
+      window.clearTimeout(googleAuthTimeoutRef.current);
+      googleAuthTimeoutRef.current = null;
+    }
+    googleAuthPopupRef.current = null;
+  }, []);
 
   const fetchFriends = useCallback((options?: {
     search?: string;
@@ -372,6 +386,8 @@ export function App() {
       if (data.user === null) {
         clearSessionToken();
         clearStoredAuthenticatedUser();
+        setHomeTab("play");
+        setPlayMode("local");
         setFriendRequests([]);
         setFriendUsers([]);
         setFriendOptions([]);
@@ -461,6 +477,14 @@ export function App() {
   }, [authenticatedUser?.id, authenticatedUser?.elo]);
 
   useEffect(() => {
+    if (authenticatedUser) return;
+
+    setHomeTab("play");
+    setPlayMode("local");
+    setIsOpponentMenuOpen(false);
+  }, [authenticatedUser]);
+
+  useEffect(() => {
     if (
       selectedOpponentId !== RANDOM_OPPONENT_ID &&
       !friendOptions.some((friend) => friend.id === selectedOpponentId)
@@ -530,14 +554,6 @@ export function App() {
   useEffect(() => {
     const serverOrigin = new URL(import.meta.env.VITE_SERVER_URL).origin;
 
-    const clearGooglePopupWatcher = () => {
-      if (googleAuthTimeoutRef.current !== null) {
-        window.clearTimeout(googleAuthTimeoutRef.current);
-        googleAuthTimeoutRef.current = null;
-      }
-      googleAuthPopupRef.current = null;
-    };
-
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== serverOrigin) {
         return;
@@ -548,7 +564,7 @@ export function App() {
         return;
       }
 
-      clearGooglePopupWatcher();
+      clearGoogleAuthPopupWatcher();
       setActiveAccountAction(null);
 
       if (!data.ok) {
@@ -580,9 +596,9 @@ export function App() {
 
     return () => {
       window.removeEventListener("message", handleMessage);
-      clearGooglePopupWatcher();
+      clearGoogleAuthPopupWatcher();
     };
-  }, []);
+  }, [clearGoogleAuthPopupWatcher]);
 
   useEffect(() => {
     if (
@@ -609,6 +625,29 @@ export function App() {
 
     window.history.pushState({}, "", `${nextPathname}${nextSearch}`);
     setRoute({ pathname: nextPathname, search: nextSearch });
+  };
+
+  const showAuthRequiredPopup = (reason: AuthRequiredReason) => {
+    setAuthRequiredReason(reason);
+  };
+
+  const handleHomeTabChange = (tabId: string) => {
+    if (tabId === "games" && !authenticatedUser) {
+      showAuthRequiredPopup("games");
+      return;
+    }
+
+    setHomeTab(tabId as HomeTab);
+  };
+
+  const handlePlayModeChange = (value: string) => {
+    if (value === "online" && !authenticatedUser) {
+      showAuthRequiredPopup("online");
+      return;
+    }
+
+    setPlayMode(value as PlayMode);
+    setIsOpponentMenuOpen(false);
   };
 
   const selectedTimeControl = (() => {
@@ -658,6 +697,7 @@ export function App() {
 
   const closeAccountPopup = () => {
     setIsAccountPopupOpen(false);
+    clearGoogleAuthPopupWatcher();
     resetAccountForms();
     setFriendStatus(null);
     setFriendStatusTone("success");
@@ -666,6 +706,7 @@ export function App() {
 
   const openAccountPopup = () => {
     setIsAccountPopupOpen(true);
+    setAuthRequiredReason(null);
     if (authenticatedUser) {
       setFriendStatus(null);
       fetchFriends({ markRequestsSeen: true });
@@ -752,6 +793,8 @@ export function App() {
       clearSessionToken();
       clearStoredAuthenticatedUser();
       setAuthenticatedUser(null);
+      setHomeTab("play");
+      setPlayMode("local");
       setFriendRequests([]);
       setFriendUsers([]);
       setFriendOptions([]);
@@ -815,11 +858,6 @@ export function App() {
   };
 
   const handleContinueWithGoogle = () => {
-    if (googleAuthPopupRef.current) {
-      googleAuthPopupRef.current.focus();
-      return;
-    }
-
     setAccountStatus(null);
     setAccountStatusTone("success");
 
@@ -842,22 +880,22 @@ export function App() {
     }
 
     googleAuthPopupRef.current = popup;
-    setActiveAccountAction("google");
 
     if (googleAuthTimeoutRef.current !== null) {
       window.clearTimeout(googleAuthTimeoutRef.current);
     }
 
     googleAuthTimeoutRef.current = window.setTimeout(() => {
-      googleAuthTimeoutRef.current = null;
-      googleAuthPopupRef.current = null;
-      setActiveAccountAction((current) =>
-        current === "google" ? null : current
-      );
+      clearGoogleAuthPopupWatcher();
     }, 2 * 60 * 1000);
   };
 
   const handleFindOnlineMatch = (timeControl: LocalTimeControl) => {
+    if (!authenticatedUser) {
+      showAuthRequiredPopup("online");
+      return;
+    }
+
     setIsWaitingForOpponent(true);
     setOnlineMatchStatus(null);
 
@@ -969,25 +1007,24 @@ export function App() {
             <main className="home-page">
               <TabPanel
                 activeTabId={homeTab}
-                onChange={(tabId) => setHomeTab(tabId as HomeTab)}
+                onChange={handleHomeTabChange}
+                isSwipeLocked={!authenticatedUser}
                 items={[
                   {
                     id: "play",
                     label: "Play",
                     content: (
                       <section className="home-page__panel">
-                        <h1 className="home-page__title">
-                          {playMode === "online" ? "Online Game" : "Local Game"}
-                        </h1>
                         <ToggleButtonGroup
                           ariaLabel="Game mode"
                           value={playMode}
-                          onChange={(value) => {
-                            setPlayMode(value as PlayMode);
-                            setIsOpponentMenuOpen(false);
-                          }}
+                          onChange={handlePlayModeChange}
                           items={[
-                            { label: "Online", value: "online" },
+                            {
+                              label: "Online",
+                              value: "online",
+                              isLocked: !authenticatedUser,
+                            },
                             { label: "Local", value: "local" },
                           ]}
                         />
@@ -1152,6 +1189,7 @@ export function App() {
                   {
                     id: "games",
                     label: "Games",
+                    isLocked: !authenticatedUser,
                     content: (
                       <section className="games-tab">
                         <div className="games-tab__inner">
@@ -1302,6 +1340,31 @@ export function App() {
             )
             : null}
         </div>
+      </Popup>
+
+      <Popup
+        open={authRequiredReason !== null}
+        title="Log in required"
+        onClose={() => setAuthRequiredReason(null)}
+        closeOnBackdropPress={true}
+        actions={
+          <button
+            type="button"
+            className="account-popup__button"
+            onClick={() => {
+              setAuthRequiredReason(null);
+              openAccountPopup();
+            }}
+          >
+            Log in
+          </button>
+        }
+      >
+        <p className="popup__description">
+          {authRequiredReason === "games"
+            ? "Log in to view your games."
+            : "Log in to play online."}
+        </p>
       </Popup>
 
       <Popup

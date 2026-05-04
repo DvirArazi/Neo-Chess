@@ -45,6 +45,12 @@ app.use(express.json());
 
 const GOOGLE_AUTH_STATE_TTL_MS = 1000 * 60 * 5;
 const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
+const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const PRIVATE_IPV4_RANGES = [
+  /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+  /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/,
+  /^192\.168\.\d{1,3}\.\d{1,3}$/,
+];
 const googleAuthStates = new Map<string, {
   origin: string;
   expiresAt: number;
@@ -78,6 +84,41 @@ type GoogleAuthPopupPayload =
     error: string;
   };
 
+function getConfiguredClientOrigins(): Set<string> {
+  return new Set(
+    [
+      process.env.CLIENT_ORIGIN,
+      process.env.CLIENT_ORIGINS,
+    ].filter(Boolean)
+      .flatMap((value) => value!.split(","))
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  );
+}
+
+function isLocalDevelopmentOrigin(origin: string): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+
+  try {
+    const url = new URL(origin);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      (
+        LOCAL_DEVELOPMENT_HOSTS.has(url.hostname) ||
+        PRIVATE_IPV4_RANGES.some((range) => range.test(url.hostname))
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+const configuredClientOrigins = getConfiguredClientOrigins();
+
+function isAllowedClientOrigin(origin: string): boolean {
+  return configuredClientOrigins.has(origin) || isLocalDevelopmentOrigin(origin);
+}
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -91,7 +132,14 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN ?? "*",
+    origin: (origin, callback) => {
+      if (!origin || isAllowedClientOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin is not allowed"), false);
+    },
     methods: ["GET", "POST"],
   },
 });
@@ -364,11 +412,12 @@ function isAllowedPopupOrigin(
   req: express.Request,
 ): boolean {
   const allowedOrigins = new Set<string>([getServerOrigin(req)]);
-  if (process.env.CLIENT_ORIGIN) {
-    allowedOrigins.add(process.env.CLIENT_ORIGIN);
+  for (const origin of configuredClientOrigins) {
+    allowedOrigins.add(origin);
   }
 
-  return allowedOrigins.has(candidateOrigin);
+  return allowedOrigins.has(candidateOrigin) ||
+    isLocalDevelopmentOrigin(candidateOrigin);
 }
 
 function createGoogleAuthState(origin: string): string {
