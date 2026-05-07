@@ -7,6 +7,35 @@ import type {
 
 const SESSION_TOKEN_STORAGE_KEY = "neo-chess-session-token";
 const AUTHENTICATED_USER_STORAGE_KEY = "neo-chess-authenticated-user";
+const LOCAL_SERVER_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
+function isLocalServerHostname(hostname: string): boolean {
+  return LOCAL_SERVER_HOSTS.has(hostname);
+}
+
+export function getServerOrigin(): string {
+  const configuredServerUrl = import.meta.env.VITE_SERVER_URL;
+  if (
+    typeof configuredServerUrl !== "string" ||
+    configuredServerUrl.trim().length === 0
+  ) {
+    return window.location.origin;
+  }
+
+  try {
+    const serverUrl = new URL(configuredServerUrl, window.location.origin);
+    if (
+      !isLocalServerHostname(window.location.hostname) &&
+      isLocalServerHostname(serverUrl.hostname)
+    ) {
+      return window.location.origin;
+    }
+
+    return serverUrl.origin;
+  } catch {
+    return window.location.origin;
+  }
+}
 
 function getStoredSessionToken(): string | undefined {
   const sessionToken = window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
@@ -14,7 +43,7 @@ function getStoredSessionToken(): string | undefined {
 }
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-  import.meta.env.VITE_SERVER_URL,
+  getServerOrigin(),
   {
     autoConnect: false,
     transports: ["websocket"],

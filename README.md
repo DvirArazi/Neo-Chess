@@ -129,7 +129,7 @@ PostgreSQL stores users, sessions, friendships, and online game snapshots. Drizz
 Render URL:
 
 ```text
-TODO: add Render URL here
+https://neo-chess.onrender.com
 ```
 
 ## Getting Started
@@ -156,6 +156,10 @@ Create `client/.env`:
 VITE_SERVER_URL=http://localhost:3000
 ```
 
+For production deployments where Express serves `client/dist`, omit
+`VITE_SERVER_URL` or set it to the public app origin. Do not build the deployed
+client with a localhost value.
+
 Create `server/.env`:
 
 ```env
@@ -172,6 +176,16 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 ```
 
 For hosted databases, set `DATABASE_SSL=true` or omit it if the default SSL behavior is appropriate for the database host.
+
+For Render, use the deployed origin in server environment variables:
+
+```env
+CLIENT_ORIGIN=https://neo-chess.onrender.com
+CLIENT_ORIGINS=https://neo-chess.onrender.com
+GOOGLE_REDIRECT_URI=https://neo-chess.onrender.com/auth/google/callback
+```
+
+Also add the same Google redirect URI in the Google Cloud Console OAuth client.
 
 ### Apply database migrations
 

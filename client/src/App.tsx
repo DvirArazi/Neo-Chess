@@ -17,6 +17,7 @@ import { RangeSlider } from "./RangeSlider";
 import {
   clearSessionToken,
   clearStoredAuthenticatedUser,
+  getServerOrigin,
   getStoredAuthenticatedUser,
   setSessionToken,
   setStoredAuthenticatedUser,
@@ -555,7 +556,7 @@ export function App() {
   }, [fetchFriends, isAccountPopupOpen]);
 
   useEffect(() => {
-    const serverOrigin = new URL(import.meta.env.VITE_SERVER_URL).origin;
+    const serverOrigin = getServerOrigin();
 
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== serverOrigin) {
@@ -865,7 +866,7 @@ export function App() {
 
     const authUrl = new URL(
       "/auth/google/start",
-      import.meta.env.VITE_SERVER_URL,
+      getServerOrigin(),
     );
     authUrl.searchParams.set("origin", window.location.origin);
 

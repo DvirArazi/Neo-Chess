@@ -54,7 +54,12 @@ const GOOGLE_AUTH_STATE_TTL_MS = 1000 * 60 * 5;
 const GOOGLE_AUTH_MESSAGE_TYPE = "neo-chess-google-auth-result";
 const RATING_K_FACTOR = 32;
 const MIN_ELO = 100;
-const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const LOCAL_DEVELOPMENT_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "::1",
+  "[::1]",
+]);
 const PRIVATE_IPV4_RANGES = [
   /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
   /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/,
@@ -105,6 +110,11 @@ function getConfiguredClientOrigins(): Set<string> {
   );
 }
 
+function isLocalDevelopmentHostname(hostname: string): boolean {
+  return LOCAL_DEVELOPMENT_HOSTS.has(hostname) ||
+    PRIVATE_IPV4_RANGES.some((range) => range.test(hostname));
+}
+
 function isLocalDevelopmentOrigin(origin: string): boolean {
   if (process.env.NODE_ENV === "production") return false;
 
@@ -112,10 +122,7 @@ function isLocalDevelopmentOrigin(origin: string): boolean {
     const url = new URL(origin);
     return (
       (url.protocol === "http:" || url.protocol === "https:") &&
-      (
-        LOCAL_DEVELOPMENT_HOSTS.has(url.hostname) ||
-        PRIVATE_IPV4_RANGES.some((range) => range.test(url.hostname))
-      )
+      isLocalDevelopmentHostname(url.hostname)
     );
   } catch {
     return false;
@@ -126,6 +133,34 @@ const configuredClientOrigins = getConfiguredClientOrigins();
 
 function isAllowedClientOrigin(origin: string): boolean {
   return configuredClientOrigins.has(origin) || isLocalDevelopmentOrigin(origin);
+}
+
+function getSingleHeaderValue(
+  value: string | string[] | undefined,
+): string | null {
+  const headerValue = Array.isArray(value) ? value[0] : value;
+  return headerValue?.split(",")[0]?.trim() || null;
+}
+
+function getRequestOriginFromHeaders(req: http.IncomingMessage): string | null {
+  const host = getSingleHeaderValue(req.headers["x-forwarded-host"]) ??
+    getSingleHeaderValue(req.headers.host);
+  if (!host) return null;
+
+  const socket = req.socket as typeof req.socket & { encrypted?: boolean };
+  const protocol = getSingleHeaderValue(req.headers["x-forwarded-proto"]) ??
+    (socket.encrypted ? "https" : "http");
+
+  return `${protocol}://${host}`;
+}
+
+function isAllowedSocketRequest(req: http.IncomingMessage): boolean {
+  const origin = getSingleHeaderValue(req.headers.origin);
+  if (!origin || isAllowedClientOrigin(origin)) {
+    return true;
+  }
+
+  return origin === getRequestOriginFromHeaders(req);
 }
 
 app.get("/api/health", (_req, res) => {
@@ -141,15 +176,11 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || isAllowedClientOrigin(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error("Origin is not allowed"), false);
-    },
+    origin: true,
     methods: ["GET", "POST"],
+  },
+  allowRequest: (req, callback) => {
+    callback(null, isAllowedSocketRequest(req));
   },
 });
 
@@ -534,9 +565,36 @@ function getServerOrigin(req: express.Request): string {
   return `${req.protocol}://${req.get("host")}`;
 }
 
+function shouldUseConfiguredGoogleRedirectUri(
+  configuredRedirectUri: string,
+  requestOrigin: string,
+): boolean {
+  try {
+    const configuredUrl = new URL(configuredRedirectUri);
+    const requestUrl = new URL(requestOrigin);
+    return !(
+      isLocalDevelopmentHostname(configuredUrl.hostname) &&
+      !isLocalDevelopmentHostname(requestUrl.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getGoogleRedirectUri(req: express.Request): string {
-  return process.env.GOOGLE_REDIRECT_URI ??
-    `${getServerOrigin(req)}/auth/google/callback`;
+  const requestOrigin = getServerOrigin(req);
+  const requestRedirectUri = `${requestOrigin}/auth/google/callback`;
+  const configuredRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim();
+  if (!configuredRedirectUri) {
+    return requestRedirectUri;
+  }
+
+  return shouldUseConfiguredGoogleRedirectUri(
+    configuredRedirectUri,
+    requestOrigin,
+  )
+    ? configuredRedirectUri
+    : requestRedirectUri;
 }
 
 function isAllowedPopupOrigin(
