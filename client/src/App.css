@@ -230,6 +230,7 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  touch-action: pan-y;
   padding: 0 24px 8px;
 }
 

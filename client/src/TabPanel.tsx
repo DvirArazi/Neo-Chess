@@ -27,17 +27,25 @@ export function TabPanel(props: TabPanelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pointerIdRef = useRef<number | null>(null);
   const swipeStartXRef = useRef<number | null>(null);
+  const dragOffsetPxRef = useRef(0);
+  const hasSwipeCaptureRef = useRef(false);
   const suppressNextClickRef = useRef(false);
   const [dragOffsetPx, setDragOffsetPx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
   const isSwipeExcludedTarget = (target: EventTarget | null): boolean => {
     return target instanceof Element &&
-      target.closest("input, textarea, select, label") !== null;
+      target.closest(
+        "input, textarea, select, label, [role='slider'], [data-tab-swipe-excluded='true']",
+      ) !== null;
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (props.isSwipeLocked) {
+      return;
+    }
+
+    if (event.pointerType === "mouse" && event.button !== 0) {
       return;
     }
 
@@ -47,9 +55,10 @@ export function TabPanel(props: TabPanelProps) {
 
     pointerIdRef.current = event.pointerId;
     swipeStartXRef.current = event.clientX;
+    dragOffsetPxRef.current = 0;
+    hasSwipeCaptureRef.current = false;
     setDragOffsetPx(0);
     setIsDragging(false);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -59,16 +68,29 @@ export function TabPanel(props: TabPanelProps) {
     if (swipeStartX === null) return;
 
     const nextDragOffsetPx = event.clientX - swipeStartX;
+    dragOffsetPxRef.current = nextDragOffsetPx;
     setDragOffsetPx(nextDragOffsetPx);
 
     if (!isDragging && Math.abs(nextDragOffsetPx) > CLICK_SUPPRESSION_THRESHOLD_PX) {
       setIsDragging(true);
+    }
+
+    if (Math.abs(nextDragOffsetPx) <= CLICK_SUPPRESSION_THRESHOLD_PX) {
+      return;
+    }
+
+    event.preventDefault();
+    if (!hasSwipeCaptureRef.current) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      hasSwipeCaptureRef.current = true;
     }
   };
 
   const resetDrag = () => {
     pointerIdRef.current = null;
     swipeStartXRef.current = null;
+    dragOffsetPxRef.current = 0;
+    hasSwipeCaptureRef.current = false;
     setDragOffsetPx(0);
     setIsDragging(false);
   };
@@ -76,10 +98,10 @@ export function TabPanel(props: TabPanelProps) {
   const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
     if (pointerIdRef.current !== event.pointerId) return;
 
-    const finalDragOffsetPx = dragOffsetPx;
-    const nextIndex = dragOffsetPx <= -SWIPE_THRESHOLD_PX
+    const finalDragOffsetPx = dragOffsetPxRef.current;
+    const nextIndex = finalDragOffsetPx <= -SWIPE_THRESHOLD_PX
       ? Math.min(props.items.length - 1, activeIndex + 1)
-      : dragOffsetPx >= SWIPE_THRESHOLD_PX
+      : finalDragOffsetPx >= SWIPE_THRESHOLD_PX
       ? Math.max(0, activeIndex - 1)
       : activeIndex;
 

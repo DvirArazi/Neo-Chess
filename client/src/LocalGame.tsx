@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { createInitialBoard } from "../../shared/chess/setup";
-import type { MoveInput, PieceColor } from "./chess/types";
+import type { AuthenticatedUser } from "../../shared/socket";
+import type { GameState, MoveInput, PieceColor } from "./chess/types";
 import {
   applyMove,
-  type BoardGameOutcome,
   getBoardGameOutcome,
 } from "../../shared/chess/moveGeneration";
 import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { ActionsBar } from "./ActionsBar";
 import { formatClock, type LocalTimeControl } from "./timeControls";
+import type {
+  LocalGameClockSnapshot,
+  LocalGameRecord,
+  LocalGameStatus,
+} from "./localGameStorage";
 import { useMediaQuery } from "./useMediaQuery";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
 import blackProfileImage from "./assets/images/localProfile/black.png";
@@ -23,13 +28,19 @@ import flipIcon from "./assets/images/flip_disabled.svg";
 import flipLockIcon from "./assets/images/flip.svg";
 import swapIcon from "./assets/images/swap.svg";
 
-type ClockSnapshot = Record<PieceColor, number>;
+type ClockSnapshot = LocalGameClockSnapshot;
 
 type GameOutcomeMessage = {
   title: string;
   detail: string;
 };
 type FlipMode = "flip" | "flip-lock";
+type LocalGameProps = {
+  timeControl: LocalTimeControl;
+  authenticatedUser: AuthenticatedUser | null;
+  savedGame?: LocalGameRecord | null;
+  onLocalGameSnapshot?: (record: LocalGameRecord) => void;
+};
 
 const CLOCK_TICK_MS = 250;
 
@@ -62,43 +73,77 @@ function oppositeColor(color: PieceColor): PieceColor {
   return color === "white" ? "black" : "white";
 }
 
-function getTimeoutOutcome(clocks: ClockSnapshot): GameOutcomeMessage | null {
+function createLocalGameId(): string {
+  return window.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function getLocalGameStatus(
+  clocks: ClockSnapshot,
+  state: GameState,
+): LocalGameStatus {
   if (Number.isFinite(clocks.white) && clocks.white === 0) {
     return {
-      title: "Black wins",
-      detail: "White ran out of time",
+      type: "timeout",
+      winner: "black",
+      loser: "white",
     };
   }
 
   if (Number.isFinite(clocks.black) && clocks.black === 0) {
     return {
-      title: "White wins",
-      detail: "Black ran out of time",
+      type: "timeout",
+      winner: "white",
+      loser: "black",
     };
   }
 
-  return null;
+  const boardOutcome = getBoardGameOutcome(state);
+  if (!boardOutcome) return { type: "active" };
+
+  if (boardOutcome.result === "draw") {
+    return {
+      type: "draw",
+      reason: boardOutcome.reason,
+    };
+  }
+
+  return {
+    type: "checkmate",
+    winner: boardOutcome.winner,
+    loser: oppositeColor(boardOutcome.winner),
+  };
 }
 
-function getBoardOutcomeMessage(
-  outcome: BoardGameOutcome | null,
-): GameOutcomeMessage | null {
-  if (!outcome) return null;
+function getLocalGameStatusKey(status: LocalGameStatus): string {
+  if (status.type === "active") return status.type;
+  if (status.type === "draw") return `${status.type}:${status.reason}`;
 
-  if (outcome.result === "draw") {
+  return `${status.type}:${status.winner}:${status.loser}`;
+}
+
+function getLocalGameOutcomeMessage(
+  status: LocalGameStatus,
+): GameOutcomeMessage | null {
+  if (status.type === "active") return null;
+
+  if (status.type === "draw") {
     return {
       title: "Draw",
       detail: "Stalemate. The side to move has no legal moves",
     };
   }
 
+  if (status.type === "timeout") {
+    return {
+      title: `${formatColorName(status.winner)} wins`,
+      detail: `${formatColorName(status.loser)} ran out of time`,
+    };
+  }
+
   return {
-    title: `${formatColorName(outcome.winner)} wins`,
-    detail: `${
-      formatColorName(
-        outcome.winner === "white" ? "black" : "white",
-      )
-    } is checkmated.`,
+    title: `${formatColorName(status.winner)} wins`,
+    detail: `${formatColorName(status.loser)} is checkmated.`,
   };
 }
 
@@ -117,31 +162,53 @@ function applyIncrement(
   };
 }
 
-function LocalGame(props: { timeControl: LocalTimeControl }) {
+function LocalGame(props: LocalGameProps) {
   const isDesktopLayout = useMediaQuery("(min-width: 600px)");
   const initialClocks = createInitialClocks(props.timeControl.initialMs);
-  const [history, setHistory] = useState([createInitialBoard()]);
-  const [moves, setMoves] = useState<MoveInput[]>([]);
-  const [clockHistory, setClockHistory] = useState<ClockSnapshot[]>([
-    initialClocks,
-  ]);
-  const [clockSnapshot, setClockSnapshot] = useState<ClockSnapshot>(
-    initialClocks,
+  const [localGameId, setLocalGameId] = useState(() =>
+    props.savedGame?.id ?? createLocalGameId()
+  );
+  const [localGameCreatedAt, setLocalGameCreatedAt] = useState(() =>
+    props.savedGame?.createdAt ?? Date.now()
+  );
+  const [history, setHistory] = useState<GameState[]>(() =>
+    props.savedGame && props.savedGame.history.length > 0
+      ? props.savedGame.history
+      : [createInitialBoard()]
+  );
+  const [moves, setMoves] = useState<MoveInput[]>(() =>
+    props.savedGame?.moves ?? []
+  );
+  const [clockHistory, setClockHistory] = useState<ClockSnapshot[]>(() =>
+    props.savedGame && props.savedGame.clockHistory.length > 0
+      ? props.savedGame.clockHistory
+      : [initialClocks]
+  );
+  const [clockSnapshot, setClockSnapshot] = useState<ClockSnapshot>(() =>
+    props.savedGame?.clockSnapshot ?? initialClocks
   );
   const [clockTickMs, setClockTickMs] = useState(() => Date.now());
-  const [historyIndex, setHistoryIndex] = useState(0);
+  const [historyIndex, setHistoryIndex] = useState(() =>
+    props.savedGame && props.savedGame.history.length > 0
+      ? props.savedGame.history.length - 1
+      : 0
+  );
   const [isPaused, setIsPaused] = useState(true);
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
   const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
   const [flipMode, setFlipMode] = useState<FlipMode>("flip-lock");
   const [bottomPlayerColor, setBottomPlayerColor] = useState<PieceColor>(() =>
-    Math.random() < 0.5 ? "white" : "black"
+    props.savedGame?.bottomPlayerColor ??
+      (Math.random() < 0.5 ? "white" : "black")
   );
-  const [hasPieRuleBeenUsed, setHasPieRuleBeenUsed] = useState(false);
+  const [hasPieRuleBeenUsed, setHasPieRuleBeenUsed] = useState(() =>
+    props.savedGame?.hasPieRuleBeenUsed ?? false
+  );
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
   const clockAnchorRef = useRef<number | null>(null);
+  const latestLocalGameRecordRef = useRef<LocalGameRecord | null>(null);
 
   const gameState = history[historyIndex];
   const isViewingCurrentPosition = historyIndex === history.length - 1;
@@ -154,8 +221,11 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
     isPaused ? null : clockAnchorRef.current,
     clockTickMs,
   );
-  const gameOutcome = getTimeoutOutcome(displayedClocks) ??
-    getBoardOutcomeMessage(getBoardGameOutcome(gameState));
+  const displayedLocalGameStatus = getLocalGameStatus(
+    displayedClocks,
+    gameState,
+  );
+  const gameOutcome = getLocalGameOutcomeMessage(displayedLocalGameStatus);
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
   const canUsePieRule =
     isViewingCurrentPosition &&
@@ -194,6 +264,35 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
   const bottomPlayerRotated = isDesktopLayout
     ? false
     : flipMode === "flip" && isTopPlayersTurn;
+  const latestClockHistorySnapshot = clockHistory[clockHistory.length - 1] ??
+    clockSnapshot;
+  const savedClockSnapshot = isViewingCurrentPosition
+    ? displayedClocks
+    : latestClockHistorySnapshot;
+  const savedGameState = history[history.length - 1] ?? gameState;
+  const savedLocalGameStatus = getLocalGameStatus(
+    savedClockSnapshot,
+    savedGameState,
+  );
+  const savedLocalGameStatusKey = getLocalGameStatusKey(savedLocalGameStatus);
+
+  latestLocalGameRecordRef.current = props.authenticatedUser
+    ? {
+      id: localGameId,
+      userId: props.authenticatedUser.id,
+      timeControlId: props.timeControl.id,
+      state: savedGameState,
+      history,
+      moves,
+      clockHistory,
+      clockSnapshot: savedClockSnapshot,
+      bottomPlayerColor,
+      hasPieRuleBeenUsed,
+      status: savedLocalGameStatus,
+      createdAt: localGameCreatedAt,
+      updatedAt: Date.now(),
+    }
+    : null;
 
   useEffect(() => {
     return () => {
@@ -201,6 +300,37 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
       cancelAnimationFrame(pendingNavigationFrameRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const record = latestLocalGameRecordRef.current;
+    if (!record || !props.onLocalGameSnapshot) return;
+
+    props.onLocalGameSnapshot(record);
+  }, [
+    props.authenticatedUser?.id,
+    props.onLocalGameSnapshot,
+    props.timeControl.id,
+    localGameId,
+    localGameCreatedAt,
+    history,
+    moves,
+    clockHistory,
+    clockSnapshot.black,
+    clockSnapshot.white,
+    bottomPlayerColor,
+    hasPieRuleBeenUsed,
+    isPaused,
+    savedLocalGameStatusKey,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      const record = latestLocalGameRecordRef.current;
+      if (!record || !props.onLocalGameSnapshot) return;
+
+      props.onLocalGameSnapshot(record);
+    };
+  }, [props.onLocalGameSnapshot]);
 
   function getCurrentDisplayedClockSnapshot(nowMs = Date.now()): ClockSnapshot {
     return getDisplayedClocks(
@@ -377,6 +507,8 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
     cancelPendingNavigation();
     const nowMs = Date.now();
     const nextBottomColor = Math.random() < 0.5 ? "white" : "black";
+    setLocalGameId(createLocalGameId());
+    setLocalGameCreatedAt(nowMs);
     setHistory([createInitialBoard()]);
     setMoves([]);
     setClockHistory([initialClocks]);
