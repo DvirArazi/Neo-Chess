@@ -462,7 +462,9 @@ body {
 }
 
 .range-slider {
-  width: 100%;
+  width: calc(100% - 64px);
+  max-width: 100%;
+  justify-self: center;
   display: grid;
 }
 
@@ -1326,6 +1328,37 @@ body {
   color: #a7c97d;
 }
 
+.player-card__controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.player-card__action-button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(247, 247, 245, 0.12);
+  border-radius: 12px;
+  background: rgba(247, 247, 245, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.player-card__action-button:hover {
+  background: rgba(129, 182, 76, 0.2);
+  border-color: rgba(129, 182, 76, 0.5);
+}
+
+.player-card__action-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
 .player-card__clock {
   min-width: 76px;
   padding: 10px 12px;
@@ -1428,6 +1461,10 @@ body {
     grid-column: 1 / -1;
     width: min(100%, 560px);
     justify-self: center;
+  }
+
+  .range-slider {
+    width: 100%;
   }
 
   .games-tab {

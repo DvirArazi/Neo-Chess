@@ -483,13 +483,6 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
                 label: "Restart",
                 onClick: handleRestart,
               },
-              ...(canUsePieRule
-                ? [{
-                  iconSrc: swapIcon,
-                  label: "Swap sides",
-                  onClick: handleUsePieRule,
-                }]
-                : []),
               ...(!isDesktopLayout
                 ? [{
                   iconSrc: flipMode === "flip-lock" ? flipLockIcon : flipIcon,
@@ -528,6 +521,23 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
             name: "Black",
             clock: formatClock(displayedClocks.black),
             imageSrc: blackProfileImage,
+            action: canUsePieRule
+              ? (
+                <button
+                  type="button"
+                  className="player-card__action-button"
+                  aria-label="Swap sides"
+                  title="Swap sides"
+                  onClick={handleUsePieRule}
+                >
+                  <img
+                    className="player-card__action-icon"
+                    src={swapIcon}
+                    alt=""
+                  />
+                </button>
+              )
+              : undefined,
           },
           white: {
             name: "White",

@@ -325,13 +325,6 @@ export function OnlineGame(props: OnlineGameProps) {
         controls={
           <ActionsBar
             actions={[
-              ...(canUsePieRule
-                ? [{
-                  iconSrc: swapIcon,
-                  label: "Swap sides",
-                  onClick: handleUsePieRule,
-                }]
-                : []),
               {
                 iconSrc: flagIcon,
                 label: "Resign",
@@ -371,6 +364,23 @@ export function OnlineGame(props: OnlineGameProps) {
             clock: clockLabel,
             imageSrc: blackProfileImage,
             ratingDelta: game.ratingDeltas?.black,
+            action: canUsePieRule
+              ? (
+                <button
+                  type="button"
+                  className="player-card__action-button"
+                  aria-label="Swap sides"
+                  title="Swap sides"
+                  onClick={handleUsePieRule}
+                >
+                  <img
+                    className="player-card__action-icon"
+                    src={swapIcon}
+                    alt=""
+                  />
+                </button>
+              )
+              : undefined,
           },
           white: {
             name: game.players.white.username,

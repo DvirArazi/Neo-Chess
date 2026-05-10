@@ -13,6 +13,7 @@ type PlayerInfo = {
   clock: string;
   imageSrc: string;
   ratingDelta?: number;
+  action?: ReactNode;
 };
 
 type GameProps = {
@@ -156,6 +157,7 @@ export function Game(props: GameProps) {
                     capturedMaterial={capturedMaterial[color]}
                     isActive={props.gameState.turn === color}
                     ratingDelta={props.players[color].ratingDelta}
+                    action={props.players[color].action}
                   />
                   {!isTop && props.bottomPlayerAddon}
                 </div>

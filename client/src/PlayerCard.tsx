@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PieceColor, PieceType } from "./chess/types";
 import blackPawn from "./assets/images/pieces/black-pawn.svg";
 import blackKnight from "./assets/images/pieces/black-knight.svg";
@@ -30,6 +31,7 @@ export type PlayerCardProps = {
   capturedMaterial: CapturedMaterial;
   isActive: boolean;
   ratingDelta?: number;
+  action?: ReactNode;
 };
 
 const CAPTURE_ICON_SOURCES: Record<
@@ -122,8 +124,11 @@ export function PlayerCard(props: PlayerCardProps) {
         </div>
       </div>
 
-      <div className="player-card__clock" aria-label={`${props.name} clock`}>
-        {props.clock}
+      <div className="player-card__controls">
+        {props.action}
+        <div className="player-card__clock" aria-label={`${props.name} clock`}>
+          {props.clock}
+        </div>
       </div>
     </section>
   );
