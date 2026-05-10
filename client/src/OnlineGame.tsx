@@ -13,6 +13,7 @@ import nextIcon from "./assets/images/forwards.svg";
 import currentPositionIcon from "./assets/images/double_forwards.svg";
 import flagIcon from "./assets/images/flag.svg";
 import drawIcon from "./assets/images/handshake.svg";
+import swapIcon from "./assets/images/swap.svg";
 
 type OnlineGameProps = {
   gameId: string;
@@ -196,6 +197,16 @@ export function OnlineGame(props: OnlineGameProps) {
   const drawOfferOpponent = hasIncomingDrawOffer && game.drawOffer
     ? game.players[game.drawOffer.offeredBy].username
     : "";
+  const canUsePieRule =
+    isViewingCurrentPosition &&
+    game.status.type === "active" &&
+    game.state.turn === "black" &&
+    game.moves.length === 1 &&
+    game.history.length === 2 &&
+    game.pieRule !== undefined &&
+    !game.pieRule.wasUsed &&
+    game.pieRule.originalBlackUserId === props.authenticatedUser.id &&
+    game.players.black.id === props.authenticatedUser.id;
 
   const handleMoveAttempt = (move: MoveInput) => {
     if (!isViewingCurrentPosition || game.status.type !== "active") return;
@@ -224,6 +235,14 @@ export function OnlineGame(props: OnlineGameProps) {
     setHistoryIndex((current) =>
       Math.min(game.history.length - 1, current + 1)
     );
+  };
+
+  const handleUsePieRule = () => {
+    socket.emit("useOnlinePieRule", { gameId: game.id }, (response) => {
+      if (!response.ok) {
+        setStatusMessage(response.error);
+      }
+    });
   };
 
   const handleJumpToCurrentPosition = () => {
@@ -306,6 +325,13 @@ export function OnlineGame(props: OnlineGameProps) {
         controls={
           <ActionsBar
             actions={[
+              ...(canUsePieRule
+                ? [{
+                  iconSrc: swapIcon,
+                  label: "Swap sides",
+                  onClick: handleUsePieRule,
+                }]
+                : []),
               {
                 iconSrc: flagIcon,
                 label: "Resign",

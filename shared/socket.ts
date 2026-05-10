@@ -74,6 +74,11 @@ export type OnlineGameStatus =
   | { type: "resigned"; winner: PieceColor; loser: PieceColor }
   | { type: "checkmate"; winner: PieceColor; loser: PieceColor };
 
+export type OnlineGamePieRule = {
+  originalBlackUserId: string;
+  wasUsed: boolean;
+};
+
 export type OnlineGameState = {
   id: string;
   mode: "rated" | "casual";
@@ -83,6 +88,7 @@ export type OnlineGameState = {
   history: GameState[];
   moves: MoveInput[];
   status: OnlineGameStatus;
+  pieRule?: OnlineGamePieRule;
   ratingDeltas?: Record<PieceColor, number>;
   drawOffer?: {
     offeredBy: PieceColor;
@@ -167,6 +173,10 @@ export interface ClientToServerEvents {
   ) => void;
   makeOnlineMove: (
     data: { gameId: string; move: MoveInput },
+    callback: (response: BasicActionResponse) => void,
+  ) => void;
+  useOnlinePieRule: (
+    data: { gameId: string },
     callback: (response: BasicActionResponse) => void,
   ) => void;
   resignOnlineGame: (

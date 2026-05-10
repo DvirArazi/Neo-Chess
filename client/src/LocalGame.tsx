@@ -21,6 +21,7 @@ import nextIcon from "./assets/images/forwards.svg";
 import currentPositionIcon from "./assets/images/double_forwards.svg";
 import flipIcon from "./assets/images/flip_disabled.svg";
 import flipLockIcon from "./assets/images/flip.svg";
+import swapIcon from "./assets/images/swap.svg";
 
 type ClockSnapshot = Record<PieceColor, number>;
 
@@ -134,9 +135,10 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
   const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
   const [flipMode, setFlipMode] = useState<FlipMode>("flip-lock");
-  const [bottomColorAtStart, setBottomColorAtStart] = useState<PieceColor>(() =>
+  const [bottomPlayerColor, setBottomPlayerColor] = useState<PieceColor>(() =>
     Math.random() < 0.5 ? "white" : "black"
   );
+  const [hasPieRuleBeenUsed, setHasPieRuleBeenUsed] = useState(false);
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
   const clockAnchorRef = useRef<number | null>(null);
@@ -155,8 +157,15 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
   const gameOutcome = getTimeoutOutcome(displayedClocks) ??
     getBoardOutcomeMessage(getBoardGameOutcome(gameState));
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
-  const topColor: PieceColor = oppositeColor(bottomColorAtStart);
-  const bottomColor: PieceColor = bottomColorAtStart;
+  const canUsePieRule =
+    isViewingCurrentPosition &&
+    !gameOutcome &&
+    !hasPieRuleBeenUsed &&
+    gameState.turn === "black" &&
+    moves.length === 1 &&
+    history.length === 2;
+  const topColor: PieceColor = oppositeColor(bottomPlayerColor);
+  const bottomColor: PieceColor = bottomPlayerColor;
   const boardRotated = bottomColor === "black";
   const isTopPlayersTurn = gameState.turn === topColor;
   const modePieceRotations: Record<PieceColor, boolean> = {
@@ -376,7 +385,8 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
     clockAnchorRef.current = null;
     setHistoryIndex(0);
     setIsPaused(true);
-    setBottomColorAtStart(nextBottomColor);
+    setBottomPlayerColor(nextBottomColor);
+    setHasPieRuleBeenUsed(false);
     setTransitionMove(null);
     setShouldAnimateReset(true);
     setIsPopupDismissed(false);
@@ -441,6 +451,16 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
     );
   };
 
+  const handleUsePieRule = () => {
+    if (!canUsePieRule) return;
+
+    cancelPendingNavigation();
+    setBottomPlayerColor((currentColor) => oppositeColor(currentColor));
+    setHasPieRuleBeenUsed(true);
+    setShouldAnimateReset(false);
+    setIsPopupDismissed(false);
+  };
+
   return (
     <>
       <Game
@@ -463,6 +483,13 @@ function LocalGame(props: { timeControl: LocalTimeControl }) {
                 label: "Restart",
                 onClick: handleRestart,
               },
+              ...(canUsePieRule
+                ? [{
+                  iconSrc: swapIcon,
+                  label: "Swap sides",
+                  onClick: handleUsePieRule,
+                }]
+                : []),
               ...(!isDesktopLayout
                 ? [{
                   iconSrc: flipMode === "flip-lock" ? flipLockIcon : flipIcon,

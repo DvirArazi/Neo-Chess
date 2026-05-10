@@ -361,6 +361,10 @@ function startOnlineMatch(
     history: [initialState],
     moves: [],
     status: { type: "active" },
+    pieRule: {
+      originalBlackUserId: blackEntry.user.id,
+      wasUsed: false,
+    },
     drawOffer: undefined,
     createdAt: nowMs,
     updatedAt: nowMs,
@@ -408,6 +412,19 @@ function getOnlinePlayerColor(
   if (game.players.white.id === userId) return "white";
   if (game.players.black.id === userId) return "black";
   return null;
+}
+
+function canUseOnlinePieRule(game: OnlineGameState, userId: string): boolean {
+  return (
+    game.status.type === "active" &&
+    game.state.turn === "black" &&
+    game.moves.length === 1 &&
+    game.history.length === 2 &&
+    game.pieRule !== undefined &&
+    !game.pieRule.wasUsed &&
+    game.pieRule.originalBlackUserId === userId &&
+    game.players.black.id === userId
+  );
 }
 
 function toOnlineGameListEntry(game: OnlineGameState): OnlineGameListEntry {
@@ -1329,6 +1346,54 @@ io.on("connection", (socket) => {
     void finalizeOnlineGame(nextGame).catch((error) => {
       console.error("rated game finalization failed", error);
     });
+  });
+
+  socket.on("useOnlinePieRule", (data, callback) => {
+    const userId = getRequiredUserId(socket);
+    if (!userId) {
+      callback({ ok: false, error: "Log in to swap sides" });
+      return;
+    }
+
+    const game = onlineGames.get(data.gameId);
+    if (!game) {
+      callback({ ok: false, error: "Online game not found" });
+      return;
+    }
+
+    const pieRule = game.pieRule;
+    if (!pieRule || !canUseOnlinePieRule(game, userId)) {
+      callback({
+        ok: false,
+        error: "The pie rule is only available to original Black on their first turn",
+      });
+      return;
+    }
+
+    const nextGame: OnlineGameState = {
+      ...game,
+      players: {
+        white: {
+          ...game.players.black,
+          color: "white",
+        },
+        black: {
+          ...game.players.white,
+          color: "black",
+        },
+      },
+      pieRule: {
+        originalBlackUserId: pieRule.originalBlackUserId,
+        wasUsed: true,
+      },
+      drawOffer: undefined,
+      updatedAt: Date.now(),
+    };
+
+    onlineGames.set(nextGame.id, nextGame);
+    callback({ ok: true });
+    io.to(nextGame.id).emit("onlineGameUpdated", nextGame);
+    queueOnlineGamePersistence(nextGame);
   });
 
   socket.on("resignOnlineGame", async (data, callback) => {

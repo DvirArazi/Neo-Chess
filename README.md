@@ -26,6 +26,7 @@ The app includes:
 
 - Local chess games with Bullet, Blitz, Rapid, Classical, and Unlimited time controls
 - Online matchmaking with rated and casual modes
+- Pie rule side-swap option on Black's first turn
 - Elo-based rating ranges for rated matchmaking
 - Elo updates when rated online games end
 - Player cards with clocks, captured material, active-turn state, and rating deltas
@@ -56,7 +57,7 @@ Choose a time control to start a local game. The desktop game view centers the b
 
 ### Online games
 
-After logging in, switch to Online, select rated or casual play, choose a rating range, and queue for a match. In online games, your side is always shown at the bottom of the board.
+After logging in, switch to Online, select rated or casual play, choose a rating range, and queue for a match. In online games, your side is always shown at the bottom of the board. If you are the original Black player, a swap button appears on your first turn after White's opening move.
 
 Suggested screenshot to add later: an active online game showing two logged-in players, the draw/resign controls, and the rated Elo delta after the game ends.
 
@@ -71,6 +72,18 @@ Suggested screenshot to add later: the Games tab with at least one ongoing onlin
 Use the account icon in the header to log in, sign up, continue with Google, manage friends, and log out.
 
 Suggested screenshot to add later: the logged-in account popup showing friend requests and the friends list.
+
+## Rules
+
+Neo Chess uses its existing legal-move engine for chess movement, check, checkmate, stalemate, and en passant.
+
+The app also uses the pie rule:
+- White makes the first move.
+- When the original Black player's first turn arrives, that player gets one swap option.
+- Choosing swap exchanges the players' sides: the original Black player takes over White's pieces and the original White player takes over Black's pieces.
+- The board position does not change when sides are swapped, and it remains Black's turn.
+- If the original Black player makes a move instead of swapping, the swap option expires and the game continues normally.
+- The same rule is available in both local and online games.
 
 ## Tech Stack
 
