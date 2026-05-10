@@ -15,6 +15,11 @@ import { OnlineGame } from "./OnlineGame";
 import { Popup } from "./Popup";
 import { RangeSlider } from "./RangeSlider";
 import {
+  getStoredLocalGamesForUser,
+  type LocalGameRecord,
+  upsertStoredLocalGame,
+} from "./localGameStorage";
+import {
   clearSessionToken,
   clearStoredAuthenticatedUser,
   getServerOrigin,
@@ -72,6 +77,9 @@ type GoogleAuthMessage =
     ok: false;
     error: string;
   };
+type OnlineGameEntry = OnlineGameListEntry & { kind: "online" };
+type LocalGameEntry = LocalGameRecord & { kind: "local" };
+type GameListEntry = OnlineGameEntry | LocalGameEntry;
 
 function BoardThumbnail(props: { gameState: GameState }) {
   return (
@@ -109,13 +117,53 @@ function getTimeControlLabel(timeControlId: string): string {
     ?.label ?? timeControlId;
 }
 
-function formatGameStatus(game: OnlineGameListEntry): string {
+function formatGameStatus(game: GameListEntry): string {
+  if (game.kind === "local") {
+    if (game.status.type === "active") return "Ongoing";
+    if (game.status.type === "draw") return "Draw";
+    if (game.status.type === "timeout") {
+      return `${formatColorName(game.status.winner)} won on time`;
+    }
+    return `${formatColorName(game.status.winner)} won by checkmate`;
+  }
+
   if (game.status.type === "active") return "Ongoing";
   if (game.status.type === "draw") return "Draw";
   if (game.status.type === "checkmate") {
     return `${game.players[game.status.winner].username} won by checkmate`;
   }
   return `${game.players[game.status.winner].username} won`;
+}
+
+function formatColorName(color: "white" | "black"): string {
+  return color === "white" ? "White" : "Black";
+}
+
+function getGamePlayersLabel(game: GameListEntry): string {
+  if (game.kind === "local") return "White vs Black";
+
+  return `${game.players.white.username} vs ${game.players.black.username}`;
+}
+
+function getGameMetaLabel(game: GameListEntry): string {
+  const timeControlLabel = getTimeControlLabel(game.timeControlId);
+  if (game.kind === "local") return `Local - ${timeControlLabel}`;
+
+  return `Online - ${timeControlLabel} - ${game.mode}`;
+}
+
+function getGameNavigationTarget(game: GameListEntry): RouteState {
+  if (game.kind === "local") {
+    return {
+      pathname: LOCAL_GAME_PATH,
+      search: `?time=${game.timeControlId}&local-game-id=${game.id}`,
+    };
+  }
+
+  return {
+    pathname: ONLINE_GAME_PATH,
+    search: `?game-id=${game.id}`,
+  };
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -234,6 +282,9 @@ export function App() {
     GamesHistoryFilter
   >("all");
   const [onlineGames, setOnlineGames] = useState<OnlineGameListEntry[]>([]);
+  const [localGames, setLocalGames] = useState<LocalGameRecord[]>(() =>
+    authenticatedUser ? getStoredLocalGamesForUser(authenticatedUser.id) : []
+  );
   const [gamesStatus, setGamesStatus] = useState<string | null>(null);
   const [selectedOpponentId, setSelectedOpponentId] = useState(
     RANDOM_OPPONENT_ID,
@@ -356,6 +407,12 @@ export function App() {
     });
   }, [authenticatedUser]);
 
+  const handleLocalGameSnapshot = useCallback((record: LocalGameRecord) => {
+    if (!authenticatedUser || record.userId !== authenticatedUser.id) return;
+
+    setLocalGames(upsertStoredLocalGame(record));
+  }, [authenticatedUser]);
+
   useEffect(() => {
     document.title = "Neo Chess";
 
@@ -396,12 +453,14 @@ export function App() {
         setFriendUsers([]);
         setFriendOptions([]);
         setOnlineGames([]);
+        setLocalGames([]);
         setSelectedOpponentId(RANDOM_OPPONENT_ID);
         setHasUnseenRequests(false);
         return;
       }
 
       setStoredAuthenticatedUser(data.user);
+      setLocalGames(getStoredLocalGamesForUser(data.user.id));
     };
 
     socket.on("authStateChanged", handleAuthStateChanged);
@@ -424,6 +483,7 @@ export function App() {
     if (!authenticatedUser || homeTab !== "games") return;
 
     fetchOnlineGames();
+    setLocalGames(getStoredLocalGamesForUser(authenticatedUser.id));
   }, [authenticatedUser, fetchOnlineGames, homeTab]);
 
   useEffect(() => {
@@ -654,13 +714,18 @@ export function App() {
     setIsOpponentMenuOpen(false);
   };
 
+  const routeSearchParams = new URLSearchParams(route.search);
   const selectedTimeControl = (() => {
-    const timeControlId = new URLSearchParams(route.search).get("time");
+    const timeControlId = routeSearchParams.get("time");
     return LOCAL_TIME_CONTROLS.find((control) =>
       control.id === timeControlId
     ) ??
       LOCAL_TIME_CONTROLS[0];
   })();
+  const selectedLocalGameId = routeSearchParams.get("local-game-id");
+  const selectedLocalGame = selectedLocalGameId
+    ? localGames.find((game) => game.id === selectedLocalGameId) ?? null
+    : null;
   const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
     ? "Random opponent"
     : friendOptions.find((friend) => friend.id === selectedOpponentId)
@@ -673,7 +738,10 @@ export function App() {
     ...game,
     kind: "online" as const,
   }));
-  const localGameEntries: Array<OnlineGameListEntry & { kind: "local" }> = [];
+  const localGameEntries = localGames.map((game) => ({
+    ...game,
+    kind: "local" as const,
+  }));
   const gameEntries = [...onlineGameEntries, ...localGameEntries].sort((
     left,
     right,
@@ -802,6 +870,7 @@ export function App() {
       setFriendRequests([]);
       setFriendUsers([]);
       setFriendOptions([]);
+      setLocalGames([]);
       setFriendSearch("");
       setSelectedOpponentId(RANDOM_OPPONENT_ID);
       setHasUnseenRequests(false);
@@ -994,16 +1063,19 @@ export function App() {
         {route.pathname === ONLINE_GAME_PATH
           ? (
             <OnlineGame
-              key={new URLSearchParams(route.search).get("game-id") ?? ""}
-              gameId={new URLSearchParams(route.search).get("game-id") ?? ""}
+              key={routeSearchParams.get("game-id") ?? ""}
+              gameId={routeSearchParams.get("game-id") ?? ""}
               authenticatedUser={authenticatedUser}
             />
           )
           : route.pathname === LOCAL_GAME_PATH
           ? (
             <LocalGame
-              key={selectedTimeControl.id}
+              key={`${selectedTimeControl.id}:${selectedLocalGame?.id ?? "new"}`}
               timeControl={selectedTimeControl}
+              authenticatedUser={authenticatedUser}
+              savedGame={selectedLocalGame}
+              onLocalGameSnapshot={handleLocalGameSnapshot}
             />
           )
           : (
@@ -1212,37 +1284,37 @@ export function App() {
                                         Ongoing Games
                                       </h2>
                                       <div className="games-tab__list">
-                                        {ongoingGameEntries.map((game) => (
-                                          <button
-                                            type="button"
-                                            className="games-tab__card"
-                                            key={`${game.kind}:${game.id}`}
-                                            onClick={() =>
-                                              navigate(
-                                                ONLINE_GAME_PATH,
-                                                `?game-id=${game.id}`,
-                                              )}
-                                          >
-                                            <BoardThumbnail
-                                              gameState={game.state}
-                                            />
-                                            <span className="games-tab__card-body">
-                                              <span className="games-tab__players">
-                                                {game.players.white.username} vs
-                                                {" "}
-                                                {game.players.black.username}
+                                        {ongoingGameEntries.map((game) => {
+                                          const target = getGameNavigationTarget(game);
+
+                                          return (
+                                            <button
+                                              type="button"
+                                              className="games-tab__card"
+                                              key={`${game.kind}:${game.id}`}
+                                              onClick={() =>
+                                                navigate(
+                                                  target.pathname,
+                                                  target.search,
+                                                )}
+                                            >
+                                              <BoardThumbnail
+                                                gameState={game.state}
+                                              />
+                                              <span className="games-tab__card-body">
+                                                <span className="games-tab__players">
+                                                  {getGamePlayersLabel(game)}
+                                                </span>
+                                                <span className="games-tab__meta">
+                                                  {getGameMetaLabel(game)}
+                                                </span>
+                                                <span className="games-tab__status">
+                                                  {formatGameStatus(game)}
+                                                </span>
                                               </span>
-                                              <span className="games-tab__meta">
-                                                Online - {getTimeControlLabel(
-                                                  game.timeControlId,
-                                                )} - {game.mode}
-                                              </span>
-                                              <span className="games-tab__status">
-                                                {formatGameStatus(game)}
-                                              </span>
-                                            </span>
-                                          </button>
-                                        ))}
+                                            </button>
+                                          );
+                                        })}
                                       </div>
                                     </section>
                                   )
@@ -1276,37 +1348,37 @@ export function App() {
                                     : historyGameEntries.length > 0
                                     ? (
                                       <div className="games-tab__list">
-                                        {historyGameEntries.map((game) => (
-                                          <button
-                                            type="button"
-                                            className="games-tab__card"
-                                            key={`${game.kind}:${game.id}`}
-                                            onClick={() =>
-                                              navigate(
-                                                ONLINE_GAME_PATH,
-                                                `?game-id=${game.id}`,
-                                              )}
-                                          >
-                                            <BoardThumbnail
-                                              gameState={game.state}
-                                            />
-                                            <span className="games-tab__card-body">
-                                              <span className="games-tab__players">
-                                                {game.players.white.username} vs
-                                                {" "}
-                                                {game.players.black.username}
+                                        {historyGameEntries.map((game) => {
+                                          const target = getGameNavigationTarget(game);
+
+                                          return (
+                                            <button
+                                              type="button"
+                                              className="games-tab__card"
+                                              key={`${game.kind}:${game.id}`}
+                                              onClick={() =>
+                                                navigate(
+                                                  target.pathname,
+                                                  target.search,
+                                                )}
+                                            >
+                                              <BoardThumbnail
+                                                gameState={game.state}
+                                              />
+                                              <span className="games-tab__card-body">
+                                                <span className="games-tab__players">
+                                                  {getGamePlayersLabel(game)}
+                                                </span>
+                                                <span className="games-tab__meta">
+                                                  {getGameMetaLabel(game)}
+                                                </span>
+                                                <span className="games-tab__status">
+                                                  {formatGameStatus(game)}
+                                                </span>
                                               </span>
-                                              <span className="games-tab__meta">
-                                                Online - {getTimeControlLabel(
-                                                  game.timeControlId,
-                                                )} - {game.mode}
-                                              </span>
-                                              <span className="games-tab__status">
-                                                {formatGameStatus(game)}
-                                              </span>
-                                            </span>
-                                          </button>
-                                        ))}
+                                            </button>
+                                          );
+                                        })}
                                       </div>
                                     )
                                     : (

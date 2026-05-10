@@ -1,7 +1,8 @@
-import type { PointerEvent, ReactNode } from "react";
+import type { MouseEvent, PointerEvent, ReactNode } from "react";
 import { useRef, useState } from "react";
 
 const SWIPE_THRESHOLD_PX = 48;
+const CLICK_SUPPRESSION_THRESHOLD_PX = 8;
 const PANEL_GAP_PX = 64;
 
 export type TabPanelItem = {
@@ -26,12 +27,13 @@ export function TabPanel(props: TabPanelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pointerIdRef = useRef<number | null>(null);
   const swipeStartXRef = useRef<number | null>(null);
+  const suppressNextClickRef = useRef(false);
   const [dragOffsetPx, setDragOffsetPx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  const isInteractiveTarget = (target: EventTarget | null): boolean => {
+  const isSwipeExcludedTarget = (target: EventTarget | null): boolean => {
     return target instanceof Element &&
-      target.closest("button, a, input, textarea, select, label") !== null;
+      target.closest("input, textarea, select, label") !== null;
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -39,13 +41,14 @@ export function TabPanel(props: TabPanelProps) {
       return;
     }
 
-    if (isInteractiveTarget(event.target)) {
+    if (isSwipeExcludedTarget(event.target)) {
       return;
     }
 
     pointerIdRef.current = event.pointerId;
     swipeStartXRef.current = event.clientX;
-    setIsDragging(true);
+    setDragOffsetPx(0);
+    setIsDragging(false);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -55,7 +58,12 @@ export function TabPanel(props: TabPanelProps) {
     const swipeStartX = swipeStartXRef.current;
     if (swipeStartX === null) return;
 
-    setDragOffsetPx(event.clientX - swipeStartX);
+    const nextDragOffsetPx = event.clientX - swipeStartX;
+    setDragOffsetPx(nextDragOffsetPx);
+
+    if (!isDragging && Math.abs(nextDragOffsetPx) > CLICK_SUPPRESSION_THRESHOLD_PX) {
+      setIsDragging(true);
+    }
   };
 
   const resetDrag = () => {
@@ -68,6 +76,7 @@ export function TabPanel(props: TabPanelProps) {
   const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
     if (pointerIdRef.current !== event.pointerId) return;
 
+    const finalDragOffsetPx = dragOffsetPx;
     const nextIndex = dragOffsetPx <= -SWIPE_THRESHOLD_PX
       ? Math.min(props.items.length - 1, activeIndex + 1)
       : dragOffsetPx >= SWIPE_THRESHOLD_PX
@@ -79,6 +88,13 @@ export function TabPanel(props: TabPanelProps) {
     }
 
     resetDrag();
+    if (Math.abs(finalDragOffsetPx) > CLICK_SUPPRESSION_THRESHOLD_PX) {
+      suppressNextClickRef.current = true;
+      window.setTimeout(() => {
+        suppressNextClickRef.current = false;
+      }, 0);
+    }
+
     if (nextIndex !== activeIndex) {
       props.onChange(props.items[nextIndex].id);
     }
@@ -92,6 +108,14 @@ export function TabPanel(props: TabPanelProps) {
     }
 
     resetDrag();
+  };
+
+  const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    if (!suppressNextClickRef.current) return;
+
+    suppressNextClickRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const tabWidthPercent = 100 / Math.max(1, props.items.length);
@@ -112,6 +136,7 @@ export function TabPanel(props: TabPanelProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerCancel}
+        onClickCapture={handleClickCapture}
       >
         <div
           className={[
