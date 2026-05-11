@@ -4,8 +4,9 @@ export type LocalGameClockSnapshot = Record<PieceColor, number>;
 
 export type LocalGameStatus =
   | { type: "active" }
-  | { type: "draw"; reason: "stalemate" }
+  | { type: "draw"; reason: "stalemate" | "agreement" }
   | { type: "checkmate"; winner: PieceColor; loser: PieceColor }
+  | { type: "resignation"; winner: PieceColor; loser: PieceColor }
   | { type: "timeout"; winner: PieceColor; loser: PieceColor };
 
 export type LocalGameRecord = {
@@ -26,6 +27,7 @@ export type LocalGameRecord = {
 
 const LOCAL_GAMES_STORAGE_KEY = "neo-chess-local-games";
 const MAX_STORED_LOCAL_GAMES_PER_USER = 100;
+export const GUEST_LOCAL_GAME_USER_ID = "__guest__";
 
 type StoredLocalGamesByUser = Record<string, LocalGameRecord[]>;
 
@@ -85,12 +87,22 @@ function writeStoredLocalGamesByUser(recordsByUser: StoredLocalGamesByUser): voi
 }
 
 export function getStoredLocalGamesForUser(userId: string): LocalGameRecord[] {
-  return readStoredLocalGamesByUser()[userId] ?? [];
+  return (readStoredLocalGamesByUser()[userId] ?? [])
+    .filter((record) => record.moves.length > 0);
+}
+
+export function getStoredLocalGameForUser(
+  userId: string,
+  gameId: string,
+): LocalGameRecord | null {
+  return readStoredLocalGamesByUser()[userId]
+    ?.find((record) => record.id === gameId) ?? null;
 }
 
 export function upsertStoredLocalGame(record: LocalGameRecord): LocalGameRecord[] {
   const recordsByUser = readStoredLocalGamesByUser();
   const currentRecords = recordsByUser[record.userId] ?? [];
+
   const nextRecords = [
     record,
     ...currentRecords.filter((currentRecord) => currentRecord.id !== record.id),
@@ -100,5 +112,5 @@ export function upsertStoredLocalGame(record: LocalGameRecord): LocalGameRecord[
 
   recordsByUser[record.userId] = nextRecords;
   writeStoredLocalGamesByUser(recordsByUser);
-  return nextRecords;
+  return nextRecords.filter((storedRecord) => storedRecord.moves.length > 0);
 }

@@ -10,10 +10,11 @@ import { Game } from "./Game";
 import { Popup } from "./Popup";
 import { ActionsBar } from "./ActionsBar";
 import { formatClock, type LocalTimeControl } from "./timeControls";
-import type {
-  LocalGameClockSnapshot,
-  LocalGameRecord,
-  LocalGameStatus,
+import {
+  GUEST_LOCAL_GAME_USER_ID,
+  type LocalGameClockSnapshot,
+  type LocalGameRecord,
+  type LocalGameStatus,
 } from "./localGameStorage";
 import { useMediaQuery } from "./useMediaQuery";
 import whiteProfileImage from "./assets/images/localProfile/white.png";
@@ -27,6 +28,8 @@ import currentPositionIcon from "./assets/images/double_forwards.svg";
 import flipIcon from "./assets/images/flip_disabled.svg";
 import flipLockIcon from "./assets/images/flip.svg";
 import swapIcon from "./assets/images/swap.svg";
+import flagIcon from "./assets/images/flag.svg";
+import drawIcon from "./assets/images/handshake.svg";
 
 type ClockSnapshot = LocalGameClockSnapshot;
 
@@ -38,7 +41,9 @@ type FlipMode = "flip" | "flip-lock";
 type LocalGameProps = {
   timeControl: LocalTimeControl;
   authenticatedUser: AuthenticatedUser | null;
+  requestedGameId?: string | null;
   savedGame?: LocalGameRecord | null;
+  onLocalGameIdChange?: (gameId: string) => void;
   onLocalGameSnapshot?: (record: LocalGameRecord) => void;
 };
 
@@ -78,10 +83,23 @@ function createLocalGameId(): string {
     `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function getSavedManualGameStatus(
+  status: LocalGameStatus | undefined,
+): LocalGameStatus | null {
+  if (!status) return null;
+  if (status.type === "resignation") return status;
+  if (status.type === "draw" && status.reason === "agreement") return status;
+
+  return null;
+}
+
 function getLocalGameStatus(
+  manualStatus: LocalGameStatus | null,
   clocks: ClockSnapshot,
   state: GameState,
 ): LocalGameStatus {
+  if (manualStatus) return manualStatus;
+
   if (Number.isFinite(clocks.white) && clocks.white === 0) {
     return {
       type: "timeout",
@@ -130,7 +148,9 @@ function getLocalGameOutcomeMessage(
   if (status.type === "draw") {
     return {
       title: "Draw",
-      detail: "Stalemate. The side to move has no legal moves",
+      detail: status.reason === "stalemate"
+        ? "Stalemate. The side to move has no legal moves"
+        : "The game ended by agreement.",
     };
   }
 
@@ -138,6 +158,13 @@ function getLocalGameOutcomeMessage(
     return {
       title: `${formatColorName(status.winner)} wins`,
       detail: `${formatColorName(status.loser)} ran out of time`,
+    };
+  }
+
+  if (status.type === "resignation") {
+    return {
+      title: `${formatColorName(status.winner)} wins`,
+      detail: `${formatColorName(status.loser)} resigned.`,
     };
   }
 
@@ -166,7 +193,7 @@ function LocalGame(props: LocalGameProps) {
   const isDesktopLayout = useMediaQuery("(min-width: 600px)");
   const initialClocks = createInitialClocks(props.timeControl.initialMs);
   const [localGameId, setLocalGameId] = useState(() =>
-    props.savedGame?.id ?? createLocalGameId()
+    props.savedGame?.id ?? props.requestedGameId ?? createLocalGameId()
   );
   const [localGameCreatedAt, setLocalGameCreatedAt] = useState(() =>
     props.savedGame?.createdAt ?? Date.now()
@@ -197,6 +224,8 @@ function LocalGame(props: LocalGameProps) {
   const [transitionMove, setTransitionMove] = useState<MoveInput | null>(null);
   const [shouldAnimateReset, setShouldAnimateReset] = useState(false);
   const [isPopupDismissed, setIsPopupDismissed] = useState(false);
+  const [isResignPopupOpen, setIsResignPopupOpen] = useState(false);
+  const [isDrawPopupOpen, setIsDrawPopupOpen] = useState(false);
   const [flipMode, setFlipMode] = useState<FlipMode>("flip-lock");
   const [bottomPlayerColor, setBottomPlayerColor] = useState<PieceColor>(() =>
     props.savedGame?.bottomPlayerColor ??
@@ -205,6 +234,9 @@ function LocalGame(props: LocalGameProps) {
   const [hasPieRuleBeenUsed, setHasPieRuleBeenUsed] = useState(() =>
     props.savedGame?.hasPieRuleBeenUsed ?? false
   );
+  const [manualGameStatus, setManualGameStatus] = useState<
+    LocalGameStatus | null
+  >(() => getSavedManualGameStatus(props.savedGame?.status));
   const pendingHistoryIndexRef = useRef<number | null>(null);
   const pendingNavigationFrameRef = useRef<number | null>(null);
   const clockAnchorRef = useRef<number | null>(null);
@@ -222,11 +254,13 @@ function LocalGame(props: LocalGameProps) {
     clockTickMs,
   );
   const displayedLocalGameStatus = getLocalGameStatus(
+    manualGameStatus,
     displayedClocks,
     gameState,
   );
   const gameOutcome = getLocalGameOutcomeMessage(displayedLocalGameStatus);
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
+  const canEndGameManually = isViewingCurrentPosition && !gameOutcome;
   const canUsePieRule =
     isViewingCurrentPosition &&
     !gameOutcome &&
@@ -264,6 +298,8 @@ function LocalGame(props: LocalGameProps) {
   const bottomPlayerRotated = isDesktopLayout
     ? false
     : flipMode === "flip" && isTopPlayersTurn;
+  const localGameStorageUserId = props.authenticatedUser?.id ??
+    GUEST_LOCAL_GAME_USER_ID;
   const latestClockHistorySnapshot = clockHistory[clockHistory.length - 1] ??
     clockSnapshot;
   const savedClockSnapshot = isViewingCurrentPosition
@@ -271,28 +307,27 @@ function LocalGame(props: LocalGameProps) {
     : latestClockHistorySnapshot;
   const savedGameState = history[history.length - 1] ?? gameState;
   const savedLocalGameStatus = getLocalGameStatus(
+    manualGameStatus,
     savedClockSnapshot,
     savedGameState,
   );
   const savedLocalGameStatusKey = getLocalGameStatusKey(savedLocalGameStatus);
 
-  latestLocalGameRecordRef.current = props.authenticatedUser
-    ? {
-      id: localGameId,
-      userId: props.authenticatedUser.id,
-      timeControlId: props.timeControl.id,
-      state: savedGameState,
-      history,
-      moves,
-      clockHistory,
-      clockSnapshot: savedClockSnapshot,
-      bottomPlayerColor,
-      hasPieRuleBeenUsed,
-      status: savedLocalGameStatus,
-      createdAt: localGameCreatedAt,
-      updatedAt: Date.now(),
-    }
-    : null;
+  latestLocalGameRecordRef.current = {
+    id: localGameId,
+    userId: localGameStorageUserId,
+    timeControlId: props.timeControl.id,
+    state: savedGameState,
+    history,
+    moves,
+    clockHistory,
+    clockSnapshot: savedClockSnapshot,
+    bottomPlayerColor,
+    hasPieRuleBeenUsed,
+    status: savedLocalGameStatus,
+    createdAt: localGameCreatedAt,
+    updatedAt: Date.now(),
+  };
 
   useEffect(() => {
     return () => {
@@ -302,12 +337,16 @@ function LocalGame(props: LocalGameProps) {
   }, []);
 
   useEffect(() => {
+    props.onLocalGameIdChange?.(localGameId);
+  }, [localGameId, props.onLocalGameIdChange]);
+
+  useEffect(() => {
     const record = latestLocalGameRecordRef.current;
     if (!record || !props.onLocalGameSnapshot) return;
 
     props.onLocalGameSnapshot(record);
   }, [
-    props.authenticatedUser?.id,
+    localGameStorageUserId,
     props.onLocalGameSnapshot,
     props.timeControl.id,
     localGameId,
@@ -519,6 +558,9 @@ function LocalGame(props: LocalGameProps) {
     setIsPaused(true);
     setBottomPlayerColor(nextBottomColor);
     setHasPieRuleBeenUsed(false);
+    setManualGameStatus(null);
+    setIsResignPopupOpen(false);
+    setIsDrawPopupOpen(false);
     setTransitionMove(null);
     setShouldAnimateReset(true);
     setIsPopupDismissed(false);
@@ -593,6 +635,50 @@ function LocalGame(props: LocalGameProps) {
     setIsPopupDismissed(false);
   };
 
+  const endGameManually = (status: LocalGameStatus) => {
+    if (!canEndGameManually) return;
+
+    cancelPendingNavigation();
+    const nowMs = Date.now();
+    const finalClockSnapshot = getCurrentDisplayedClockSnapshot(nowMs);
+    setClockSnapshot(finalClockSnapshot);
+    setClockTickMs(nowMs);
+    clockAnchorRef.current = null;
+    setIsPaused(true);
+    setManualGameStatus(status);
+    setIsResignPopupOpen(false);
+    setIsDrawPopupOpen(false);
+    setShouldAnimateReset(false);
+    setIsPopupDismissed(false);
+  };
+
+  const handleResign = () => {
+    if (!canEndGameManually) return;
+
+    setIsResignPopupOpen(true);
+  };
+
+  const handleConfirmResign = () => {
+    endGameManually({
+      type: "resignation",
+      winner: oppositeColor(gameState.turn),
+      loser: gameState.turn,
+    });
+  };
+
+  const handleDraw = () => {
+    if (!canEndGameManually) return;
+
+    setIsDrawPopupOpen(true);
+  };
+
+  const handleConfirmDraw = () => {
+    endGameManually({
+      type: "draw",
+      reason: "agreement",
+    });
+  };
+
   return (
     <>
       <Game
@@ -626,6 +712,19 @@ function LocalGame(props: LocalGameProps) {
                 iconSrc: isPaused ? playIcon : pauseIcon,
                 label: isPaused ? "Resume" : "Pause",
                 onClick: handleTogglePause,
+                disabled: Boolean(gameOutcome),
+              },
+              {
+                iconSrc: flagIcon,
+                label: "Resign",
+                onClick: handleResign,
+                disabled: !canEndGameManually,
+              },
+              {
+                iconSrc: drawIcon,
+                label: "Draw",
+                onClick: handleDraw,
+                disabled: !canEndGameManually,
               },
               {
                 iconSrc: backIcon,
@@ -678,6 +777,62 @@ function LocalGame(props: LocalGameProps) {
           },
         }}
       />
+
+      <Popup
+        open={isResignPopupOpen}
+        title="Resign?"
+        onClose={() => setIsResignPopupOpen(false)}
+        closeOnBackdropPress={true}
+        actions={
+          <>
+            <button
+              type="button"
+              className="popup__button popup__button--secondary"
+              onClick={() => setIsResignPopupOpen(false)}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className="popup__button popup__button--danger"
+              onClick={handleConfirmResign}
+            >
+              Yes
+            </button>
+          </>
+        }
+      >
+        <p className="popup__description">Are you sure you want to resign?</p>
+      </Popup>
+
+      <Popup
+        open={isDrawPopupOpen}
+        title="Draw?"
+        onClose={() => setIsDrawPopupOpen(false)}
+        closeOnBackdropPress={true}
+        actions={
+          <>
+            <button
+              type="button"
+              className="popup__button popup__button--secondary"
+              onClick={() => setIsDrawPopupOpen(false)}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className="popup__button"
+              onClick={handleConfirmDraw}
+            >
+              Yes
+            </button>
+          </>
+        }
+      >
+        <p className="popup__description">
+          End this local game as a draw?
+        </p>
+      </Popup>
 
       <Popup
         open={shouldShowPopup && Boolean(gameOutcome)}

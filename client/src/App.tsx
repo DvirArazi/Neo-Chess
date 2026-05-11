@@ -15,6 +15,8 @@ import { OnlineGame } from "./OnlineGame";
 import { Popup } from "./Popup";
 import { RangeSlider } from "./RangeSlider";
 import {
+  GUEST_LOCAL_GAME_USER_ID,
+  getStoredLocalGameForUser,
   getStoredLocalGamesForUser,
   type LocalGameRecord,
   upsertStoredLocalGame,
@@ -124,6 +126,9 @@ function formatGameStatus(game: GameListEntry): string {
     if (game.status.type === "timeout") {
       return `${formatColorName(game.status.winner)} won on time`;
     }
+    if (game.status.type === "resignation") {
+      return `${formatColorName(game.status.winner)} won by resignation`;
+    }
     return `${formatColorName(game.status.winner)} won by checkmate`;
   }
 
@@ -164,6 +169,18 @@ function getGameNavigationTarget(game: GameListEntry): RouteState {
     pathname: ONLINE_GAME_PATH,
     search: `?game-id=${game.id}`,
   };
+}
+
+function createLocalGameId(): string {
+  return window.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createLocalGameSearch(timeControlId: string, gameId: string): string {
+  const params = new URLSearchParams();
+  params.set("time", timeControlId);
+  params.set("local-game-id", gameId);
+  return `?${params.toString()}`;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -408,9 +425,13 @@ export function App() {
   }, [authenticatedUser]);
 
   const handleLocalGameSnapshot = useCallback((record: LocalGameRecord) => {
-    if (!authenticatedUser || record.userId !== authenticatedUser.id) return;
+    const expectedUserId = authenticatedUser?.id ?? GUEST_LOCAL_GAME_USER_ID;
+    if (record.userId !== expectedUserId) return;
 
-    setLocalGames(upsertStoredLocalGame(record));
+    const storedGames = upsertStoredLocalGame(record);
+    if (authenticatedUser) {
+      setLocalGames(storedGames);
+    }
   }, [authenticatedUser]);
 
   useEffect(() => {
@@ -722,10 +743,21 @@ export function App() {
     ) ??
       LOCAL_TIME_CONTROLS[0];
   })();
+  const localGameStorageUserId = authenticatedUser?.id ??
+    GUEST_LOCAL_GAME_USER_ID;
   const selectedLocalGameId = routeSearchParams.get("local-game-id");
   const selectedLocalGame = selectedLocalGameId
-    ? localGames.find((game) => game.id === selectedLocalGameId) ?? null
+    ? localGames.find((game) => game.id === selectedLocalGameId) ??
+      getStoredLocalGameForUser(localGameStorageUserId, selectedLocalGameId)
     : null;
+  const handleLocalGameIdChange = useCallback((gameId: string) => {
+    if (route.pathname !== LOCAL_GAME_PATH) return;
+
+    const nextSearch = createLocalGameSearch(selectedTimeControl.id, gameId);
+    if (window.location.search === nextSearch) return;
+
+    window.history.replaceState({}, "", `${LOCAL_GAME_PATH}${nextSearch}`);
+  }, [route.pathname, selectedTimeControl.id]);
   const selectedOpponentLabel = selectedOpponentId === RANDOM_OPPONENT_ID
     ? "Random opponent"
     : friendOptions.find((friend) => friend.id === selectedOpponentId)
@@ -1071,10 +1103,12 @@ export function App() {
           : route.pathname === LOCAL_GAME_PATH
           ? (
             <LocalGame
-              key={`${selectedTimeControl.id}:${selectedLocalGame?.id ?? "new"}`}
+              key={`${selectedTimeControl.id}:${selectedLocalGameId ?? "new"}`}
               timeControl={selectedTimeControl}
               authenticatedUser={authenticatedUser}
+              requestedGameId={selectedLocalGameId}
               savedGame={selectedLocalGame}
+              onLocalGameIdChange={handleLocalGameIdChange}
               onLocalGameSnapshot={handleLocalGameSnapshot}
             />
           )
@@ -1253,7 +1287,10 @@ export function App() {
 
                               navigate(
                                 LOCAL_GAME_PATH,
-                                `?time=${timeControl.id}`,
+                                createLocalGameSearch(
+                                  timeControl.id,
+                                  createLocalGameId(),
+                                ),
                               );
                             },
                           }))}
