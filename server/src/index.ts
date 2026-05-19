@@ -1311,12 +1311,14 @@ io.on("connection", (socket) => {
     }
 
     const nextState = applyMove(game.state, data.move);
-    const boardOutcome = getBoardGameOutcome(nextState);
+    const nextHistory = [...game.history, nextState];
+    const boardOutcome = getBoardGameOutcome(nextState, nextHistory);
     const nextStatus = boardOutcome
       ? boardOutcome.result === "draw"
         ? { type: "draw" as const, reason: boardOutcome.reason }
         : {
-          type: "checkmate" as const,
+          type: "win" as const,
+          reason: boardOutcome.reason,
           winner: boardOutcome.winner,
           loser: boardOutcome.winner === "white" ? "black" as const : "white" as const,
         }
@@ -1324,7 +1326,7 @@ io.on("connection", (socket) => {
     const nextGame: OnlineGameState = {
       ...game,
       state: nextState,
-      history: [...game.history, nextState],
+      history: nextHistory,
       moves: [...game.moves, data.move],
       status: nextStatus,
       drawOffer: undefined,

@@ -1,12 +1,12 @@
-# Neo Chess
+# Neo-Chess
 
-A real-time chess web app with local play, online matchmaking, account-based game history, and rated games with Elo updates.
+Neo-Chess is a real-time chess variant web app with local play, online matchmaking, account-based game history, and rated games with Elo updates.
 
 Built with React, TypeScript, Express, Socket.IO, PostgreSQL, Drizzle ORM, and HTML Canvas.
 
 ## Overview
 
-Neo Chess is a browser-based chess app designed for quick local games and live online matches.
+Neo-Chess is a browser-based chess variant designed for quick local games and live online matches.
 
 Players can start a local game immediately, choose from built-in time controls, and use move navigation controls to review the game. Logged-in users can also queue for online games, play rated or casual matches, offer draws, resign, and return to their game history.
 
@@ -22,11 +22,29 @@ The app includes:
 - online game persistence
 - a Games tab for ongoing and historical games
 
+## Rules
+
+Neo-Chess is a variant of chess. It uses standard legal movement, check, checkmate, pawn promotion, and en passant, with these rule changes:
+
+- Fischer Random starting positions are used for every game. The bishops start on opposite-colored squares, the king starts between the rooks, and both players receive mirrored back ranks.
+- Castling is not available.
+- Stalemate is a win for the player who stalemated the opponent, not a draw.
+- Threefold repetition is a loss for the player who caused the third repeated position, meaning the last player to make a move loses.
+- Insufficient material is only a draw when the board has king vs. king.
+- A pie rule is available for Black after White's first move.
+
+The pie rule works like this:
+- White makes the first move.
+- When the original Black player's first turn arrives, that player gets one swap option.
+- Choosing swap exchanges the players' sides: the original Black player takes over White's pieces and the original White player takes over Black's pieces.
+- The board position does not change when sides are swapped, and it remains Black's turn.
+- If the original Black player makes a move instead of swapping, the swap option expires and the game continues normally.
+- The same rule is available in both local and online games.
+
 ## Features
 
 - Local chess games with Bullet, Blitz, Rapid, Classical, and Unlimited time controls
 - Online matchmaking with rated and casual modes
-- Pie rule side-swap option on Black's first turn
 - Elo-based rating ranges for rated matchmaking
 - Elo updates when rated online games end
 - Player cards with clocks, captured material, active-turn state, and rating deltas
@@ -72,18 +90,6 @@ Suggested screenshot to add later: the Games tab with at least one ongoing onlin
 Use the account icon in the header to log in, sign up, continue with Google, manage friends, and log out.
 
 Suggested screenshot to add later: the logged-in account popup showing friend requests and the friends list.
-
-## Rules
-
-Neo Chess uses its existing legal-move engine for chess movement, check, checkmate, stalemate, and en passant.
-
-The app also uses the pie rule:
-- White makes the first move.
-- When the original Black player's first turn arrives, that player gets one swap option.
-- Choosing swap exchanges the players' sides: the original Black player takes over White's pieces and the original White player takes over Black's pieces.
-- The board position does not change when sides are swapped, and it remains Black's turn.
-- If the original Black player makes a move instead of swapping, the swap option expires and the game continues normally.
-- The same rule is available in both local and online games.
 
 ## Tech Stack
 

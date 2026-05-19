@@ -36,6 +36,14 @@ function getPlayerColor(
 function formatStatus(game: OnlineGameState): string | null {
   if (game.status.type === "active") return null;
   if (game.status.type === "draw") return "Draw";
+  if (game.status.type === "win") {
+    const reasons = {
+      checkmate: "checkmate",
+      stalemate: "stalemate",
+      "threefold-repetition": "threefold repetition",
+    } as const;
+    return `${game.players[game.status.winner].username} wins by ${reasons[game.status.reason]}`;
+  }
   if (game.status.type === "checkmate") {
     return `${game.players[game.status.winner].username} wins by checkmate`;
   }
@@ -51,9 +59,24 @@ function getGameOutcome(game: OnlineGameState): {
   if (game.status.type === "draw") {
     return {
       title: "Draw",
-      detail: game.status.reason === "stalemate"
+      detail: game.status.reason === "insufficient-material"
+        ? "Only kings remain, so neither side has sufficient material to win."
+        : game.status.reason === "stalemate"
         ? "The game ended by stalemate."
         : "The game ended by agreement.",
+    };
+  }
+
+  if (game.status.type === "win") {
+    const details = {
+      checkmate: "Reason: checkmate.",
+      stalemate: "Reason: stalemate.",
+      "threefold-repetition": "Reason: threefold repetition.",
+    } as const;
+
+    return {
+      title: `${game.players[game.status.winner].username} wins`,
+      detail: details[game.status.reason],
     };
   }
 

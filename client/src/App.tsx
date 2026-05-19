@@ -120,6 +120,12 @@ function getTimeControlLabel(timeControlId: string): string {
 }
 
 function formatGameStatus(game: GameListEntry): string {
+  const winReasonLabels = {
+    checkmate: "checkmate",
+    stalemate: "stalemate",
+    "threefold-repetition": "threefold repetition",
+  } as const;
+
   if (game.kind === "local") {
     if (game.status.type === "active") return "Ongoing";
     if (game.status.type === "draw") return "Draw";
@@ -129,11 +135,17 @@ function formatGameStatus(game: GameListEntry): string {
     if (game.status.type === "resignation") {
       return `${formatColorName(game.status.winner)} won by resignation`;
     }
-    return `${formatColorName(game.status.winner)} won by checkmate`;
+    if (game.status.type === "checkmate") {
+      return `${formatColorName(game.status.winner)} won by checkmate`;
+    }
+    return `${formatColorName(game.status.winner)} won by ${winReasonLabels[game.status.reason]}`;
   }
 
   if (game.status.type === "active") return "Ongoing";
   if (game.status.type === "draw") return "Draw";
+  if (game.status.type === "win") {
+    return `${game.players[game.status.winner].username} won by ${winReasonLabels[game.status.reason]}`;
+  }
   if (game.status.type === "checkmate") {
     return `${game.players[game.status.winner].username} won by checkmate`;
   }

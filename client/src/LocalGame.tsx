@@ -97,6 +97,7 @@ function getLocalGameStatus(
   manualStatus: LocalGameStatus | null,
   clocks: ClockSnapshot,
   state: GameState,
+  history: GameState[],
 ): LocalGameStatus {
   if (manualStatus) return manualStatus;
 
@@ -116,7 +117,7 @@ function getLocalGameStatus(
     };
   }
 
-  const boardOutcome = getBoardGameOutcome(state);
+  const boardOutcome = getBoardGameOutcome(state, history);
   if (!boardOutcome) return { type: "active" };
 
   if (boardOutcome.result === "draw") {
@@ -127,7 +128,8 @@ function getLocalGameStatus(
   }
 
   return {
-    type: "checkmate",
+    type: "win",
+    reason: boardOutcome.reason,
     winner: boardOutcome.winner,
     loser: oppositeColor(boardOutcome.winner),
   };
@@ -136,6 +138,9 @@ function getLocalGameStatus(
 function getLocalGameStatusKey(status: LocalGameStatus): string {
   if (status.type === "active") return status.type;
   if (status.type === "draw") return `${status.type}:${status.reason}`;
+  if (status.type === "win") {
+    return `${status.type}:${status.reason}:${status.winner}:${status.loser}`;
+  }
 
   return `${status.type}:${status.winner}:${status.loser}`;
 }
@@ -148,8 +153,10 @@ function getLocalGameOutcomeMessage(
   if (status.type === "draw") {
     return {
       title: "Draw",
-      detail: status.reason === "stalemate"
-        ? "Stalemate. The side to move has no legal moves"
+      detail: status.reason === "insufficient-material"
+        ? "Only kings remain, so neither side has sufficient material to win."
+        : status.reason === "stalemate"
+        ? "Stalemate."
         : "The game ended by agreement.",
     };
   }
@@ -168,9 +175,23 @@ function getLocalGameOutcomeMessage(
     };
   }
 
+  if (status.type === "checkmate") {
+    return {
+      title: `${formatColorName(status.winner)} wins`,
+      detail: `${formatColorName(status.loser)} is checkmated.`,
+    };
+  }
+
+  const winDetails = {
+    checkmate: `${formatColorName(status.loser)} is checkmated.`,
+    stalemate: `${formatColorName(status.winner)} wins by stalemate.`,
+    "threefold-repetition":
+      `${formatColorName(status.loser)} caused a threefold repetition.`,
+  } as const;
+
   return {
     title: `${formatColorName(status.winner)} wins`,
-    detail: `${formatColorName(status.loser)} is checkmated.`,
+    detail: winDetails[status.reason],
   };
 }
 
@@ -257,6 +278,7 @@ function LocalGame(props: LocalGameProps) {
     manualGameStatus,
     displayedClocks,
     gameState,
+    history.slice(0, historyIndex + 1),
   );
   const gameOutcome = getLocalGameOutcomeMessage(displayedLocalGameStatus);
   const shouldShowPopup = Boolean(gameOutcome) && !isPopupDismissed;
@@ -310,6 +332,7 @@ function LocalGame(props: LocalGameProps) {
     manualGameStatus,
     savedClockSnapshot,
     savedGameState,
+    history,
   );
   const savedLocalGameStatusKey = getLocalGameStatusKey(savedLocalGameStatus);
 

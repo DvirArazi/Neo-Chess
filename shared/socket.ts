@@ -70,8 +70,14 @@ export type OnlineGamePlayer = AuthenticatedUser & {
 
 export type OnlineGameStatus =
   | { type: "active" }
-  | { type: "draw"; reason: "agreement" | "stalemate" }
+  | { type: "draw"; reason: "agreement" | "insufficient-material" | "stalemate" }
   | { type: "resigned"; winner: PieceColor; loser: PieceColor }
+  | {
+    type: "win";
+    reason: "checkmate" | "stalemate" | "threefold-repetition";
+    winner: PieceColor;
+    loser: PieceColor;
+  }
   | { type: "checkmate"; winner: PieceColor; loser: PieceColor };
 
 export type OnlineGamePieRule = {

@@ -4,7 +4,13 @@ export type LocalGameClockSnapshot = Record<PieceColor, number>;
 
 export type LocalGameStatus =
   | { type: "active" }
-  | { type: "draw"; reason: "stalemate" | "agreement" }
+  | { type: "draw"; reason: "agreement" | "insufficient-material" | "stalemate" }
+  | {
+    type: "win";
+    reason: "checkmate" | "stalemate" | "threefold-repetition";
+    winner: PieceColor;
+    loser: PieceColor;
+  }
   | { type: "checkmate"; winner: PieceColor; loser: PieceColor }
   | { type: "resignation"; winner: PieceColor; loser: PieceColor }
   | { type: "timeout"; winner: PieceColor; loser: PieceColor };

@@ -11,11 +11,11 @@ export type BoardGameOutcome =
   | {
     result: "win";
     winner: Piece["color"];
-    reason: "checkmate";
+    reason: "checkmate" | "stalemate" | "threefold-repetition";
   }
   | {
     result: "draw";
-    reason: "stalemate";
+    reason: "insufficient-material";
   };
 
 function isInBounds(tile: Square): boolean {
@@ -173,6 +173,41 @@ function isKingInCheck(state: GameState, color: Piece["color"]): boolean {
 
   const attackerColor = color === "white" ? "black" : "white";
   return isTileAttackedBy(state, kingTile, attackerColor);
+}
+
+function getPositionKey(state: GameState): string {
+  const boardKey = state.board
+    .map((row) =>
+      row
+        .map((piece) => piece ? `${piece.color}:${piece.type}` : "--")
+        .join("")
+    )
+    .join("/");
+  const enPassantKey = state.enPassantTarget
+    ? `${state.enPassantTarget.x},${state.enPassantTarget.y}`
+    : "-";
+
+  return `${boardKey} ${state.turn} ${enPassantKey}`;
+}
+
+function hasOnlyKings(state: GameState): boolean {
+  return state.board.every((row) =>
+    row.every((piece) => !piece || piece.type === "king")
+  );
+}
+
+function isThreefoldRepetition(
+  state: GameState,
+  history: GameState[],
+): boolean {
+  const positionKey = getPositionKey(state);
+  const occurrences = history.reduce(
+    (count, historicalState) =>
+      count + (getPositionKey(historicalState) === positionKey ? 1 : 0),
+    0,
+  );
+
+  return occurrences >= 3;
 }
 
 export function getPseudoLegalMoves(from: Square, state: GameState): Square[] {
@@ -362,7 +397,23 @@ export function getLegalMoves(from: Square, state: GameState): Square[] {
 
 export function getBoardGameOutcome(
   state: GameState,
+  history: GameState[] = [state],
 ): BoardGameOutcome | null {
+  if (hasOnlyKings(state)) {
+    return {
+      result: "draw",
+      reason: "insufficient-material",
+    };
+  }
+
+  if (isThreefoldRepetition(state, history)) {
+    return {
+      result: "win",
+      winner: state.turn,
+      reason: "threefold-repetition",
+    };
+  }
+
   for (let y = 0; y < BOARD_SIZE; y += 1) {
     for (let x = 0; x < BOARD_SIZE; x += 1) {
       const piece = state.board[y][x];
@@ -383,7 +434,8 @@ export function getBoardGameOutcome(
   }
 
   return {
-    result: "draw",
+    result: "win",
+    winner: state.turn === "white" ? "black" : "white",
     reason: "stalemate",
   };
 }
